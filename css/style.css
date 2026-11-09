@@ -34,6 +34,9 @@ tr:nth-child(even) { background: #f8fafc; }
 .note { color: #64748b; font-size: 12px; }
 .chart-scroll { overflow-x: auto; }
 canvas { width: 100%; min-width: 680px; display: block; }
+/* kolom pertama (Unit ID / Kode Unit) terkunci di kiri saat tabel digeser */
+.table-wrap thead th:first-child { position: sticky; left: 0; z-index: 3; background: #0f3d5e; }
+.table-wrap tbody td:first-child { position: sticky; left: 0; z-index: 1; background: #ffffff; border-right: 2px solid #cbd5e1; }
 @media (max-width: 640px) {
   section { margin: 12px; padding: 12px; }
   header { padding: 14px 16px; }
