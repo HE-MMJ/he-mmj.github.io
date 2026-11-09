@@ -209,6 +209,9 @@ function drawCombo(rows, prog = 1) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const w = c.clientWidth, h = H;
   ctx.clearRect(0, 0, w, h);
+  // latar putih di seluruh area grafik
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, w, h);
 
   const topN = window.innerWidth < 620 ? 8 : 15;
   const top15 = [...rows].sort((a, b) => num(b.HMTotal) - num(a.HMTotal)).slice(0, topN);

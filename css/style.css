@@ -32,7 +32,7 @@ th { background: #0f3d5e; color: #fff; position: sticky; top: 0; }
 tr:nth-child(even) { background: #f8fafc; }
 .table-wrap { max-height: 520px; overflow: auto; border: 1px solid #e2e8f0; border-radius: 8px; }
 .note { color: #64748b; font-size: 12px; }
-.chart-scroll { overflow-x: auto; }
+.chart-scroll { overflow-x: auto; background: #fff; }
 canvas { width: 100%; min-width: 680px; display: block; }
 /* kolom pertama (Unit ID / Kode Unit) terkunci di kiri saat tabel digeser */
 .table-wrap thead th:first-child { position: sticky; left: 0; z-index: 3; background: #0f3d5e; }
