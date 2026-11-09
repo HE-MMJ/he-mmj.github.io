@@ -477,6 +477,25 @@ function drawTooltip(ctx, d, i, cfg, geo, barW, maxHM, baseY, plotH) {
     }
   });
 
+  // sentuh (HP): tap & geser menunjuk seperti hover
+  function sentuh(e) {
+    if (!GEO || !e.touches || !e.touches.length) return;
+    const t = e.touches[0];
+    const r = c.getBoundingClientRect();
+    const x = t.clientX - r.left;
+    let idx = -1;
+    if (x >= GEO.padL && x <= GEO.padL + GEO.bw * GEO.n) {
+      const i = Math.floor((x - GEO.padL) / GEO.bw);
+      if (i >= 0 && i < GEO.n) idx = i;
+    }
+    if (idx !== hoverIdx) {
+      hoverIdx = idx;
+      if (!animRAF) drawCombo(lastRows, 1);
+    }
+  }
+  c.addEventListener('touchstart', sentuh, { passive: true });
+  c.addEventListener('touchmove', sentuh, { passive: true });
+
   window.addEventListener('resize', () => {
     if (!animRAF) drawCombo(lastRows, 1);
   });

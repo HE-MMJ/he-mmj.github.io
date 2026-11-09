@@ -32,7 +32,22 @@ th { background: #0f3d5e; color: #fff; position: sticky; top: 0; }
 tr:nth-child(even) { background: #f8fafc; }
 .table-wrap { max-height: 520px; overflow: auto; border: 1px solid #e2e8f0; border-radius: 8px; }
 .note { color: #64748b; font-size: 12px; }
-canvas { width: 100%; display: block; }
+.chart-scroll { overflow-x: auto; }
+canvas { width: 100%; min-width: 680px; display: block; }
+.table-wrap th:first-child, .table-wrap td:first-child { position: sticky; left: 0; z-index: 2; }
+.table-wrap thead th:first-child { background: #0f3d5e; }
+.table-wrap tbody td:first-child { background: #ffffff; box-shadow: 2px 0 0 #e2e8f0; }
+@media (max-width: 640px) {
+  section { margin: 12px; padding: 12px; }
+  header { padding: 14px 16px; }
+  .header-logo { height: 46px; }
+  .cards { grid-template-columns: repeat(2, 1fr); }
+  .card .val { font-size: 20px; }
+  th, td { padding: 6px 6px; }
+}
+@media (max-width: 420px) {
+  .cards { grid-template-columns: 1fr; }
+}
 th.sortable { cursor: pointer; user-select: none; }
 th.sortable:hover { background: #164f74; }
 .arrow { font-size: 10px; opacity: 0.9; }
