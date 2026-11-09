@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Timesheet HE — MMJ November 2026</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="header-text">
+        <h1>Dashboard Timesheet HE — MMJ</h1>
+        <p>Periode November 2026 · GIP H1, GIP H2, JTU, BDK, SKN</p>
+      </div>
+      <img class="header-logo" src="assets/logo-mmj.png" alt="Musi Mitra Jaya">
+    </div>
+  </header>
+
+  <section class="filters">
+    <label>Vendor:
+      <select id="fVendor">
+        <option value="ALL">Semua</option>
+        <option value="GIP H1">GIP H1</option>
+        <option value="GIP H2">GIP H2</option>
+        <option value="JTU">JTU</option>
+        <option value="BDK">BDK</option>
+        <option value="SKN">SKN</option>
+      </select>
+    </label>
+    <label>Area Kerja:
+      <select id="fArea">
+        <option value="ALL">Semua Area</option>
+      </select>
+    </label>
+    <label>Unit Type:
+      <select id="fJenis">
+        <option value="ALL">Semua Unit Type</option>
+      </select>
+    </label>
+  </section>
+
+  <section class="cards" id="cards"></section>
+
+  <section class="charts">
+    <div class="chart-box">
+      <div class="chart-head">
+        <h2 id="chartTitle">Grafik HM (Bar) &amp; MA (Garis) per Unit — Top 15</h2>
+        <div class="seg" id="cmpMenu">
+          <button type="button" class="seg-btn active" data-cmp="MA">HM vs MA</button>
+          <button type="button" class="seg-btn" data-cmp="RATIO">HM vs Fuel Ratio</button>
+          <button type="button" class="seg-btn" data-cmp="PA">HM vs PA</button>
+        </div>
+      </div>
+      <canvas id="comboChart" height="360"></canvas>
+      <p class="note" id="chartNote">Batang biru = HM Total (skala kiri, jam). Garis oranye = MA % (skala kanan).</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Tabel Review Unit</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Unit ID</th>
+            <th>Unit Type</th>
+            <th>Area Kerja</th>
+            <th>Model</th>
+            <th class="sortable" data-sort="HMTotal" title="Klik untuk mengurutkan">HM Total <span class="arrow" data-arrow="HMTotal"></span></th>
+            <th class="sortable" data-sort="MA" title="Klik untuk mengurutkan">MA <span class="arrow" data-arrow="MA"></span></th>
+            <th>PA (%)</th>
+            <th class="sortable" data-sort="Fuel" title="Klik untuk mengurutkan">Fuel (L) <span class="arrow" data-arrow="Fuel"></span></th>
+            <th class="sortable" data-sort="FuelRatio" title="Klik untuk mengurutkan">Fuel Ratio <span class="arrow" data-arrow="FuelRatio"></span></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Tabel Timesheet Belum di Terima</h2>
+    <p class="note">✓ = timesheet sudah di terima, - = Timesheet Belum di terima</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Kode Unit</th>
+            <th>Area</th>
+            <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th><th>15</th><th>16</th><th>17</th><th>18</th><th>19</th><th>20</th><th>21</th><th>22</th><th>23</th><th>24</th><th>25</th><th>26</th><th>27</th><th>28</th><th>29</th><th>30</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody id="belumTbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

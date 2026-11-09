@@ -1,0 +1,66 @@
+﻿[
+    {
+        "Tanggal":  "1-Nov-26",
+        "GIP H2":  0,
+        "GIP H1":  149.5,
+        "JTU":  75.5,
+        "BDK":  45.2,
+        "SKN":  28.7
+    },
+    {
+        "Tanggal":  "2-Nov-26",
+        "GIP H2":  0,
+        "GIP H1":  145.5,
+        "JTU":  73.8,
+        "BDK":  51,
+        "SKN":  36.2
+    },
+    {
+        "Tanggal":  "3-Nov-26",
+        "GIP H2":  0,
+        "GIP H1":  163.8,
+        "JTU":  74.1,
+        "BDK":  33.7,
+        "SKN":  22.2
+    },
+    {
+        "Tanggal":  "4-Nov-26",
+        "GIP H2":  0,
+        "GIP H1":  158,
+        "JTU":  61.6,
+        "BDK":  50.1,
+        "SKN":  35.8
+    },
+    {
+        "Tanggal":  "5-Nov-26",
+        "GIP H2":  0,
+        "GIP H1":  153.4,
+        "JTU":  67.3,
+        "BDK":  37.8,
+        "SKN":  32.3
+    },
+    {
+        "Tanggal":  "6-Nov-26",
+        "GIP H2":  0,
+        "GIP H1":  148.4,
+        "JTU":  53.2,
+        "BDK":  32.4,
+        "SKN":  34.1
+    },
+    {
+        "Tanggal":  "7-Nov-26",
+        "GIP H2":  0,
+        "GIP H1":  163.9,
+        "JTU":  47.2,
+        "BDK":  47.6,
+        "SKN":  16.4
+    },
+    {
+        "Tanggal":  "8-Nov-26",
+        "GIP H2":  0,
+        "GIP H1":  77.1,
+        "JTU":  15.2,
+        "BDK":  9.2,
+        "SKN":  8.4
+    }
+]
