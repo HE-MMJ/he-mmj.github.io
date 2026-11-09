@@ -210,7 +210,8 @@ function drawCombo(rows, prog = 1) {
   const w = c.clientWidth, h = H;
   ctx.clearRect(0, 0, w, h);
 
-  const top15 = [...rows].sort((a, b) => num(b.HMTotal) - num(a.HMTotal)).slice(0, 15);
+  const topN = window.innerWidth < 620 ? 8 : 15;
+  const top15 = [...rows].sort((a, b) => num(b.HMTotal) - num(a.HMTotal)).slice(0, topN);
   // urutkan sesuai nomor unit lalu Unit ID (tidak acak)
   const nomorUnit = u => { const m = String(u || '').match(/(\d+)/); return m ? parseInt(m[1], 10) : 0; };
   const top = top15.sort((a, b) =>
@@ -568,8 +569,9 @@ function setCmp(key) {
   document.querySelectorAll('.seg-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.cmp === key);
   });
+  const topN = window.innerWidth < 620 ? 8 : 15;
   document.getElementById('chartTitle').textContent =
-    `Grafik HM (Bar) & ${cfg.judul} (Garis) per Unit - Top 15`;
+    `Grafik HM (Bar) & ${cfg.judul} (Garis) per Unit - Top ${topN}`;
   document.getElementById('chartNote').textContent = cfg.catatan;
   render();
 }
