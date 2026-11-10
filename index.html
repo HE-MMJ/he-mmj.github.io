@@ -108,7 +108,7 @@
     <section class="panel">
       <div class="panel-head">
         <h2>Tabel Review Unit</h2>
-        <span class="panel-sub">Kinerja per unit &mdash; HM, MA, PA, fuel</span>
+        <span class="panel-sub">Kinerja per unit &mdash; HM, MA, PA, fuel &middot; Min. hours <b>240 jam/bulan</b></span>
       </div>
       <div class="table-wrap">
         <table class="grid">
@@ -117,8 +117,10 @@
               <th>Unit ID</th>
               <th>Unit Type</th>
               <th>Area Kerja</th>
-              <th>Model</th>
+              <th>Model / Capacity</th>
               <th class="sortable num" data-sort="HMTotal" title="Klik untuk mengurutkan">HM Total <span class="arrow" data-arrow="HMTotal"></span></th>
+              <th class="num" title="Jatah minimum jam kerja per unit per bulan">Min Hours</th>
+              <th class="num" title="Sisa jatah HM = Min Hours - HM Total">Sisa HM</th>
               <th class="sortable num" data-sort="MA" title="Klik untuk mengurutkan">MA <span class="arrow" data-arrow="MA"></span></th>
               <th class="num">PA (%)</th>
               <th class="sortable num" data-sort="Fuel" title="Klik untuk mengurutkan">Fuel (L) <span class="arrow" data-arrow="Fuel"></span></th>
@@ -128,6 +130,7 @@
           <tbody id="tbody"></tbody>
         </table>
       </div>
+      <p class="note">Sisa HM = Min. hours 240 jam &minus; HM bulan berjalan tiap unit (tidak berubah saat rentang tanggal dipersempit). Nilai negatif berarti pemakaian sudah melebihi jatah bulanan.</p>
     </section>
 
     <section class="panel">

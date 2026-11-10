@@ -48,6 +48,9 @@ const CARD_ICO = {
 };
 
 // ---------- state grafik ----------
+// Jatah minimum jam kerja (HM) per unit per bulan -> dasar perhitungan Sisa HM
+const MIN_HOURS = 240;
+
 let lastRows = [];   // data yang sedang tampil (untuk redraw saat hover)
 let hoverIdx = -1;   // indeks batang yang disorot mouse
 let GEO = null;      // geometri grafik terakhir (untuk hit-test mouse)
@@ -206,17 +209,31 @@ function render() {
   }
   document.getElementById('tbody').innerHTML = tabelRows.map(d => {
     const kosong = d._noharian ? '\u2014' : null;
-    const hmTxt = kosong || num(d.HMTotal).toFixed(1);
+    const hmNum = num(d.HMTotal);
+    const hmTxt = kosong || hmNum.toFixed(1);
     const maTxt = kosong || num(d.MA).toFixed(1) + '%';
     const paTxt = kosong || num(d.PAPct).toFixed(1) + '%';
     const fuelTxt = kosong || fmt(d.Fuel, 1);
     const ratioTxt = kosong || fmt(d.FuelRatio, 2);
+    // sisa jatah HM = min hours bulanan - HM bulan berjalan (tidak ikut menyempit saat rentang dipersempit)
+    const hmBulan = (() => {
+      if (!d._range) return hmNum;
+      const asli = (typeof DATA !== 'undefined' ? DATA : []).find(x => unitKey(x.Unit) === unitKey(d.Unit));
+      return asli ? num(asli.HMTotal) : hmNum;
+    })();
+    const sisa = MIN_HOURS - hmBulan;
+    const sisaTxt = kosong || sisa.toFixed(1);
+    const sisaCls = kosong ? '' : (sisa < 0 ? ' sisa-over' : (sisa <= MIN_HOURS * 0.1 ? ' sisa-warn' : ' sisa-ok'));
+    // model + kapasitas unit (dari sheet Database List Unit)
+    const modelTxt = d.Model ? (d.Capacity && d.Capacity !== '-' ? `${d.Model}/${d.Capacity}` : d.Model) : '-';
     return `<tr>
     <td><b>${d.Unit || '-'}</b></td>
     <td>${d.Jenis || '-'}</td>
     <td>${d.Area || '-'}</td>
-    <td>${d.Model || '-'}</td>
+    <td class="model-cell">${modelTxt}</td>
     <td class="num"><b>${hmTxt}</b></td>
+    <td class="num min-h">${kosong || MIN_HOURS}</td>
+    <td class="num${sisaCls}"><b>${sisaTxt}</b></td>
     <td class="num">${maTxt}</td>
     <td class="num">${paTxt}</td>
     <td class="num">${fuelTxt}</td>
@@ -237,9 +254,10 @@ function updateChartNote() {
   if (!el) return;
   const dasar = CMP_CFG[CMP].catatan;
   const adaBelum = lastRows.some(d => d._belum);
+  const dasarCap = dasar + ' Batang dikelompokkan per <b>capacity</b> unit (label di bawah sumbu X).';
   el.innerHTML = adaBelum
-    ? `${dasar} <b style="color:#DC2626">Batang merah = timesheet belum lengkap.</b>`
-    : dasar;
+    ? `${dasarCap} <b style="color:#DC2626">Batang merah = timesheet belum lengkap.</b>`
+    : dasarCap;
 }
 
 // ---------- tabel Timesheet Belum di Terima (grid Kode Unit | Area | 1..30 | Total) ----------
@@ -389,6 +407,47 @@ function barPath(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
+// ---------- pengelompokan capacity ----------
+// urutan kelas capacity: FT -> TON -> KL -> KVA -> PC -> lainnya -> tanpa capacity
+const CAP_KELAS = ['FT', 'TON', 'KL', 'KVA', 'PC'];
+
+function capInfo(s) {
+  const raw = String(s == null ? '' : s).trim();
+  if (!raw || raw === '-' || raw === '\u2014') {
+    return { label: 'Tanpa capacity', cls: 99, num: 0, ada: false };
+  }
+  const mUnit = raw.match(/[A-Za-z]+/);
+  const unit = mUnit ? mUnit[0].toUpperCase() : '';
+  const mNum = raw.match(/(\d+(?:[.,]\d+)?)/);
+  const num = mNum ? parseFloat(mNum[1].replace(',', '.')) : 0;
+  let cls = CAP_KELAS.indexOf(unit);
+  if (cls < 0) cls = 50;
+  return { label: raw, cls, num: isNaN(num) ? 0 : num, ada: true };
+}
+
+// kelompokkan baris per capacity; tiap kelompok menyimpan item (urutan di dalam kelompok tetap)
+function groupByCapacity(list) {
+  const groups = [];
+  const map = new Map();
+  list.forEach(d => {
+    const info = capInfo(d.Capacity);
+    const key = info.cls + '|' + info.num + '|' + info.label.toUpperCase();
+    let g = map.get(key);
+    if (!g) {
+      g = { label: info.label, cls: info.cls, num: info.num, ada: info.ada, items: [] };
+      map.set(key, g);
+      groups.push(g);
+    }
+    g.items.push(d);
+  });
+  groups.sort((a, b) =>
+    (a.cls - b.cls) ||
+    (a.num - b.num) ||
+    a.label.localeCompare(b.label, 'id', { numeric: true })
+  );
+  return groups;
+}
+
 // ---- Grafik gabungan: BAR = HM Total, GARIS = metrik pembanding ----
 // prog = 0..1 (progres animasi), 1 = tampil penuh
 function drawCombo(rows, prog = 1) {
@@ -410,10 +469,13 @@ function drawCombo(rows, prog = 1) {
   const top15 = [...rows].sort((a, b) => num(b.HMTotal) - num(a.HMTotal)).slice(0, topN);
   // urutkan sesuai nomor unit lalu Unit ID (tidak acak)
   const nomorUnit = u => { const m = String(u || '').match(/(\d+)/); return m ? parseInt(m[1], 10) : 0; };
-  const top = top15.sort((a, b) =>
+  top15.sort((a, b) =>
     (nomorUnit(a.Unit) - nomorUnit(b.Unit)) ||
     String(a.Unit).localeCompare(String(b.Unit), 'id', { numeric: true })
   );
+  // kelompokkan per capacity, lalu ratakan lagi jadi urutan batang
+  const groups = groupByCapacity(top15);
+  const top = groups.flatMap(g => g.items);
   if (!top.length) {
     GEO = null;
     ctx.fillStyle = '#64748B';
@@ -426,20 +488,82 @@ function drawCombo(rows, prog = 1) {
   const vals = top.map(d => num(d[cfg.field]));
   const maxCmp = cfg.tetapMax !== null ? cfg.tetapMax : niceMax(Math.max(...vals) * 1.15);
 
-  const padL = 64, padR = 74, padB = 84, padT = 54;
+  const padL = 64, padR = 74, padT = 54;
   const plotW = w - padL - padR;
+  const GAP = 0.6;                       // jarak antar kelompok (satuan slot)
+
+  // hitung posisi slot: 1 unit per batang, GAP antar kelompok
+  let cursor = 0;
+  groups.forEach(g => {
+    g.slotAwal = cursor;
+    cursor += g.items.length;
+    g.slotAkhir = cursor;
+    cursor += GAP;
+  });
+  const totalSlot = Math.max(cursor - GAP, 1);
+  const slotW = plotW / totalSlot;
+  const bw = slotW;
+  const centers = [];
+  cursor = 0;
+  groups.forEach(g => {
+    g.items.forEach(() => { centers.push(padL + (cursor + 0.5) * slotW); cursor += 1; });
+    cursor += GAP;
+  });
+  const xCenter = i => centers[i];
+
+  // --- label kelompok: hitung lebar, susun per baris agar tidak tumpang tindih ---
+  ctx.save();
+  ctx.font = 'bold 9.5px "Fira Code", Consolas, monospace';
+  const pillPx = 14;
+  groups.forEach(g => {
+    g.cx = padL + ((g.slotAwal + g.slotAkhir) / 2) * slotW;
+    g.teks = g.label + (g.items.length > 1 ? ' (' + g.items.length + ')' : '');
+    g.pw = Math.ceil(ctx.measureText(g.teks).width) + pillPx;
+    g.baris = 0;
+  });
+  ctx.restore();
+  const barisAkhir = [];
+  groups.forEach(g => {
+    let r = 0;
+    while (barisAkhir[r] !== undefined && (g.cx - g.pw / 2) < barisAkhir[r] + 5) r++;
+    g.baris = r;
+    barisAkhir[r] = g.cx + g.pw / 2;
+  });
+  const barisMaks = Math.max(0, barisAkhir.length - 1);
+
+  // tinggi bawah = label unit miring + baris label kelompok
+  const padB = 102 + barisMaks * 16;
   const plotH = h - padB - padT;
-  const bw = plotW / top.length;
-  const xCenter = i => padL + i * bw + bw / 2;
   const baseY = h - padB;
 
   // simpan geometri untuk hit-test mouse
-  GEO = { padL, padB, padT, bw, plotH, n: top.length, w, h, xCenter };
+  GEO = { padL, padB, padT, bw, slotW, plotH, n: top.length, w, h, xCenter, centers };
+
+  // --- pita latar + pemisah antar kelompok capacity ---
+  groups.forEach((g, gi) => {
+    const x0 = padL + g.slotAwal * slotW;
+    const x1 = padL + g.slotAkhir * slotW;
+    if (gi % 2 === 1) {
+      ctx.fillStyle = 'rgba(30,64,175,0.035)';
+      ctx.fillRect(x0, padT - 8, x1 - x0, plotH + 10);
+    }
+    if (gi > 0) {
+      ctx.save();
+      ctx.strokeStyle = '#DCE7F5';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 4]);
+      ctx.beginPath();
+      ctx.moveTo(x0 - (GAP * slotW) / 2, padT - 8);
+      ctx.lineTo(x0 - (GAP * slotW) / 2, baseY);
+      ctx.stroke();
+      ctx.restore();
+    }
+  });
 
   // --- sorotan latar untuk batang yang di-hover ---
   if (hoverIdx >= 0 && hoverIdx < top.length) {
-    ctx.fillStyle = 'rgba(59,130,246,0.09)';
-    ctx.fillRect(padL + hoverIdx * bw, padT, bw, plotH + 6);
+    ctx.fillStyle = 'rgba(59,130,246,0.10)';
+    ctx.fillRect(centers[hoverIdx] - slotW / 2, padT, slotW, plotH + 6);
   }
 
   // --- grid + sumbu kiri (HM) + sumbu kanan (metrik) ---
@@ -464,11 +588,11 @@ function drawCombo(rows, prog = 1) {
   ctx.fillText(cfg.satuan, w - padR + 36, padT - 16);
 
   // --- bar HM ---
-  const barW = bw * 0.64;
+  const barW = Math.max(6, bw * 0.64);
   top.forEach((d, i) => {
     const hm = num(d.HMTotal);
     const bh = plotH * (hm / maxHM) * prog;
-    const x = padL + i * bw + bw * 0.18;
+    const x = centers[i] - barW / 2;
     const y = baseY - bh;
     const aktif = i === hoverIdx;
 
@@ -528,6 +652,26 @@ function drawCombo(rows, prog = 1) {
     ctx.font = (i === hoverIdx ? 'bold ' : '') + '10px "Fira Sans", Segoe UI, sans-serif';
     ctx.textAlign = 'right';
     ctx.fillText(String(d.Unit).replace(/ (GIP|JTU|BDK|SKN)( H[12])?$/, ''), 0, 0);
+    ctx.restore();
+  });
+
+  // --- label kelompok capacity di bawah label unit ---
+  const groupY = baseY + 76;
+  groups.forEach(g => {
+    const cy = groupY + g.baris * 16;
+    ctx.save();
+    ctx.font = 'bold 9.5px "Fira Code", Consolas, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = g.ada ? '#EEF4FE' : '#F1F5F9';
+    barPath(ctx, g.cx - g.pw / 2, cy - 8, g.pw, 16, 8);
+    ctx.fill();
+    ctx.strokeStyle = g.ada ? '#D6E4FA' : '#E2E8F0';
+    ctx.lineWidth = 1;
+    barPath(ctx, g.cx - g.pw / 2, cy - 8, g.pw, 16, 8);
+    ctx.stroke();
+    ctx.fillStyle = g.ada ? '#1E40AF' : '#64748B';
+    ctx.fillText(g.teks, g.cx, cy + 0.5);
     ctx.restore();
   });
 
@@ -601,9 +745,11 @@ function drawCombo(rows, prog = 1) {
 // kotak tooltip: nama unit, vendor/unit type, HM, dan nilai metrik pembanding
 function drawTooltip(ctx, d, i, cfg, geo, barW, maxHM, baseY, plotH) {
   const barTop = baseY - plotH * (num(d.HMTotal) / maxHM);
+  const cap = capInfo(d.Capacity);
   const lines = [
     { t: String(d.Unit), bold: true, warna: '#0F172A' },
     { t: [d.Vendor, d.Jenis, d.Area].filter(Boolean).join(' - '), bold: false, warna: '#64748B' },
+    { t: 'Capacity: ' + (cap.ada ? cap.label : '-'), bold: false, warna: cap.ada ? '#1E40AF' : '#94A3B8' },
     { t: 'HM Total: ' + fmt(num(d.HMTotal), 1) + ' jam', bold: true, warna: '#1E40AF' },
     { t: cfg.judul + ': ' + cfg.nilai(num(d[cfg.field])), bold: true, warna: cfg.warna }
   ];
@@ -655,16 +801,24 @@ function drawTooltip(ctx, d, i, cfg, geo, barW, maxHM, baseY, plotH) {
   const c = document.getElementById('comboChart');
   if (!c) return;
 
+  // cari batang terdekat dari posisi x (batang tidak lagi berjarak seragam)
+  function idxDi(x) {
+    if (!GEO || !GEO.centers) return -1;
+    const setengah = GEO.slotW * 0.5;
+    let best = -1, bestD = Infinity;
+    GEO.centers.forEach((cx, i) => {
+      const d = Math.abs(x - cx);
+      if (d <= setengah && d < bestD) { bestD = d; best = i; }
+    });
+    return best;
+  }
+
   c.addEventListener('mousemove', e => {
     if (!GEO) return;
     const r = c.getBoundingClientRect();
     const x = e.clientX - r.left;
     const y = e.clientY - r.top;
-    let idx = -1;
-    if (x >= GEO.padL && x <= GEO.padL + GEO.bw * GEO.n) {
-      const i = Math.floor((x - GEO.padL) / GEO.bw);
-      if (i >= 0 && i < GEO.n) idx = i;
-    }
+    const idx = idxDi(x);
     if (idx !== hoverIdx) {
       hoverIdx = idx;
       c.style.cursor = idx >= 0 ? 'pointer' : 'default';
@@ -686,11 +840,7 @@ function drawTooltip(ctx, d, i, cfg, geo, barW, maxHM, baseY, plotH) {
     const t = e.touches[0];
     const r = c.getBoundingClientRect();
     const x = t.clientX - r.left;
-    let idx = -1;
-    if (x >= GEO.padL && x <= GEO.padL + GEO.bw * GEO.n) {
-      const i = Math.floor((x - GEO.padL) / GEO.bw);
-      if (i >= 0 && i < GEO.n) idx = i;
-    }
+    const idx = idxDi(x);
     if (idx !== hoverIdx) {
       hoverIdx = idx;
       if (!animRAF) drawCombo(lastRows, 1);
@@ -772,7 +922,7 @@ function setCmp(key) {
     b.classList.toggle('active', b.dataset.cmp === key);
   });
   const topN = window.innerWidth < 620 ? 8 : 15;
-  TITLE_BASE = `Grafik HM (Bar) & ${cfg.judul} (Garis) per Unit - Top ${topN}`;
+  TITLE_BASE = `Grafik HM (Bar) & ${cfg.judul} (Garis) per Unit - Top ${topN} · per Capacity`;
   updateTitle();
   document.getElementById('chartNote').textContent = cfg.catatan;
   render();

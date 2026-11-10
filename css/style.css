@@ -539,7 +539,18 @@ th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .grid tbody td:nth-child(6),
 .grid tbody td:nth-child(7),
 .grid tbody td:nth-child(8),
-.grid tbody td:nth-child(9) { font-family: var(--font-num); font-size: 12.5px; }
+.grid tbody td:nth-child(9),
+.grid tbody td:nth-child(10),
+.grid tbody td:nth-child(11) { font-family: var(--font-num); font-size: 12.5px; }
+
+/* kolom Min Hours & Sisa HM */
+.grid tbody td.min-h { color: var(--muted); }
+.grid tbody td.sisa-ok b { color: var(--ok); }
+.grid tbody td.sisa-warn b { color: #B45309; }
+.grid tbody td.sisa-over b { color: #B91C1C; }
+.grid tbody td.sisa-over { background: #FFF6F6; }
+.grid tbody td.model-cell { white-space: nowrap; color: var(--text-2); }
+.grid tbody td.model-cell b { color: var(--navy-900); }
 
 /* kolom pertama terkunci */
 .table-wrap thead th:first-child {
