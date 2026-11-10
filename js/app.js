@@ -9,32 +9,42 @@ const CMP_CFG = {
     field: 'MA',
     judul: 'MA',
     satuan: 'MA (%)',
-    warna: '#d93025',
+    warna: '#D97706',
     tetapMax: 100,
     tick: v => v.toFixed(0) + '%',
     nilai: v => v.toFixed(1) + '%',
-    catatan: 'Batang biru = HM Total (skala kiri, jam). Garis merah = MA % (skala kanan 0-100%).'
+    catatan: 'Batang biru = HM Total (skala kiri, jam). Garis amber = MA % (skala kanan 0-100%).'
   },
   RATIO: {
     field: 'FuelRatio',
     judul: 'Fuel Ratio',
     satuan: 'Fuel Ratio (L/Jam)',
-    warna: '#0d47a1',
+    warna: '#0D9488',
     tetapMax: 30,
     tick: v => v.toFixed(2),
     nilai: v => v.toFixed(2),
-    catatan: 'Batang biru = HM Total (skala kiri, jam). Garis biru = Fuel Ratio L/Jam (skala kanan 0-30).'
+    catatan: 'Batang biru = HM Total (skala kiri, jam). Garis teal = Fuel Ratio L/Jam (skala kanan 0-30).'
   },
   PA: {
     field: 'PAPct',
     judul: 'PA',
     satuan: 'PA (%)',
-    warna: '#e67e22',
+    warna: '#7C3AED',
     tetapMax: 100,
     tick: v => v.toFixed(0) + '%',
     nilai: v => v.toFixed(1) + '%',
-    catatan: 'Batang biru = HM Total (skala kiri, jam). Garis oranye = PA % (Physical Availability) dari blok EFISIENSI Review Unit (skala kanan 0-100%).'
+    catatan: 'Batang biru = HM Total (skala kiri, jam). Garis ungu = PA % (Physical Availability) dari blok EFISIENSI Review Unit (skala kanan 0-100%).'
   }
+};
+
+// ikon garis (stroke) untuk kartu ringkasan
+const CARD_ICO = {
+  unit: '<rect x="2.5" y="6.5" width="11" height="8" rx="1.2"/><path d="M13.5 9.5h3.2l2.8 3v2h-6z"/><circle cx="6.5" cy="17" r="1.6"/><circle cx="17" cy="17" r="1.6"/>',
+  clock: '<circle cx="12" cy="12" r="8.2"/><path d="M12 7.6V12l3 1.8"/>',
+  activity: '<path d="M3 12h3.6l2.4-6 3.4 12 2.4-6H21"/>',
+  gauge: '<path d="M4 17.5a8.2 8.2 0 1 1 16 0"/><path d="M12 17.5 16 11"/>',
+  fuel: '<path d="M12 3.5s5.6 5.7 5.6 9.3A5.6 5.6 0 0 1 6.4 12.8C6.4 9.2 12 3.5 12 3.5Z"/>',
+  trend: '<path d="M3 16.5 9.2 10l3.3 3.3L21 5"/><path d="M15.6 5H21v5.4"/>'
 };
 
 // ---------- state grafik ----------
@@ -167,14 +177,27 @@ function render() {
   })();
   const sumRatio = rows.filter(d => num(d.FuelRatio) > 0);
   const avgRatio = sumRatio.length ? sumRatio.reduce((s, d) => s + num(d.FuelRatio), 0) / sumRatio.length : 0;
-  document.getElementById('cards').innerHTML = [
-    ['Unit tampil', rows.length, '#0f3d5e'],
-    ['Total HM (Jam)', sumHM.toFixed(1), '#1677d2'],
-    ['Rata-rata MA', avgMA.toFixed(1) + '%', '#d93025'],
-    ['Rata-rata PA', avgPA.toFixed(1) + '%', '#e67e22'],
-    ['Total Fuel (L)', fmt(sumFuel, 0), '#1e88e5'],
-    ['Rata-rata Fuel Ratio', fmt(avgRatio, 2), '#0d47a1']
-  ].map(([l, v, c]) => `<div class="card" style="--c:${c}"><div class="label">${l}</div><div class="val">${v}</div></div>`).join('');
+  const totalUnit = (typeof DATA !== 'undefined' && Array.isArray(DATA)) ? DATA.length : rows.length;
+  const cards = [
+    ['Unit tampil', String(rows.length), '#1E40AF', 'unit', 'dari ' + totalUnit + ' unit'],
+    ['Total HM (Jam)', sumHM.toFixed(1), '#2563EB', 'clock', 'jam operasi'],
+    ['Rata-rata MA', avgMA.toFixed(1) + '%', '#D97706', 'activity', 'Mechanical Availability'],
+    ['Rata-rata PA', avgPA.toFixed(1) + '%', '#7C3AED', 'gauge', 'Physical Availability'],
+    ['Total Fuel (L)', fmt(sumFuel, 0), '#0D9488', 'fuel', 'liter terpakai'],
+    ['Rata-rata Fuel Ratio', fmt(avgRatio, 2), '#1D4ED8', 'trend', 'liter / jam']
+  ];
+  document.getElementById('cards').innerHTML = cards.map(([l, v, c, ic, sub]) =>
+    `<div class="card" style="--c:${c}">
+      <div class="card-top">
+        <div class="label">${l}</div>
+        <span class="card-ico" aria-hidden="true"><svg viewBox="0 0 24 24">${CARD_ICO[ic] || ''}</svg></span>
+      </div>
+      <div class="val">${v}</div>
+      <div class="card-sub">${sub}</div>
+    </div>`).join('');
+
+  const cu = document.getElementById('countUnit');
+  if (cu) cu.textContent = rows.length;
 
   // tabel (urutan sesuai sortir aktif; default = urutan data)
   const tabelRows = [...rows];
@@ -193,11 +216,11 @@ function render() {
     <td>${d.Jenis || '-'}</td>
     <td>${d.Area || '-'}</td>
     <td>${d.Model || '-'}</td>
-    <td><b>${hmTxt}</b></td>
-    <td>${maTxt}</td>
-    <td>${paTxt}</td>
-    <td>${fuelTxt}</td>
-    <td>${ratioTxt}</td>
+    <td class="num"><b>${hmTxt}</b></td>
+    <td class="num">${maTxt}</td>
+    <td class="num">${paTxt}</td>
+    <td class="num">${fuelTxt}</td>
+    <td class="num">${ratioTxt}</td>
   </tr>`;
   }).join('');
 
@@ -215,7 +238,7 @@ function updateChartNote() {
   const dasar = CMP_CFG[CMP].catatan;
   const adaBelum = lastRows.some(d => d._belum);
   el.innerHTML = adaBelum
-    ? `${dasar} <b style="color:#d93025">Batang merah = timesheet belum lengkap.</b>`
+    ? `${dasar} <b style="color:#DC2626">Batang merah = timesheet belum lengkap.</b>`
     : dasar;
 }
 
@@ -225,11 +248,17 @@ function updateChartNote() {
 // status ceklis 30 hari untuk satu unit (true = timesheet sudah diterima)
 function belumDays(d) {
   const days = d.Days || {};
-  // unit tanpa blok P di file (mis. GIP H2): pakai data harian sheet unit
-  let pakaiHarian = !Object.keys(days).length;
-  if (!pakaiHarian) {
-    pakaiHarian = true;
-    for (let h = 1; h <= 30; h++) { if (num(days[String(h)] ?? days[h]) > 0) { pakaiHarian = false; break; } }
+  // data resmi: blok "Timesheet Belum di Terima" di sheet Review Unit (Src='review') -> pakai apa adanya
+  // fallback: unit tanpa blok P di file -> pakai data harian sheet unit
+  let pakaiHarian;
+  if (d.Src === 'review') {
+    pakaiHarian = false;
+  } else {
+    pakaiHarian = !Object.keys(days).length;
+    if (!pakaiHarian) {
+      pakaiHarian = true;
+      for (let h = 1; h <= 30; h++) { if (num(days[String(h)] ?? days[h]) > 0) { pakaiHarian = false; break; } }
+    }
   }
   const DUd = DU_MAP[unitKey(d.Unit)] || {};
   const out = [];
@@ -313,13 +342,14 @@ function renderBelum() {
       const ada = adaHari[hari - 1];
       if (ada) total++;
       const telat = !ada && hari <= BBATAS;
-      cells += `<td class="day-cell${telat ? ' day-miss' : ''}">${ada ? '✓' : '-'}</td>`;
+      const cls = ada ? 'day-cell day-ok' : ('day-cell' + (telat ? ' day-miss' : ' day-none'));
+      cells += `<td class="${cls}"><span class="chip">${ada ? '✓' : '-'}</span></td>`;
     }
     return `<tr>
       <td><b>${d.Unit || '-'}</b></td>
       <td>${d.Area || '-'}</td>
       ${cells}
-      <td><b>${total}</b></td>
+      <td class="num"><b>${total}</b></td>
     </tr>`;
   }).join('');
 }
@@ -386,8 +416,8 @@ function drawCombo(rows, prog = 1) {
   );
   if (!top.length) {
     GEO = null;
-    ctx.fillStyle = '#64748b';
-    ctx.font = '13px Segoe UI';
+    ctx.fillStyle = '#64748B';
+    ctx.font = '13px "Fira Sans", Segoe UI, sans-serif';
     ctx.fillText('Tidak ada data untuk filter ini.', 20, 30);
     return;
   }
@@ -396,7 +426,7 @@ function drawCombo(rows, prog = 1) {
   const vals = top.map(d => num(d[cfg.field]));
   const maxCmp = cfg.tetapMax !== null ? cfg.tetapMax : niceMax(Math.max(...vals) * 1.15);
 
-  const padL = 64, padR = 74, padB = 84, padT = 34;
+  const padL = 64, padR = 74, padB = 84, padT = 54;
   const plotW = w - padL - padR;
   const plotH = h - padB - padT;
   const bw = plotW / top.length;
@@ -408,17 +438,17 @@ function drawCombo(rows, prog = 1) {
 
   // --- sorotan latar untuk batang yang di-hover ---
   if (hoverIdx >= 0 && hoverIdx < top.length) {
-    ctx.fillStyle = 'rgba(22,119,210,0.07)';
+    ctx.fillStyle = 'rgba(59,130,246,0.09)';
     ctx.fillRect(padL + hoverIdx * bw, padT, bw, plotH + 6);
   }
 
   // --- grid + sumbu kiri (HM) + sumbu kanan (metrik) ---
-  ctx.font = '11px Segoe UI';
+  ctx.font = '11px "Fira Code", Consolas, monospace';
   for (let i = 0; i <= 4; i++) {
     const y = baseY - i * plotH / 4;
-    ctx.strokeStyle = i === 0 ? '#cbd5e1' : '#e2e8f0';
+    ctx.strokeStyle = i === 0 ? '#CBD5E1' : '#EEF2F7';
     ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(w - padR, y); ctx.stroke();
-    ctx.fillStyle = '#0f3d5e';
+    ctx.fillStyle = '#64748B';
     ctx.textAlign = 'right';
     ctx.fillText((maxHM * i / 4).toFixed(0), padL - 8, y + 4);
     ctx.fillStyle = cfg.warna;
@@ -427,7 +457,7 @@ function drawCombo(rows, prog = 1) {
   }
 
   // judul sumbu
-  ctx.fillStyle = '#0f3d5e';
+  ctx.fillStyle = '#94A3B8';
   ctx.textAlign = 'center';
   ctx.fillText('HM (jam)', padL - 34, padT - 16);
   ctx.fillStyle = cfg.warna;
@@ -445,20 +475,20 @@ function drawCombo(rows, prog = 1) {
     if (bh > 0.5) {
       const grad = ctx.createLinearGradient(0, y, 0, baseY);
       if (d._belum) {
-        grad.addColorStop(0, aktif ? '#f47168' : '#e8564b');
-        grad.addColorStop(1, aktif ? '#c62828' : '#d93025');
+        grad.addColorStop(0, aktif ? '#FCA5A5' : '#F87171');
+        grad.addColorStop(1, aktif ? '#B91C1C' : '#DC2626');
       } else if (aktif) {
-        grad.addColorStop(0, '#4aa6f5');
-        grad.addColorStop(1, '#0f5fb8');
+        grad.addColorStop(0, '#60A5FA');
+        grad.addColorStop(1, '#1D4ED8');
       } else {
-        grad.addColorStop(0, '#2b8ce0');
-        grad.addColorStop(1, '#1677d2');
+        grad.addColorStop(0, '#7EB3F7');
+        grad.addColorStop(1, '#1E40AF');
       }
       ctx.save();
       if (aktif) {
-        ctx.shadowColor = d._belum ? 'rgba(217,48,37,0.45)' : 'rgba(13,71,161,0.45)';
-        ctx.shadowBlur = 10;
-        ctx.shadowOffsetY = 2;
+        ctx.shadowColor = d._belum ? 'rgba(220,38,38,0.35)' : 'rgba(30,64,175,0.35)';
+        ctx.shadowBlur = 12;
+        ctx.shadowOffsetY = 3;
       }
       ctx.fillStyle = grad;
       barPath(ctx, x, y, barW, bh, 4);
@@ -466,7 +496,7 @@ function drawCombo(rows, prog = 1) {
       ctx.restore();
 
       if (aktif) {
-        ctx.strokeStyle = d._belum ? '#b3261e' : '#0d47a1';
+        ctx.strokeStyle = d._belum ? '#991B1B' : '#1E3A8A';
         ctx.lineWidth = 1.5;
         barPath(ctx, x, y, barW, bh, 4);
         ctx.stroke();
@@ -477,14 +507,14 @@ function drawCombo(rows, prog = 1) {
     if (hm > 0 && prog > 0.55) {
       ctx.save();
       ctx.globalAlpha = Math.min(1, (prog - 0.55) / 0.45);
-      ctx.font = 'bold 10px Segoe UI';
+      ctx.font = 'bold 10px "Fira Code", Consolas, monospace';
       ctx.textAlign = 'center';
       if (bh > 22) {
         // angka ditaruh di bagian BAWAH bar (putih) supaya tidak tertutup garis
         ctx.fillStyle = '#ffffff';
         ctx.fillText(hm.toFixed(1), x + barW / 2, baseY - 6);
       } else {
-        ctx.fillStyle = '#0f3d5e';
+        ctx.fillStyle = '#334155';
         ctx.fillText(hm.toFixed(1), x + barW / 2, y - 5);
       }
       ctx.restore();
@@ -494,8 +524,8 @@ function drawCombo(rows, prog = 1) {
     ctx.save();
     ctx.translate(xCenter(i), baseY + 12);
     ctx.rotate(-Math.PI / 4);
-    ctx.fillStyle = i === hoverIdx ? '#0d47a1' : '#334155';
-    ctx.font = (i === hoverIdx ? 'bold ' : '') + '10px Segoe UI';
+    ctx.fillStyle = i === hoverIdx ? '#1E40AF' : '#475569';
+    ctx.font = (i === hoverIdx ? 'bold ' : '') + '10px "Fira Sans", Segoe UI, sans-serif';
     ctx.textAlign = 'right';
     ctx.fillText(String(d.Unit).replace(/ (GIP|JTU|BDK|SKN)( H[12])?$/, ''), 0, 0);
     ctx.restore();
@@ -530,7 +560,7 @@ function drawCombo(rows, prog = 1) {
   if (prog > 0.7) {
     ctx.save();
     ctx.globalAlpha = Math.min(1, (prog - 0.7) / 0.3);
-    ctx.font = 'bold 9px Segoe UI';
+    ctx.font = 'bold 9px "Fira Code", Consolas, monospace';
     ctx.textAlign = 'center';
     top.forEach((d, i) => {
       const v = num(d[cfg.field]);
@@ -549,17 +579,17 @@ function drawCombo(rows, prog = 1) {
 
   // --- legenda ---
   ctx.textAlign = 'left';
-  ctx.font = '12px Segoe UI';
-  ctx.fillStyle = '#1677d2';
+  ctx.font = '12px "Fira Sans", Segoe UI, sans-serif';
+  ctx.fillStyle = '#3B82F6';
   ctx.fillRect(padL, 8, 12, 8);
-  ctx.fillStyle = '#0f3d5e';
+  ctx.fillStyle = '#475569';
   ctx.fillText('HM Total (jam)', padL + 18, 16);
   ctx.strokeStyle = cfg.warna;
   ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(padL + 140, 12); ctx.lineTo(padL + 168, 12); ctx.stroke();
   ctx.fillStyle = cfg.warna;
   ctx.beginPath(); ctx.arc(padL + 154, 12, 4, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#0f3d5e';
+  ctx.fillStyle = '#475569';
   ctx.fillText(cfg.satuan, padL + 174, 16);
 
   // --- tooltip saat hover ---
@@ -572,20 +602,20 @@ function drawCombo(rows, prog = 1) {
 function drawTooltip(ctx, d, i, cfg, geo, barW, maxHM, baseY, plotH) {
   const barTop = baseY - plotH * (num(d.HMTotal) / maxHM);
   const lines = [
-    { t: String(d.Unit), bold: true, warna: '#0f3d5e' },
-    { t: [d.Vendor, d.Jenis, d.Area].filter(Boolean).join(' - '), bold: false, warna: '#64748b' },
-    { t: 'HM Total: ' + fmt(num(d.HMTotal), 1) + ' jam', bold: true, warna: '#1677d2' },
+    { t: String(d.Unit), bold: true, warna: '#0F172A' },
+    { t: [d.Vendor, d.Jenis, d.Area].filter(Boolean).join(' - '), bold: false, warna: '#64748B' },
+    { t: 'HM Total: ' + fmt(num(d.HMTotal), 1) + ' jam', bold: true, warna: '#1E40AF' },
     { t: cfg.judul + ': ' + cfg.nilai(num(d[cfg.field])), bold: true, warna: cfg.warna }
   ];
   if (d._belum) {
-    lines.push({ t: 'Timesheet belum lengkap: ' + d._kosong.map(labelHari).join(', '), bold: true, warna: '#d93025' });
+    lines.push({ t: 'Timesheet belum lengkap: ' + d._kosong.map(labelHari).join(', '), bold: true, warna: '#DC2626' });
   }
 
   ctx.save();
-  ctx.font = '11px Segoe UI';
+  ctx.font = '11px "Fira Sans", Segoe UI, sans-serif';
   let maxW = 0;
   lines.forEach(l => {
-    ctx.font = (l.bold ? 'bold ' : '') + '11px Segoe UI';
+    ctx.font = (l.bold ? 'bold ' : '') + '11px "Fira Sans", Segoe UI, sans-serif';
     maxW = Math.max(maxW, ctx.measureText(l.t).width);
   });
 
@@ -605,7 +635,7 @@ function drawTooltip(ctx, d, i, cfg, geo, barW, maxHM, baseY, plotH) {
   barPath(ctx, bx, by, boxW, boxH, 6);
   ctx.fill();
   ctx.shadowColor = 'transparent';
-  ctx.strokeStyle = '#cbd5e1';
+  ctx.strokeStyle = '#DBE3EE';
   ctx.lineWidth = 1;
   barPath(ctx, bx, by, boxW, boxH, 6);
   ctx.stroke();
@@ -613,7 +643,7 @@ function drawTooltip(ctx, d, i, cfg, geo, barW, maxHM, baseY, plotH) {
   // isi teks
   ctx.textAlign = 'left';
   lines.forEach((l, k) => {
-    ctx.font = (l.bold ? 'bold ' : '') + '11px Segoe UI';
+    ctx.font = (l.bold ? 'bold ' : '') + '11px "Fira Sans", Segoe UI, sans-serif';
     ctx.fillStyle = l.warna;
     ctx.fillText(l.t, bx + padX, by + padY + k * lineH + 4);
   });
@@ -852,6 +882,17 @@ document.querySelectorAll('.seg-btn').forEach(b => {
 document.getElementById('fVendor').addEventListener('change', () => { fillAreas(); fillJenis(); render(); });
 document.getElementById('fArea').addEventListener('change', () => { fillJenis(); render(); });
 document.getElementById('fJenis').addEventListener('change', () => render());
+
+// tombol reset filter
+const btnReset = document.getElementById('btnResetFilter');
+if (btnReset) btnReset.addEventListener('click', () => {
+  document.getElementById('fVendor').value = 'ALL';
+  fillAreas();
+  document.getElementById('fArea').value = 'ALL';
+  fillJenis();
+  document.getElementById('fJenis').value = 'ALL';
+  render();
+});
 
 // kalender rentang waktu
 const rangeBtn = document.getElementById('rangeBtn');

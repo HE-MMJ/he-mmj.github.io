@@ -3,111 +3,162 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0B1F3A">
+  <meta name="description" content="Dashboard Timesheet Heavy Equipment MMJ — periode November 2026">>
   <title>Dashboard Timesheet HE — MMJ November 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <header>
+  <header class="app-header">
     <div class="header-inner">
       <div class="header-text">
-        <h1>Dashboard Timesheet HE — MMJ</h1>
-        <p>Periode November 2026 · GIP H1, GIP H2, JTU, BDK, SKN</p>
+        <span class="eyebrow">
+          <span class="dot" aria-hidden="true"></span>
+          Heavy Equipment &middot; Daily Operation
+        </span>
+        <h1>Dashboard Timesheet HE <span class="h1-sep">/</span> MMJ</h1>
+        <p class="sub">
+          <span class="chip-period">November 2026</span>
+          <span class="sub-vendors">GIP H1 &middot; GIP H2 &middot; JTU &middot; BDK &middot; SKN</span>
+        </p>
       </div>
-      <img class="header-logo" src="assets/logo-mmj.png" alt="Musi Mitra Jaya">
+      <div class="header-brand">
+        <img class="header-logo" src="assets/logo-mmj.png" alt="Musi Mitra Jaya">
+      </div>
     </div>
   </header>
 
-  <section class="filters">
-    <label>Vendor:
-      <select id="fVendor">
-        <option value="ALL">Semua</option>
-        <option value="GIP H1">GIP H1</option>
-        <option value="GIP H2">GIP H2</option>
-        <option value="JTU">JTU</option>
-        <option value="BDK">BDK</option>
-        <option value="SKN">SKN</option>
-      </select>
-    </label>
-    <label>Area Kerja:
-      <select id="fArea">
-        <option value="ALL">Semua Area</option>
-      </select>
-    </label>
-    <label>Unit Type:
-      <select id="fJenis">
-        <option value="ALL">Semua Unit Type</option>
-      </select>
-    </label>
-  </section>
-
-  <section class="cards" id="cards"></section>
-
-  <section class="charts">
-    <div class="chart-box">
-      <div class="chart-head">
-        <div class="chart-head-main">
-          <span class="range-wrap">
-            <button type="button" id="rangeBtn" class="range-box" title="Klik untuk memilih rentang tanggal">
-              <span class="range-cap">Rentang Waktu</span>
-              <span id="rangeVal">01 Nov &ndash; 30 Nov 2026</span>
-              <span class="range-caret" aria-hidden="true">&#9662;</span>
-            </button>
-            <input type="date" id="fFrom" min="2026-11-01" max="2026-11-30" value="2026-11-01" hidden>
-            <input type="date" id="fTo" min="2026-11-01" max="2026-11-30" value="2026-11-30" hidden>
-            <div id="calPop" class="cal-pop" hidden></div>
+  <div class="filterbar">
+    <div class="filterbar-inner">
+      <div class="filter-group">
+        <label class="field">
+          <span class="field-cap">Vendor</span>
+          <span class="select-wrap">
+            <select id="fVendor">
+              <option value="ALL">Semua Vendor</option>
+              <option value="GIP H1">GIP H1</option>
+              <option value="GIP H2">GIP H2</option>
+              <option value="JTU">JTU</option>
+              <option value="BDK">BDK</option>
+              <option value="SKN">SKN</option>
+            </select>
           </span>
-          <h2 id="chartTitle">Grafik HM (Bar) &amp; MA (Garis) per Unit &mdash; Top 15</h2>
-        </div>
-        <div class="seg" id="cmpMenu">
-          <button type="button" class="seg-btn active" data-cmp="MA">HM vs MA</button>
-          <button type="button" class="seg-btn" data-cmp="RATIO">HM vs Fuel Ratio</button>
-          <button type="button" class="seg-btn" data-cmp="PA">HM vs PA</button>
-        </div>
+        </label>
+        <label class="field">
+          <span class="field-cap">Area Kerja</span>
+          <span class="select-wrap">
+            <select id="fArea">
+              <option value="ALL">Semua Area</option>
+            </select>
+          </span>
+        </label>
+        <label class="field">
+          <span class="field-cap">Unit Type</span>
+          <span class="select-wrap">
+            <select id="fJenis">
+              <option value="ALL">Semua Unit Type</option>
+            </select>
+          </span>
+        </label>
       </div>
-            <div class="chart-scroll"><canvas id="comboChart" height="360"></canvas></div>
-      <p class="note" id="chartNote">Batang biru = HM Total (skala kiri, jam). Garis oranye = MA % (skala kanan).</p>
+      <div class="filter-meta">
+        <span class="live-chip" title="Jumlah unit yang sedang ditampilkan">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M3 7h13l5 5v5h-3M3 7v10h3M6 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0Zm9 0a2 2 0 1 0 4 0 2 2 0 0 0-4 0Z"/></svg>
+          <b id="countUnit">0</b><span>unit tampil</span>
+        </span>
+        <button type="button" id="btnResetFilter" class="btn-ghost">Reset filter</button>
+      </div>
     </div>
-  </section>
+  </div>
 
-  <section>
-    <h2>Tabel Review Unit</h2>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Unit ID</th>
-            <th>Unit Type</th>
-            <th>Area Kerja</th>
-            <th>Model</th>
-            <th class="sortable" data-sort="HMTotal" title="Klik untuk mengurutkan">HM Total <span class="arrow" data-arrow="HMTotal"></span></th>
-            <th class="sortable" data-sort="MA" title="Klik untuk mengurutkan">MA <span class="arrow" data-arrow="MA"></span></th>
-            <th>PA (%)</th>
-            <th class="sortable" data-sort="Fuel" title="Klik untuk mengurutkan">Fuel (L) <span class="arrow" data-arrow="Fuel"></span></th>
-            <th class="sortable" data-sort="FuelRatio" title="Klik untuk mengurutkan">Fuel Ratio <span class="arrow" data-arrow="FuelRatio"></span></th>
-          </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
-    </div>
-  </section>
+  <main class="wrap">
+    <section class="cards" id="cards" aria-label="Ringkasan indikator"></section>
 
-  <section>
-    <h2>Tabel Timesheet Belum di Terima</h2>
-    <p class="note">✓ = timesheet sudah di terima, - = Timesheet Belum di terima</p>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Kode Unit</th>
-            <th>Area</th>
-            <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th><th>15</th><th>16</th><th>17</th><th>18</th><th>19</th><th>20</th><th>21</th><th>22</th><th>23</th><th>24</th><th>25</th><th>26</th><th>27</th><th>28</th><th>29</th><th>30</th>
-            <th>Total</th>
-          </tr>
-        </thead>
-        <tbody id="belumTbody"></tbody>
-      </table>
-    </div>
-  </section>
+    <section class="panel charts">
+      <div class="chart-box">
+        <div class="chart-head">
+          <div class="chart-head-main">
+            <span class="range-wrap">
+              <button type="button" id="rangeBtn" class="range-box" title="Klik untuk memilih rentang tanggal">
+                <svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M7 3v3m10-3v3M4 9h16M5 6h14a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z"/></svg>
+                <span class="range-cap">Rentang Waktu</span>
+                <span id="rangeVal">01 Nov &ndash; 30 Nov 2026</span>
+                <span class="range-caret" aria-hidden="true">&#9662;</span>
+              </button>
+              <input type="date" id="fFrom" min="2026-11-01" max="2026-11-30" value="2026-11-01" hidden>
+              <input type="date" id="fTo" min="2026-11-01" max="2026-11-30" value="2026-11-30" hidden>
+              <div id="calPop" class="cal-pop" hidden></div>
+            </span>
+            <h2 id="chartTitle">Grafik HM (Bar) &amp; MA (Garis) per Unit &mdash; Top 15</h2>
+          </div>
+          <div class="seg" id="cmpMenu">
+            <button type="button" class="seg-btn active" data-cmp="MA">HM vs MA</button>
+            <button type="button" class="seg-btn" data-cmp="RATIO">HM vs Fuel Ratio</button>
+            <button type="button" class="seg-btn" data-cmp="PA">HM vs PA</button>
+          </div>
+        </div>
+        <div class="chart-scroll"><canvas id="comboChart" height="360"></canvas></div>
+        <p class="note" id="chartNote">Batang biru = HM Total (skala kiri, jam). Garis oranye = MA % (skala kanan).</p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Tabel Review Unit</h2>
+        <span class="panel-sub">Kinerja per unit &mdash; HM, MA, PA, fuel</span>
+      </div>
+      <div class="table-wrap">
+        <table class="grid">
+          <thead>
+            <tr>
+              <th>Unit ID</th>
+              <th>Unit Type</th>
+              <th>Area Kerja</th>
+              <th>Model</th>
+              <th class="sortable num" data-sort="HMTotal" title="Klik untuk mengurutkan">HM Total <span class="arrow" data-arrow="HMTotal"></span></th>
+              <th class="sortable num" data-sort="MA" title="Klik untuk mengurutkan">MA <span class="arrow" data-arrow="MA"></span></th>
+              <th class="num">PA (%)</th>
+              <th class="sortable num" data-sort="Fuel" title="Klik untuk mengurutkan">Fuel (L) <span class="arrow" data-arrow="Fuel"></span></th>
+              <th class="sortable num" data-sort="FuelRatio" title="Klik untuk mengurutkan">Fuel Ratio <span class="arrow" data-arrow="FuelRatio"></span></th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Tabel Timesheet Belum di Terima</h2>
+        <span class="panel-sub">Sumber: blok Timesheet Belum di Terima, sheet Review Unit</span>
+      </div>
+      <p class="legend">
+        <span class="lg"><span class="lg-chip ok">&#10003;</span> sudah diterima</span>
+        <span class="lg"><span class="lg-chip no">-</span> belum diterima</span>
+        <span class="lg"><span class="lg-chip miss">-</span> terlewat (sudah jatuh tempo)</span>
+      </p>
+      <div class="table-wrap">
+        <table class="grid grid-days">
+          <thead>
+            <tr>
+              <th>Kode Unit</th>
+              <th>Area</th>
+              <th class="num">1</th><th class="num">2</th><th class="num">3</th><th class="num">4</th><th class="num">5</th><th class="num">6</th><th class="num">7</th><th class="num">8</th><th class="num">9</th><th class="num">10</th><th class="num">11</th><th class="num">12</th><th class="num">13</th><th class="num">14</th><th class="num">15</th><th class="num">16</th><th class="num">17</th><th class="num">18</th><th class="num">19</th><th class="num">20</th><th class="num">21</th><th class="num">22</th><th class="num">23</th><th class="num">24</th><th class="num">25</th><th class="num">26</th><th class="num">27</th><th class="num">28</th><th class="num">29</th><th class="num">30</th>
+              <th class="num">Total</th>
+            </tr>
+          </thead>
+          <tbody id="belumTbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer class="app-footer">
+      Dashboard internal &mdash; data dari file timesheet HE MMJ November 2026.
+    </footer>
+  </main>
 
   <script src="js/data.js"></script>
   <script src="js/app.js"></script>
