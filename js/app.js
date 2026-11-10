@@ -42,6 +42,7 @@ let lastRows = [];   // data yang sedang tampil (untuk redraw saat hover)
 let hoverIdx = -1;   // indeks batang yang disorot mouse
 let GEO = null;      // geometri grafik terakhir (untuk hit-test mouse)
 let animRAF = null;  // requestAnimationFrame animasi
+let TITLE_BASE = 'Grafik HM & MA per Unit'; // judul grafik tanpa info rentang
 
 function filtered() {
   const v = document.getElementById('fVendor').value;
@@ -52,6 +53,67 @@ function filtered() {
     (area === 'ALL' || (d.Area || '') === area) &&
     (jenis === 'ALL' || (d.Jenis || '-') === jenis)
   );
+}
+
+// ---------- rentang waktu (kalender) ----------
+// DAILYUNIT: [{ Unit, Vendor, D: { "1": [hm, mohh, bd, idle, ops, q, fuel], ... } }]
+const DU = (typeof DAILYUNIT !== 'undefined' && Array.isArray(DAILYUNIT)) ? DAILYUNIT : [];
+const DU_MAP = {};
+DU.forEach(r => { DU_MAP[unitKey(r.Unit)] = r.D || {}; });
+
+function unitKey(s) { return String(s || '').replace(/\s+/g, ' ').trim().toUpperCase(); }
+
+function dayOf(iso) {
+  const p = String(iso || '').split('-');
+  const n = parseInt(p[2], 10);
+  return (n >= 1 && n <= 31) ? n : 0;
+}
+
+function rangeState() {
+  const fEl = document.getElementById('fFrom');
+  const tEl = document.getElementById('fTo');
+  let from = fEl ? dayOf(fEl.value) : 0;
+  let to = tEl ? dayOf(tEl.value) : 0;
+  if (!from) from = 1;
+  if (!to) to = 30;
+  if (from > to) { const x = from; from = to; to = x; }
+  const full = (from <= 1 && to >= 30);
+  return { from, to, full };
+}
+
+// hitung ulang HM / MA / PA / Fuel sesuai rentang tanggal (dari input harian)
+function applyRange(rows) {
+  const rs = rangeState();
+  if (rs.full) return rows.map(d => ({ ...d, _range: false }));
+  return rows.map(d => {
+    const D = DU_MAP[unitKey(d.Unit)];
+    if (!D || !Object.keys(D).length) {
+      return { ...d, HMTotal: 0, MA: 0, PAPct: 0, Fuel: 0, FuelRatio: 0, _range: true, _noharian: true };
+    }
+    let hm = 0, mohh = 0, bd = 0, idle = 0, ops = 0, q = 0, fuel = 0;
+    for (let hari = rs.from; hari <= rs.to; hari++) {
+      const v = D[String(hari)];
+      if (!v) continue;
+      hm += Number(v[0]) || 0;
+      mohh += Number(v[1]) || 0;
+      bd += Number(v[2]) || 0;
+      idle += Number(v[3]) || 0;
+      ops += Number(v[4]) || 0;
+      q += Number(v[5]) || 0;
+      fuel += Number(v[6]) || 0;
+    }
+    const ma = (bd + q) > 0 ? (q / (bd + q)) * 100 : 0;
+    const pa = mohh > 0 ? ((idle + ops + q) / mohh) * 100 : 0;
+    return {
+      ...d,
+      HMTotal: +hm.toFixed(1),
+      MA: +ma.toFixed(2),
+      PAPct: +pa.toFixed(2),
+      Fuel: +fuel.toFixed(1),
+      FuelRatio: hm > 0 ? +(fuel / hm).toFixed(2) : 0,
+      _range: true
+    };
+  });
 }
 
 function num(x) {
@@ -83,14 +145,26 @@ function niceMax(v) {
 let SORT = { col: null, dir: 1 }; // col: 'HMTotal' | 'MA' | 'Fuel' | 'FuelRatio'
 
 function render() {
-  const rows = filtered();
+  const hb = hitungBelum();
+  BMAP = hb.map;
+  BBATAS = hb.batas;
+
+  const rows = applyRange(filtered());
+  rows.forEach(d => {
+    const k = unitKey(d.Unit);
+    if (BMAP[k]) { d._belum = true; d._kosong = BMAP[k]; }
+  });
+  updateTitle();
 
   // kartu ringkasan
   const sumHM = rows.reduce((s, d) => s + num(d.HMTotal), 0);
   const sumFuel = rows.reduce((s, d) => s + num(d.Fuel), 0);
   const sumPA = rows.filter(d => num(d.PAPct) > 0);
   const avgPA = sumPA.length ? sumPA.reduce((s, d) => s + num(d.PAPct), 0) / sumPA.length : 0;
-  const avgMA = rows.length ? rows.reduce((s, d) => s + num(d.MA), 0) / rows.length : 0;
+  const avgMA = (() => {
+    const f = rows.filter(d => num(d.MA) > 0);
+    return f.length ? f.reduce((s, d) => s + num(d.MA), 0) / f.length : 0;
+  })();
   const sumRatio = rows.filter(d => num(d.FuelRatio) > 0);
   const avgRatio = sumRatio.length ? sumRatio.reduce((s, d) => s + num(d.FuelRatio), 0) / sumRatio.length : 0;
   document.getElementById('cards').innerHTML = [
@@ -107,26 +181,115 @@ function render() {
   if (SORT.col) {
     tabelRows.sort((a, b) => (num(a[SORT.col]) - num(b[SORT.col])) * SORT.dir);
   }
-  document.getElementById('tbody').innerHTML = tabelRows.map(d => `<tr>
+  document.getElementById('tbody').innerHTML = tabelRows.map(d => {
+    const kosong = d._noharian ? '\u2014' : null;
+    const hmTxt = kosong || num(d.HMTotal).toFixed(1);
+    const maTxt = kosong || num(d.MA).toFixed(1) + '%';
+    const paTxt = kosong || num(d.PAPct).toFixed(1) + '%';
+    const fuelTxt = kosong || fmt(d.Fuel, 1);
+    const ratioTxt = kosong || fmt(d.FuelRatio, 2);
+    return `<tr>
     <td><b>${d.Unit || '-'}</b></td>
     <td>${d.Jenis || '-'}</td>
     <td>${d.Area || '-'}</td>
     <td>${d.Model || '-'}</td>
-    <td><b>${num(d.HMTotal).toFixed(1)}</b></td>
-    <td>${num(d.MA).toFixed(1)}%</td>
-    <td>${num(d.PAPct).toFixed(1)}%</td>
-    <td>${fmt(d.Fuel, 1)}</td>
-    <td>${fmt(d.FuelRatio, 2)}</td>
-  </tr>`).join('');
+    <td><b>${hmTxt}</b></td>
+    <td>${maTxt}</td>
+    <td>${paTxt}</td>
+    <td>${fuelTxt}</td>
+    <td>${ratioTxt}</td>
+  </tr>`;
+  }).join('');
 
   lastRows = rows;
   hoverIdx = -1;
+  updateChartNote();
   animateChart();
   renderBelum();
 }
 
+// keterangan bawah grafik: jelaskan batang merah (timesheet belum lengkap)
+function updateChartNote() {
+  const el = document.getElementById('chartNote');
+  if (!el) return;
+  const dasar = CMP_CFG[CMP].catatan;
+  const adaBelum = lastRows.some(d => d._belum);
+  el.innerHTML = adaBelum
+    ? `${dasar} <b style="color:#d93025">Batang merah = timesheet belum lengkap.</b>`
+    : dasar;
+}
+
 // ---------- tabel Timesheet Belum di Terima (grid Kode Unit | Area | 1..30 | Total) ----------
 // ikut terfilter oleh Vendor, Area Kerja, dan Unit Type seperti tabel Review Unit
+
+// status ceklis 30 hari untuk satu unit (true = timesheet sudah diterima)
+function belumDays(d) {
+  const days = d.Days || {};
+  // unit tanpa blok P di file (mis. GIP H2): pakai data harian sheet unit
+  let pakaiHarian = !Object.keys(days).length;
+  if (!pakaiHarian) {
+    pakaiHarian = true;
+    for (let h = 1; h <= 30; h++) { if (num(days[String(h)] ?? days[h]) > 0) { pakaiHarian = false; break; } }
+  }
+  const DUd = DU_MAP[unitKey(d.Unit)] || {};
+  const out = [];
+  for (let hari = 1; hari <= 30; hari++) {
+    let ada;
+    if (pakaiHarian) {
+      const v = DUd[String(hari)];
+      ada = !!v && ((Number(v[0]) || 0) > 0 || (Number(v[5]) || 0) > 0);
+    } else {
+      ada = num(days[String(hari)] ?? days[hari]) > 0;
+    }
+    out.push(ada);
+  }
+  return out;
+}
+
+// ---------- peringatan "timesheet belum lengkap" di header grafik ----------
+const PERIODE = { y: 2026, m: 11, last: 30 };
+const BULAN_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+// batas hari yang seharusnya sudah masuk = kemarin (dibatasi akhir periode)
+function cutoffDay() {
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth() + 1, d = now.getDate();
+  if (y > PERIODE.y || (y === PERIODE.y && m > PERIODE.m)) return PERIODE.last;
+  if (y < PERIODE.y || (y === PERIODE.y && m < PERIODE.m)) return 0;
+  return Math.min(PERIODE.last, d - 1);
+}
+
+// peta unit -> hari kosong (dihitung dari SELURUH unit, tidak ikut filter)
+let BMAP = {};        // unitKey -> [hari kosong]
+let BBATAS = 0;       // hari jatuh tempo
+
+function hitungBelum() {
+  const raw = (typeof BELUM !== 'undefined') ? BELUM : [];
+  const all = Array.isArray(raw) ? raw : (raw ? [raw] : []);
+  const rs = rangeState();
+  const maks = Math.min(rs.to, cutoffDay());
+  const mulai = Math.max(1, rs.from);
+  const sumber = all.filter(d => Object.keys(d.Days || {}).length || DU_MAP[unitKey(d.Unit)]);
+  const rows = sumber.map(d => belumDays(d));
+  // hari terakhir yang datanya sudah mayoritas masuk (>=50% unit) -> dianggap sudah jatuh tempo
+  let batas = 0;
+  for (let h = maks; h >= 1; h--) {
+    const n = rows.filter(r => r[h - 1]).length;
+    if (rows.length && n / rows.length >= 0.5) { batas = h; break; }
+  }
+  const map = {};
+  if (batas >= mulai) {
+    sumber.forEach((d, i) => {
+      const kosong = [];
+      for (let h = mulai; h <= batas; h++) { if (!rows[i][h - 1]) kosong.push(h); }
+      if (kosong.length) map[unitKey(d.Unit)] = kosong;
+    });
+  }
+  return { map, batas, mulai };
+}
+
+function labelHari(h) { return h + ' ' + BULAN_ID[PERIODE.m - 1]; }
+
 function renderBelum() {
   const tb = document.getElementById('belumTbody');
   if (!tb) return;
@@ -143,14 +306,14 @@ function renderBelum() {
   );
 
   tb.innerHTML = list.map(d => {
-    const days = d.Days || {};
+    const adaHari = belumDays(d);
     let total = 0;
     let cells = '';
     for (let hari = 1; hari <= 30; hari++) {
-      const hm = num(days[String(hari)] ?? days[hari]);
-      const ada = hm > 0;               // inputan terisi -> ceklis, masih 0 -> -
+      const ada = adaHari[hari - 1];
       if (ada) total++;
-      cells += `<td class="day-cell">${ada ? '✓' : '-'}</td>`;
+      const telat = !ada && hari <= BBATAS;
+      cells += `<td class="day-cell${telat ? ' day-miss' : ''}">${ada ? '✓' : '-'}</td>`;
     }
     return `<tr>
       <td><b>${d.Unit || '-'}</b></td>
@@ -281,7 +444,10 @@ function drawCombo(rows, prog = 1) {
 
     if (bh > 0.5) {
       const grad = ctx.createLinearGradient(0, y, 0, baseY);
-      if (aktif) {
+      if (d._belum) {
+        grad.addColorStop(0, aktif ? '#f47168' : '#e8564b');
+        grad.addColorStop(1, aktif ? '#c62828' : '#d93025');
+      } else if (aktif) {
         grad.addColorStop(0, '#4aa6f5');
         grad.addColorStop(1, '#0f5fb8');
       } else {
@@ -290,7 +456,7 @@ function drawCombo(rows, prog = 1) {
       }
       ctx.save();
       if (aktif) {
-        ctx.shadowColor = 'rgba(13,71,161,0.45)';
+        ctx.shadowColor = d._belum ? 'rgba(217,48,37,0.45)' : 'rgba(13,71,161,0.45)';
         ctx.shadowBlur = 10;
         ctx.shadowOffsetY = 2;
       }
@@ -300,7 +466,7 @@ function drawCombo(rows, prog = 1) {
       ctx.restore();
 
       if (aktif) {
-        ctx.strokeStyle = '#0d47a1';
+        ctx.strokeStyle = d._belum ? '#b3261e' : '#0d47a1';
         ctx.lineWidth = 1.5;
         barPath(ctx, x, y, barW, bh, 4);
         ctx.stroke();
@@ -411,6 +577,9 @@ function drawTooltip(ctx, d, i, cfg, geo, barW, maxHM, baseY, plotH) {
     { t: 'HM Total: ' + fmt(num(d.HMTotal), 1) + ' jam', bold: true, warna: '#1677d2' },
     { t: cfg.judul + ': ' + cfg.nilai(num(d[cfg.field])), bold: true, warna: cfg.warna }
   ];
+  if (d._belum) {
+    lines.push({ t: 'Timesheet belum lengkap: ' + d._kosong.map(labelHari).join(', '), bold: true, warna: '#d93025' });
+  }
 
   ctx.save();
   ctx.font = '11px Segoe UI';
@@ -573,10 +742,107 @@ function setCmp(key) {
     b.classList.toggle('active', b.dataset.cmp === key);
   });
   const topN = window.innerWidth < 620 ? 8 : 15;
-  document.getElementById('chartTitle').textContent =
-    `Grafik HM (Bar) & ${cfg.judul} (Garis) per Unit - Top ${topN}`;
+  TITLE_BASE = `Grafik HM (Bar) & ${cfg.judul} (Garis) per Unit - Top ${topN}`;
+  updateTitle();
   document.getElementById('chartNote').textContent = cfg.catatan;
   render();
+}
+
+// judul grafik + info rentang waktu aktif
+function updateTitle() {
+  const el = document.getElementById('chartTitle');
+  if (!el) return;
+  const rs = rangeState();
+  el.textContent = TITLE_BASE + (rs.full ? '' : ` · ${rs.from}\u2013${rs.to} Nov 2026`);
+}
+
+// ---------- kalender rentang: satu kalender, klik tanggal awal lalu tanggal akhir ----------
+const CAL = { y: 2026, m: 11, pick: null };
+
+function isoOf(day) { return `2026-11-${String(day).padStart(2, '0')}`; }
+
+function rangeLabel() {
+  const rs = rangeState();
+  const nm = d => String(d).padStart(2, '0');
+  return `${nm(rs.from)} Nov \u2013 ${nm(rs.to)} Nov 2026`;
+}
+
+function setRange(from, to) {
+  const f = document.getElementById('fFrom');
+  const t = document.getElementById('fTo');
+  if (f) f.value = isoOf(from);
+  if (t) t.value = isoOf(to);
+  const lbl = document.getElementById('rangeVal');
+  if (lbl) lbl.textContent = rangeLabel();
+  render();
+}
+
+function pilihHari(d) {
+  if (CAL.pick === null) {
+    CAL.pick = d;             // klik pertama: tandai tanggal awal (belum mengubah grafik)
+    renderKalender();
+    return;
+  }
+  const a = Math.min(CAL.pick, d), b = Math.max(CAL.pick, d);
+  CAL.pick = null;
+  setRange(a, b);
+  tutupKalender();
+}
+
+function renderKalender() {
+  const pop = document.getElementById('calPop');
+  if (!pop) return;
+  const rs = rangeState();
+  const pk = CAL.pick;
+  const from = pk !== null ? pk : (rs.full ? 0 : rs.from);
+  const to = pk !== null ? pk : (rs.full ? 0 : rs.to);
+  const jml = new Date(CAL.y, CAL.m, 0).getDate();
+  const mulai = new Date(CAL.y, CAL.m - 1, 1).getDay();
+  const now = new Date();
+  const hariIni = (now.getFullYear() === CAL.y && now.getMonth() === CAL.m - 1) ? now.getDate() : 0;
+  const dow = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+
+  let html = `<div class="cal-head"><span>November 2026</span><span class="cal-hint">${CAL.pick ? 'klik tanggal akhir' : 'klik tanggal awal'}</span></div><div class="cal-grid">`;
+  html += dow.map(d => `<div class="cal-dow">${d}</div>`).join('');
+  for (let i = 0; i < mulai; i++) html += '<div></div>';
+  for (let d = 1; d <= jml; d++) {
+    const dalam = from && to && d > from && d < to;
+    const tepi = !!from && !!to && (d === from || d === to);
+    const cls = ['cal-day'];
+    if (dalam) cls.push('in-range');
+    if (tepi) cls.push('edge', from === to ? 'single' : (d === from ? 'start' : 'end'));
+    if (d === hariIni) cls.push('today');
+    html += `<button type="button" class="${cls.join(' ')}" data-day="${d}">${d}</button>`;
+  }
+  html += `</div><div class="cal-foot"><span class="cal-hint">Pilih 2 tanggal (awal &amp; akhir)</span><button type="button" class="btn-reset" id="fReset">Semua</button></div>`;
+  pop.innerHTML = html;
+  pop.querySelectorAll('.cal-day').forEach(b => b.addEventListener('click', ev => {
+    ev.stopPropagation();
+    pilihHari(parseInt(b.dataset.day, 10));
+  }));
+  const rst = pop.querySelector('#fReset');
+  if (rst) rst.addEventListener('click', ev => { ev.stopPropagation(); CAL.pick = null; setRange(1, 30); tutupKalender(); });
+}
+
+function bukaKalender() {
+  const pop = document.getElementById('calPop');
+  if (!pop) return;
+  CAL.pick = null;
+  renderKalender();
+  pop.hidden = false;
+}
+
+function tutupKalender() {
+  const pop = document.getElementById('calPop');
+  if (pop) pop.hidden = true;
+}
+
+// pastikan tanggal awal tidak melewati tanggal akhir
+function syncRange() {
+  const f = document.getElementById('fFrom');
+  const t = document.getElementById('fTo');
+  if (!f || !t || !f.value || !t.value) return;
+  if (f.value > t.value) { const x = f.value; f.value = t.value; t.value = x; }
 }
 
 document.querySelectorAll('.seg-btn').forEach(b => {
@@ -587,6 +853,20 @@ document.getElementById('fVendor').addEventListener('change', () => { fillAreas(
 document.getElementById('fArea').addEventListener('change', () => { fillJenis(); render(); });
 document.getElementById('fJenis').addEventListener('change', () => render());
 
+// kalender rentang waktu
+const rangeBtn = document.getElementById('rangeBtn');
+if (rangeBtn) rangeBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  const pop = document.getElementById('calPop');
+  if (pop && !pop.hidden) tutupKalender(); else bukaKalender();
+});
+document.addEventListener('click', e => {
+  if (!e.target.closest('.range-wrap')) tutupKalender();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') tutupKalender(); });
+
 fillAreas();
 fillJenis();
 setCmp('MA');
+const lblAwal = document.getElementById('rangeVal');
+if (lblAwal) lblAwal.textContent = rangeLabel();
