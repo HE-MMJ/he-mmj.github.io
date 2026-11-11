@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard MMJ 2026</title>
+<link rel="icon" href="__LOGO__">
+<style id="mmjBootCss">
+body{margin:0;background:#edf2fb;color:#121833;font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+.mmjbox{max-width:560px;margin:40px auto;padding:18px 20px;background:#fff7e4;color:#5b3d00;border:1px solid #f1d38c;border-radius:14px}
+.mmjbox b{display:block;font-size:16px;margin-bottom:6px}
+.mmjbox ol{margin:8px 0 0;padding-left:20px}
+</style>
+</head>
+<body>
+<!-- terlihat hanya bila JavaScript tidak berjalan -->
+<div class="mmjbox" id="mmjNojs"><b>Dashboard belum tampil?</b>File ini perlu dibuka dengan browser (Chrome, Edge, atau Safari), bukan pratinjau WhatsApp / pembaca file.
+  <ol><li>Unduh file dari WhatsApp.</li><li>Ketuk ⋮ / Bagikan → <i>Buka dengan</i> → pilih <b>Chrome</b>.</li><li>Di laptop: klik kanan file → <i>Open with</i> → Chrome / Edge.</li></ol></div>
+
+<!--TEMPLATES-->
+
+<script>
+/* Dashboard MMJ gabungan. Isi tiap dashboard disimpan sebagai <template> (HTML biasa, belum aktif).
+   Saat dibuka, dashboard yang dipilih dipasang ke halaman ini (tanpa iframe / tanpa menulis ulang halaman). */
+(function(){
+  var asFrag = function(t){ if(!t) return null; if(t.content) return t.content;
+    var d=document.createElement("div"); d.innerHTML=t.innerHTML; var f=document.createDocumentFragment(); while(d.firstChild) f.appendChild(d.firstChild); return f; };
+  var T = {exec: asFrag(document.getElementById("mmjT_exec")), haul: asFrag(document.getElementById("mmjT_haul")), batu: asFrag(document.getElementById("mmjT_batu")), lt: asFrag(document.getElementById("mmjT_lt"))};
+  /* data mentah tiap dashboard untuk Dashboard Eksekutif (dibaca dari script dashboard aslinya, tidak diduplikasi) */
+  var DC = {};
+  window.mmjData = function(k){
+    if(k in DC) return DC[k];
+    DC[k] = null; var f = T[k]; if(!f) return null;
+    var ss = f.querySelectorAll("script");
+    for(var i=0;i<ss.length;i++){ var m = /const DATA\s*=\s*(\{[\s\S]*?\});\s*\n/.exec(ss[i].text || ss[i].textContent || "");
+      if(m){ try{ DC[k] = JSON.parse(m[1]); }catch(e){} break; } }
+    return DC[k];
+  };
+  if(!T.exec && !T.haul && !T.batu && !T.lt){ var nb=document.getElementById("mmjNojs"); if(nb) nb.innerHTML="<b>Dashboard belum berhasil dibuat.</b>Jalankan ulang Update Dashboard Gabungan.bat."; return; }
+
+  /* catat listener window/document milik dashboard aktif, supaya bisa dilepas saat pindah dashboard */
+  var L = [], orig = EventTarget.prototype.addEventListener;
+  EventTarget.prototype.addEventListener = function(type, fn, opt){
+    if(this === window || this === document) L.push([this, type, fn, opt]);
+    return orig.call(this, type, fn, opt);
+  };
+  var current = "";
+
+  function mount(tab){
+    var key = (tab === "batu" || tab === "haul" || tab === "exec") ? tab : "lt";
+    if(!T[key]){ key = ["exec","haul","batu","lt"].filter(function(k){ return T[k]; })[0]; tab = key; }
+    try{ localStorage.setItem("mmjTab", tab); }catch(e){}
+    /* bersihkan dashboard sebelumnya */
+    for(var i=0;i<L.length;i++){ try{ L[i][0].removeEventListener(L[i][1], L[i][2], L[i][3]); }catch(e){} }
+    L = [];
+    var own = document.querySelectorAll("[data-mmj-own], #mmjBootCss");
+    for(var k=0;k<own.length;k++) own[k].parentNode.removeChild(own[k]);
+    while(document.body.firstChild) document.body.removeChild(document.body.firstChild);
+    while(document.body.attributes.length) document.body.removeAttribute(document.body.attributes[0].name);
+    document.documentElement.removeAttribute("data-theme");
+    try{ delete window.setView; }catch(e){ window.setView = undefined; }
+    /* pasang dashboard terpilih */
+    var frag = T[key].cloneNode(true);
+    var heads = frag.querySelectorAll("[data-mmj-head]");
+    for(var h=0;h<heads.length;h++){ var el=heads[h]; el.removeAttribute("data-mmj-head");
+      if(el.tagName === "TITLE"){ document.title = el.textContent; el.parentNode.removeChild(el); }
+      else { el.setAttribute("data-mmj-own", ""); document.head.appendChild(el); } }
+    /* script bawaan dinonaktifkan dulu agar tidak jalan saat ditempel; dijalankan sekali di bawah (dibungkus fungsi) */
+    var raw = frag.querySelectorAll("script");
+    for(var r=0;r<raw.length;r++) raw[r].type = "text/x-mmj-inert";
+    document.body.appendChild(frag);
+    current = key;
+    window.scrollTo(0, 0);
+    /* jalankan script dashboard berurutan; tiap script dibungkus fungsi agar variabel kedua dashboard tidak bentrok */
+    var olds = document.body.querySelectorAll("script");
+    for(var j=0;j<olds.length;j++){ var o=olds[j], s=document.createElement("script");
+      var code = (o.text || o.textContent).replace("__MMJ_TAB__", tab);
+      s.text = "(function(){\n" + code + "\n;try{ if(typeof setView===\"function\") window.setView=setView; }catch(e){}\n})();";
+      o.parentNode.replaceChild(s, o); }
+  }
+  /* dipanggil dari bar tab di atas dashboard */
+  window.mmjSwitch = function(tab){ setTimeout(function(){ mount(tab); }, 0); };
+
+  var tab = "", m = /tab=(exec|haul|batu|lt|rf)/.exec(location.hash || "");
+  if(m) tab = m[1];
+  if(!tab){ try{ tab = localStorage.getItem("mmjTab") || ""; }catch(e){} }
+  if(["exec","haul","batu","lt","rf"].indexOf(tab) < 0) tab = "exec";
+  mount(tab);
+})();
+</script>
+</body>
+</html>
