@@ -20,7 +20,7 @@ TOOLS = os.path.dirname(os.path.abspath(__file__))          # .../tools/gabungan
 ROOT = os.path.abspath(os.path.join(TOOLS, "..", "..", ".."))  # root repo (dashboard-mmj -> repo)
 OUT = os.path.join(TOOLS, "he_template.html")
 
-HTML = os.path.join(ROOT, "index.html")
+HTML = os.path.join(TOOLS, "he_index.html")
 CSS = os.path.join(ROOT, "css", "style.css")
 JS_DATA = os.path.join(ROOT, "js", "data.js")
 JS_WT = os.path.join(ROOT, "js", "wt-data.js")

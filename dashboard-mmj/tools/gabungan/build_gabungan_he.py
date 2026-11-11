@@ -1,13 +1,15 @@
 """
-Gabungkan 2 Pages menjadi SATU file baru: `dashboard-mmj/gabungan.html`
+Gabungkan 2 Pages menjadi SATU halaman utama: `index.html` (root repo)
 
-- Sumber shell   : dashboard-mmj/index.html        (dibaca, TIDAK diubah)
-- Sumber HE      : index.html, css/style.css, js/*.js, assets/logo-mmj.png (root repo, dibaca saja)
-- Keluaran       : dashboard-mmj/gabungan.html    (file BARU)
+- Sumber shell   : dashboard-mmj/index.html                    (dibaca, TIDAK diubah)
+- Sumber HE      : tools/gabungan/he_index.html (HTML) + css/style.css, js/*.js,
+                    assets/logo-mmj.png, data/belum.json (root repo, dibaca saja)
+- Keluaran       : index.html  ->  https://he-mmj.github.io/
 
 Isi hasil:
-  * tab baru "Timesheet HE" (dashboard HE inline sebagai <template id="mmjT_he">)
+  * tab "Heavy Equipment" (dashboard HE inline sebagai <template id="mmjT_he">)
   * Monitoring (Dashboard Eksekutif) menampilkan ringkasan data HE + Water Truck
+  * semua file CSS/JS/logo di-inline -> 1 file mandiri, tanpa dependensi eksternal
 
 Jalankan: python build_gabungan_he.py
 """
@@ -17,9 +19,9 @@ TOOLS = os.path.dirname(os.path.abspath(__file__))
 GAB = os.path.abspath(os.path.join(TOOLS, "..", ".."))          # folder dashboard-mmj
 ROOT = os.path.abspath(os.path.join(GAB, ".."))                 # root repo
 SRC_SHELL = os.path.join(GAB, "index.html")
-OUT = os.path.join(GAB, "gabungan.html")
+OUT = os.path.join(ROOT, "index.html")          # hasil = halaman utama GitHub Pages
 
-HTML = os.path.join(ROOT, "index.html")
+HTML = os.path.join(TOOLS, "he_index.html")     # sumber HTML dashboard HE (salinan)
 CSS = os.path.join(ROOT, "css", "style.css")
 JS_DATA = os.path.join(ROOT, "js", "data.js")
 JS_WT = os.path.join(ROOT, "js", "wt-data.js")
@@ -328,7 +330,8 @@ def main():
                                       '<div class="mlbl">Monitoring</div>' + nav_item)
 
     # 3) susun template HE dengan format yang sama seperti build_gabungan.py
-    he_head = '<style data-mmj-head>%s</style>' % css
+    he_head = ('<title data-mmj-head>Dashboard Timesheet HE - MMJ November 2026</title>'
+               '<style data-mmj-head>%s</style>' % css)
     spec = importlib.util.spec_from_file_location("mmj_gen", os.path.join(TOOLS, "build_gabungan.py"))
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
