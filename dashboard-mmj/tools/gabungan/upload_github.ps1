@@ -1,6 +1,6 @@
 # Update semua dashboard MMJ lalu upload ke GitHub Pages
-# Repo  : HE-MMJ/he-mmj.github.io  (folder dashboard-mmj/ saja; file lain di repo tidak disentuh)
-# Online: https://he-mmj.github.io/dashboard-mmj/
+# Repo  : HE-MMJ/he-mmj.github.io  (folder dashboard-mmj/ + index.html root; file HE collaborator tidak disentuh)
+# Online: https://he-mmj.github.io/ (halaman utama, dibangun build_gabungan_he.py) & /dashboard-mmj/
 param([switch]$TanpaGenerate)
 
 $ErrorActionPreference = 'Stop'
@@ -65,9 +65,17 @@ Copy-Item "$CH\Dashboard Tools\logos\*.png" "$D\tools\coal-hauling\logos" -Force
 Copy-Item "$BS\Update Dashboard.bat", "$BS\Dashboard Tools\update_dashboard.py", "$BS\Dashboard Tools\dashboard_template.html", "$BS\Dashboard Tools\logo_mmj.png" "$D\tools\batu-split" -Force
 Copy-Item "$LT\Update Dashboard Loss Time.bat", "$LT\Dashboard Tools\update_dashboard_losstime.py", "$LT\Dashboard Tools\losstime_template.html", "$LT\Dashboard Tools\logo_mmj.png" "$D\tools\loss-time" -Force
 
-# ---------- 4. Commit & push ----------
-git add -- dashboard-mmj
-git diff --cached --quiet -- dashboard-mmj
+# ---------- 4. Bangun ulang halaman utama (index.html root: tab MMJ + Heavy Equipment) ----------
+$HEB = Join-Path $D "tools\gabungan\build_gabungan_he.py"
+if (Test-Path $HEB) {
+    Langkah "Membangun ulang halaman utama (tab MMJ + Heavy Equipment)..."
+    & python $HEB
+    if ($LASTEXITCODE -ne 0) { Gagal "build halaman utama (build_gabungan_he.py). Upload dibatalkan." }
+}
+
+# ---------- 5. Commit & push ----------
+git add -- dashboard-mmj index.html
+git diff --cached --quiet -- dashboard-mmj index.html
 if ($LASTEXITCODE -eq 0) {
     Write-Host ""
     Write-Host "Tidak ada perubahan - dashboard online sudah sama dengan versi terbaru." -ForegroundColor Yellow
@@ -75,12 +83,13 @@ if ($LASTEXITCODE -eq 0) {
 }
 Langkah "Upload ke GitHub..."
 $tgl = Get-Date -Format "yyyy-MM-dd HH:mm"
-git commit -q -m "Update Dashboard MMJ $tgl" -- dashboard-mmj
+git commit -q -m "Update Dashboard MMJ $tgl" -- dashboard-mmj index.html
 if ($LASTEXITCODE -ne 0) { Gagal "git commit." }
 git push -q origin main
 if ($LASTEXITCODE -ne 0) { Gagal "git push. Cek koneksi internet / login GitHub (gh auth login)." }
 
 Write-Host ""
 Write-Host "BERHASIL diupload ($tgl)." -ForegroundColor Green
-Write-Host "Online dalam +-1 menit: https://he-mmj.github.io/dashboard-mmj/"
+Write-Host "Online dalam +-1 menit: https://he-mmj.github.io/  (halaman utama)"
+Write-Host "                       https://he-mmj.github.io/dashboard-mmj/"
 exit 0
