@@ -7,7 +7,7 @@ R_Adjust bila ada, selain itu revisi R_nn tertinggi), lalu membuat ulang
 
 Sumber angka:
   - Loss time  : sheet "Input Stop Hauling", kolom "Convert Duration" (sudah direkonsil,
-                 duplikat dihapus, angka disesuaikan SOP). Pembagian H1 / ISP / H2 dari kolom Route.
+                 duplikat dihapus, angka disesuaikan SOP). Pembagian route dari kolom Route: Jan-Jun H1 & H2 saja, Jul-Des H1 / ISP / H2.
                  Rincian Mitra Company dari kolom "Desc Type2".
   - Curah hujan: sheet "Input TCH", akumulasi per hari per pos (Rainfall mm & Duration Convert jam).
                  KM 124 - KM 75 = H1 · ISP68 = ISP · KM 47 - KM 12 & SBL Port = H2.
@@ -204,10 +204,11 @@ def read_file(src, codes, cek, stop, rain, months_info):
             if dur:
                 cek.append({**base, "msg": f"Code Type '{code or '-'}' tidak dikenal ({dur:.2f} jam) - tidak dihitung", "hapus": True})
             continue
-        # Area ISP selalu dihitung ISP (file Jan-Jun hanya punya Route H1/H2)
-        if area == "Area ISP":
+        # Jan-Jun: ikuti kolom Route apa adanya (hanya H1 & H2). Jul-Des: 3 route (H1 / ISP / H2), Area ISP = ISP.
+        three = d.month >= 7
+        if three and area == "Area ISP":
             rt = "ISP"
-        elif route in ROUTES:
+        elif route in ROUTES and (three or route != "ISP"):
             rt = route
         elif area in AREA_ROUTE:
             rt = AREA_ROUTE[area]
@@ -220,6 +221,11 @@ def read_file(src, codes, cek, stop, rain, months_info):
             if dur:
                 cek.append({**base, "msg": f"Route '{route or '-'}' & Area '{area or '-'}' tidak dikenali ({dur:.2f} jam) - tidak dihitung", "hapus": True})
             continue
+        if not three and rt == "ISP":
+            # Jan-Jun belum ada route ISP: pola input = KM ISP >= 68 diisi H1, di bawahnya H2
+            km = num(g(r, "Location (KM)"))
+            rt = "H1" if km is not None and km >= 68 else "H2"
+            cek.append({**base, "msg": f"Jan-Jun hanya route H1/H2: Route kosong di lokasi ISP (KM {txt(g(r, 'Location (KM)')) or '-'}) -> {rt} - tetap dihitung", "hapus": False})
         if code == "MC" and t2.lower() in ("isi data", "") and dur:
             cek.append({**base, "msg": f"Mitra Company: Desc Type2 belum diisi ('{t2 or '-'}') - tetap dihitung", "hapus": False})
         stop.append({"d": d.isoformat(), "r": rt, "c": code, "t2": t2, "h": round(dur, 6),

@@ -342,6 +342,45 @@ section[hidden]{display:none!important}
   th{position:static}
   .hm td.cell{height:22px}
 }
+
+/* ---------- running text info penting ---------- */
+.ticker{display:flex;align-items:center;gap:10px;margin:0 0 16px;padding:6px;border-radius:999px;background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow);-webkit-backdrop-filter:blur(var(--blur));backdrop-filter:blur(var(--blur));overflow:hidden}
+.ticker:empty{display:none}
+.tk-lb{flex:none;display:flex;align-items:center;gap:8px;padding:9px 15px;border-radius:999px;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;font-size:11.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;box-shadow:0 6px 16px -6px var(--accent)}
+.tk-dot{width:8px;height:8px;border-radius:50%;background:#fff;animation:tkPulse 1.8s ease-out infinite}
+.tk-vp{flex:1;min-width:0;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 28px,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,transparent,#000 28px,#000 calc(100% - 28px),transparent)}
+.tk-tr{display:flex;width:max-content;animation:tkMove var(--tkd,45s) linear infinite}
+.tk-list{display:flex;gap:10px;margin:0;padding:0 10px 0 0;list-style:none}
+.tk-it{--tc:var(--accent);display:inline-flex;align-items:center;gap:8px;white-space:nowrap;padding:6px 14px 6px 6px;border-radius:999px;font-size:13px;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--border)}
+.tk-it.good{--tc:var(--good)} .tk-it.bad{--tc:var(--bad)} .tk-it.warn{--tc:#d97706} .tk-it.info{--tc:var(--accent)}
+.tk-ic{flex:none;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;color:var(--tc);background:color-mix(in srgb,var(--tc) 15%,transparent)}
+.tk-tag{font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--tc)}
+.tk-it b{color:var(--ink);font-weight:800}
+.tk-btn{flex:none;width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:var(--surface-solid);color:var(--ink);display:grid;place-items:center;cursor:pointer;transition:transform .15s,background .15s}
+.tk-btn:hover{background:var(--accent-soft)} .tk-btn:active{transform:scale(.94)}
+.tk-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ticker:hover .tk-tr,.ticker:focus-within .tk-tr,.ticker.paused .tk-tr{animation-play-state:paused}
+@keyframes tkMove{to{transform:translateX(-50%)}}
+@keyframes tkPulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.8)}70%{box-shadow:0 0 0 7px rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
+@media (max-width:760px){.ticker{border-radius:18px;margin-bottom:12px}.tk-lb{padding:9px 11px}.tk-lb span{display:none}.tk-it{font-size:12px}}
+@media (prefers-reduced-motion:reduce){.tk-tr{animation:none}.tk-vp{overflow-x:auto}.tk-list[aria-hidden]{display:none}.tk-dot{animation:none}}
+@media print{.tk-tr{animation:none;width:auto}.tk-list{flex-wrap:wrap;row-gap:6px}.tk-list[aria-hidden],.tk-btn{display:none}.tk-vp{-webkit-mask-image:none;mask-image:none}.ticker{border-radius:16px}}
+
+/* ---------- kunci running text + filter di atas layar ---------- */
+.lockbar{position:sticky;top:8px;z-index:30;display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+.lockbar .ticker{margin:0}
+.lockbar .filters{position:relative;top:auto;margin:0;z-index:auto}
+.lockbar.stuck .ticker,.lockbar.stuck .filters{box-shadow:0 14px 32px -14px rgba(30,40,100,.45)}
+.stick{top:calc(var(--lockH,60px) + 20px)}
+.lk-ft{display:none}
+@media (max-width:620px){
+  .lockbar{top:0;gap:6px;margin:0 -6px 12px;padding:6px;border-radius:0 0 18px 18px}
+  .lockbar.stuck{background:color-mix(in srgb,var(--surface-solid) 82%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+  .lk-ft{display:flex;align-items:center;justify-content:center;gap:8px;min-height:42px;border-radius:14px;border:1px solid var(--border);background:var(--surface-solid);color:var(--ink);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+  .lk-ft svg{transition:transform .2s} .lockbar.open .lk-ft svg{transform:rotate(180deg)}
+  .lockbar:not(.open) .filters{display:none}
+}
+@media print{.lockbar{position:static}.lk-ft{display:none}}
 </style>
 </head>
 <body>
@@ -400,6 +439,9 @@ section[hidden]{display:none!important}
     </div>
   </header>
 
+  <div class="lockbar" id="lockbar">
+  <div class="ticker" id="ticker" role="region" aria-label="Info penting"></div>
+  <button class="lk-ft" id="lkFt" type="button" aria-expanded="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg><span>Filter</span></button>
   <div class="filters" role="group" aria-label="Filter">
     <label>Bulan <select id="fBulan"></select></label>
     <div class="rp" id="rp">
@@ -409,6 +451,7 @@ section[hidden]{display:none!important}
     <div class="chips" id="fRoute" aria-label="Route"></div>
     <label data-view="lt">Tipe <select id="fType"></select></label>
     <button class="reset" id="reset" type="button">Reset filter</button>
+  </div>
   </div>
 
   <section class="kpis" id="ringkasan" data-view="lt"></section>
@@ -877,6 +920,42 @@ const MMJ_CODES = new Set(["T","A","E","M","CP","D","SI"]);
 const AREA_SOP = new Set(["Area Mekar Sari","Area Ketapat","Area Bintialo","Area Dayung","Area ISP","Area Selaro","Area Pakerin","Area B 80","Area Mendis"]);
 
 /* ---------- render ---------- */
+/* ---------- running text info penting ---------- */
+const TK_IC = (()=>{ const s=p=>`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+  return { truck:s('<path d="M2 16V7h11v9M13 10h4l4 4v2h-8"/><circle cx="6.5" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/>'),
+    cal:s('<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>'),
+    goal:s('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>'),
+    trend:s('<path d="m3 17 6-6 4 4 8-8M15 7h6v6"/>'),
+    trophy:s('<path d="M8 4h8v5a4 4 0 0 1-8 0V4ZM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M10 15h4v4h-4zM8 21h8"/>'),
+    alert:s('<path d="M12 3 2 20h20L12 3Z"/><path d="M12 10v4M12 17v.5"/>'),
+    chart:s('<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'),
+    flag:s('<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>'),
+    pin:s('<path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/>'),
+    ship:s('<path d="M3 15h18l-2 5H5l-2-5Zm3 0V9h12v6M12 9V4"/>'),
+    box:s('<path d="M3 7l9-4 9 4-9 4-9-4Zm0 5 9 4 9-4M3 17l9 4 9-4"/>'),
+    route:s('<circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h8a3 3 0 0 0 0-6H8a3 3 0 0 1 0-6h8"/>'),
+    clock:s('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
+    tool:s('<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4Z"/>'),
+    rain:s('<path d="M7 15a5 5 0 1 1 .9-9.9A6 6 0 0 1 19 9a4 4 0 0 1-1 7.9M8 19l-1 2M12 18l-1 3M16 19l-1 2"/>'),
+    drop:s('<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11Z"/>'),
+    pause:s('<path d="M9 5v14M15 5v14"/>'), play:s('<path d="M7 5l12 7-12 7V5Z"/>') }; })();
+function tickerRender(el, items){
+  if(!el) return;
+  const li = items.filter(Boolean).map(it=>`<li class="tk-it ${it.tone||"info"}"><span class="tk-ic">${TK_IC[it.ic]||TK_IC.alert}</span>${it.tag?`<span class="tk-tag">${it.tag}</span>`:""}<span>${it.html}</span></li>`).join("");
+  if(!li){ el.innerHTML=""; return; }
+  const paused = el.classList.contains("paused");
+  el.innerHTML = `<div class="tk-lb"><i class="tk-dot" aria-hidden="true"></i><span>Info penting</span></div><div class="tk-vp"><div class="tk-tr"><ul class="tk-list">${li}</ul><ul class="tk-list" aria-hidden="true">${li}</ul></div></div><button class="tk-btn" type="button" aria-pressed="${paused}" aria-label="${paused?"Jalankan":"Jeda"} running text" title="${paused?"Jalankan":"Jeda"}">${paused?TK_IC.play:TK_IC.pause}</button>`;
+  const w = el.querySelector(".tk-list").scrollWidth;
+  el.querySelector(".tk-tr").style.setProperty("--tkd", Math.max(25, w/60).toFixed(1)+"s");
+  el.querySelector(".tk-btn").onclick = ()=>{ el.classList.toggle("paused"); tickerRender(el, items); };
+}
+/* kunci running text + filter: tombol Filter (HP), tinggi untuk kartu sticky, bayangan saat menempel */
+(function(){ const lb=document.getElementById("lockbar"), bt=document.getElementById("lkFt"); if(!lb) return;
+  if(bt) bt.onclick=()=>{ const o=!lb.classList.contains("open"); lb.classList.toggle("open",o); bt.setAttribute("aria-expanded",o); bt.querySelector("span").textContent=o?"Tutup filter":"Filter"; };
+  const setH=()=>{ if(lb.parentElement) lb.parentElement.style.setProperty("--lockH", lb.offsetHeight+"px"); };
+  setH(); if(window.ResizeObserver) new ResizeObserver(setH).observe(lb);
+  addEventListener("scroll",()=>lb.classList.toggle("stuck", lb.getBoundingClientRect().top<=10), {passive:true});
+})();
 function render(){
   document.body.dataset.v = st.view;
   $("viewSw").querySelectorAll("[data-view-btn]").forEach(b=>b.setAttribute("aria-selected", b.dataset.viewBtn===st.view));
@@ -918,7 +997,7 @@ function render(){
               n:`Jumlah route ${fh(sumR)} j − overlap ${fh(ovl)} j · ${ltDays} hari ada stop`, s:h0B(), off:false}];
   ROUTES.forEach((r,i)=>{ const arr=byRoute[r], t=rTot[r], tt=topType(arr);
     K.push({c:["var(--k2)","var(--k3)","var(--k4)"][i], ic:`<b>${r}</b>`, l:`Loss time ${r}`, v:st.routes.has(r)?fh(t):"–", u:"jam", d:st.routes.has(r)&&H0?pct(t,H0)+"% H0":"",
-      n: !st.routes.has(r) ? "Route tidak dipilih di filter" : tt ? `Terbesar: ${TN[tt[0]]} ${fh(tt[1])} j · ${arr.filter(s=>s.h>0).length} kejadian` : "Tidak ada loss time", s:perB(arr), off:!st.routes.has(r)}); });
+      n: !st.routes.has(r) ? "Route tidak dipilih di filter" : (r==="ISP" && b<"2026-07") ? "Jan–Jun belum ada route ISP (input hanya H1 & H2)" : tt ? `Terbesar: ${TN[tt[0]]} ${fh(tt[1])} j · ${arr.filter(s=>s.h>0).length} kejadian` : "Tidak ada loss time", s:perB(arr), off:!st.routes.has(r)}); });
   K[0].kp="H0"; ROUTES.forEach((r,i)=>{ K[i+1].kp=r; });
   if(st.kp && st.kp!=="H0" && !st.routes.has(st.kp)) st.kp="";
   $("ringkasan").innerHTML = K.map(k=>{ const can=!k.off; return `<div class="kpi${k.off?" off":""}${can?" clk":""}${st.kp===k.kp?" sel":""}" style="--c:${k.c}"${can?` data-kp="${k.kp}" role="button" tabindex="0" aria-pressed="${st.kp===k.kp}" title="Klik untuk rincian ${k.kp}"`:""}>${can?`<span class="pick">${st.kp===k.kp?"Tutup ✕":"Rincian ›"}</span>`:""}<div class="hd"><div class="ic">${k.ic}</div><div style="min-width:0"><div class="l">${k.l}</div><div class="v">${k.v}<small>${k.u}</small>${k.d?`<span class="d">${k.d}</span>`:""}</div></div></div><div class="n" title="${esc(k.n)}">${k.n}</div>${spark(k.s)}</div>`; }).join("");
@@ -970,7 +1049,7 @@ function render(){
     rSeries[r] = used.map(t=>{ const m=groupBy(byRoute[r].filter(s=>s.c===t.c), s=>B.key(s.d), s=>s.h); return {n:t.n, c:TCOL[t.c], vals:B.keys.map(k=>m.get(k)||0)}; });
     B.keys.forEach((_,i)=>{ rMax=Math.max(rMax, sum(rSeries[r],s=>s.vals[i])); }); });
   const usedR = TYPES.filter(t=>ROUTES.some(r=>st.routes.has(r) && byRoute[r].some(s=>s.c===t.c && s.h>0)));
-  $("lgR").innerHTML = usedR.map(t=>`<span><i style="background:${TCOL[t.c]}"></i>${t.n}</span>`).join("") + '<span style="color:var(--muted)">· skala sumbu Y sama untuk ketiga route</span>';
+  $("lgR").innerHTML = usedR.map(t=>`<span><i style="background:${TCOL[t.c]}"></i>${t.n}</span>`).join("") + '<span style="color:var(--muted)">· skala sumbu Y sama untuk ketiga route · Jan–Jun hanya H1 &amp; H2 (ISP mulai Jul)</span>';
   ROUTES.forEach(r=>{
     const el=$("cR_"+r);
     $("tR_"+r).textContent = `${r} ${B.daily?"harian":"bulanan"}`;
@@ -990,6 +1069,41 @@ function render(){
     <div><div class="k">Insight</div><h3>${TN[tt[0]]} penyebab terbesar · ${pct(tt[1],H0)}% dari H0</h3>
     <p>${fh(tt[1])} dari ${fh(H0)} jam H0. Loss Time MMJ ${fh(lMMJ)} jam (${pct(lMMJ,H0)}%), bukan MMJ ${fh(H0-lMMJ)} jam (${pct(H0-lMMJ,H0)}%). ${ovl>0.005?`Ada ${fh(ovl)} jam yang terjadi bersamaan di lebih dari satu route dan hanya dihitung sekali di H0.`:""}${rainyPosDays.size?` Dari ${rainyPosDays.size} kombinasi hari-route yang tercatat hujan di pos, ${both} berujung stop hauling karena hujan/licin.`:""}</p></div>
     <button type="button" onclick="document.getElementById('sop').scrollIntoView({behavior:'smooth'})">Kelompok loss time</button>`;
+
+  /* running text */
+  { const o=H0m.get(LAST), lastH0=o?h0DayVal(o):0;
+    const topR=ROUTES.filter(r=>st.routes.has(r)).sort((x,y)=>rTot[y]-rTot[x])[0];
+    const pd=groupBy(R, x=>x.p+"|"+x.d, x=>x.mm), mxPD=[...pd.entries()].sort((x,y)=>y[1]-x[1])[0];
+    const lastPos=[...groupBy(R.filter(x=>x.d===LAST), x=>x.p, x=>x.mm).entries()].sort((x,y)=>y[1]-x[1])[0];
+    /* tiap item: H0 + setiap route terpilih (H1, ISP, H2) */
+    const RS = ROUTES.filter(r=>st.routes.has(r));
+    const RX = RS.map(r=>{ const arr=byRoute[r].filter(x=>x.h>0), tot=rTot[r];
+      const mmj=sum(arr.filter(x=>MMJ_CODES.has(x.c)), x=>x.h), idle=sum(arr.filter(x=>x.c==="R"||x.c==="S"), x=>x.h);
+      const byD=groupBy(arr, x=>x.d, x=>x.h), pk=[...byD.entries()].sort((x,y)=>y[1]-x[1])[0];
+      return {r, tot, mmj, idle, n:arr.length, days:byD.size, top:topType(arr), pk, last:byD.get(LAST)||0}; });
+    const H0x = {r:"H0", tot:H0, mmj:lMMJ, idle:lIdle, days:ltDays, top:tt, pk:peak&&peak[1]>0?peak:null, last:lastH0};
+    const ALL = [H0x, ...RX];
+    const seg = (x, body) => `<b>${x.r}</b> ${body}`;
+    const join = f => ALL.map(x=>{ const v=f(x); return v?seg(x,v):null; }).filter(Boolean).join(" &nbsp;·&nbsp; ");
+    if(st.view==="lt") tickerRender($("ticker"),[
+      {ic:"clock",tone:"info",tag:"Total loss time",html:join(x=>`${fh(x.tot)} jam`)},
+      H0>0&&{ic:"tool",tone:pct(lMMJ,H0)>=50?"bad":"warn",tag:"Loss time MMJ",html:join(x=>x.tot?`${fh(x.mmj)} j (${pct(x.mmj,x.tot)}%)`:"–")},
+      H0>0&&{ic:"rain",tone:"info",tag:"Bukan MMJ",html:join(x=>x.tot?`${fh(x.tot-x.mmj)} j (${pct(x.tot-x.mmj,x.tot)}%)`:"–")},
+      tt&&{ic:"alert",tone:"bad",tag:"Penyebab terbesar",html:join(x=>x.top?`${TN[x.top[0]]} ${fh(x.top[1])} j`:"–")},
+      {ic:"route",tone:"warn",tag:"Hari ada stop",html:join(x=>`${x.days} hari`)},
+      H0>0&&{ic:"trend",tone:"warn",tag:"Hari tertinggi",html:join(x=>x.pk?`${fh(x.pk[1])} j (${dLabel(x.pk[0]).replace(/ \d{4}$/,"")})`:"–")},
+      {ic:"cal",tone:lastH0>0?"warn":"good",tag:`Hari terakhir · ${dLabel(LAST)}`,html:join(x=>x.last>0?`${fh(x.last)} j`:"tanpa stop")},
+      lIdle>0&&{ic:"drop",tone:"info",tag:"Idle hujan / slippery",html:join(x=>x.tot?`${fh(x.idle)} j (${pct(x.idle,x.tot)}%)`:"–")},
+    ]);
+    else tickerRender($("ticker"),[
+      {ic:"rain",tone:"info",tag:"Hari hujan",html:`<b>${rainDays} hari</b> · ${RA.pos} pos tercatat`},
+      {ic:"drop",tone:"info",tag:"Rata-rata",html:`<b>${fmm(RA.mm)} mm</b> per hari hujan per pos · ${fh(RA.h)} jam hujan`},
+      wettest&&wettest[1]>0&&{ic:"pin",tone:"warn",tag:"Pos terbasah",html:`<b>${wettest[0]}</b> ${fmm(wettest[1])} mm`},
+      mxPD&&mxPD[1]>0&&{ic:"alert",tone:"bad",tag:"Hujan harian tertinggi",html:`<b>${fmm(mxPD[1])} mm</b> · ${mxPD[0].split("|")[0]}, ${dLabel(mxPD[0].split("|")[1])}`},
+      {ic:"cal",tone:lastPos&&lastPos[1]>0?"warn":"good",tag:`Hari terakhir · ${dLabel(LAST)}`,html:lastPos&&lastPos[1]>0?`Hujan s/d <b>${fmm(lastPos[1])} mm</b> di ${lastPos[0]}`:`<b>Tidak ada hujan</b>`},
+      both>0&&{ic:"clock",tone:"warn",tag:"Hujan & idle",html:`<b>${both}</b> hari-route hujan bersamaan dengan Idle R/S`},
+    ]);
+  }
 
   /* donut H0 + route vs H0 */
   donut($("cMix"), TYPES.map(t=>({n:t.n, c:TCOL[t.c], code:t.c, v:tf(t.c)?(h0Type[t.c]||0):0})), "jam H0", {can:p=>p.code==="MC", go:openMc});

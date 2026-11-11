@@ -58,7 +58,8 @@ Copy-Item "$CH\Dashboard Coal Hauling 2026.html"            "$D\coal-hauling.htm
 Copy-Item "$BS\Dashboard Angkutan Batu Split 2026.html"     "$D\batu-split.html"   -Force
 Copy-Item "$LT\Dashboard Loss Time & Curah Hujan 2026.html" "$D\loss-time.html"    -Force
 
-Copy-Item "$GAB\Update Dashboard Gabungan.bat", "$GAB\Upload Dashboard ke GitHub.bat", "$GAB\Tools\build_gabungan.py", "$GAB\Tools\exec_template.html", "$GAB\Tools\shell_template.html", "$GAB\Tools\upload_github.ps1" "$D\tools\gabungan" -Force
+# build_gabungan.py versi repo sudah diubah collaborator (menu Heavy Equipment) -> jangan ditimpa
+Copy-Item "$GAB\Update Dashboard Gabungan.bat", "$GAB\Upload Dashboard ke GitHub.bat", "$GAB\Tools\exec_template.html", "$GAB\Tools\shell_template.html", "$GAB\Tools\upload_github.ps1" "$D\tools\gabungan" -Force
 Copy-Item "$CH\Update Dashboard Coal Hauling.bat", "$CH\Dashboard Tools\update_dashboard_hauling.py", "$CH\Dashboard Tools\hauling_template.html", "$CH\Dashboard Tools\target_rkap.json", "$CH\Dashboard Tools\logo_mmj.png" "$D\tools\coal-hauling" -Force
 Copy-Item "$CH\Dashboard Tools\logos\*.png" "$D\tools\coal-hauling\logos" -Force
 Copy-Item "$BS\Update Dashboard.bat", "$BS\Dashboard Tools\update_dashboard.py", "$BS\Dashboard Tools\dashboard_template.html", "$BS\Dashboard Tools\logo_mmj.png" "$D\tools\batu-split" -Force

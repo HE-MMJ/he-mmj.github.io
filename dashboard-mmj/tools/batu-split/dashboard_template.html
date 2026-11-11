@@ -165,6 +165,11 @@ select{font:inherit;font-size:13px;color:var(--ink);background:var(--surface-sol
 .kpi .n{font-size:12px;color:var(--ink-2);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative}
 .kpi svg.spark{display:block;width:100%;height:48px;margin-top:8px;overflow:visible}
 
+[hidden]{display:none!important}
+.fsum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}
+tr.grp td{background:var(--surface-2)}
+.fsum>div{background:var(--surface-2);border-radius:14px;padding:10px 12px}
+.fsum .l{font-size:11.5px;color:var(--muted)} .fsum .v{font-size:20px;font-weight:800;color:var(--ink)} .fsum .v small{font-size:11px;font-weight:600;color:var(--muted);margin-left:4px}
 .minis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:18px}
 .mini{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow)}
 .mini .dot{width:36px;height:36px;border-radius:11px;background:var(--accent-soft);display:grid;place-items:center;color:var(--accent);flex:none}
@@ -316,6 +321,45 @@ tbody tr:hover td{background:var(--surface-2)}
   #cek .tw tbody tr:nth-child(n+41){display:none}
   #cek .ch p::after{content:" · PDF menampilkan 40 baris pertama, daftar lengkap ada di Export Excel"}
 }
+
+/* ---------- running text info penting ---------- */
+.ticker{display:flex;align-items:center;gap:10px;margin:0 0 16px;padding:6px;border-radius:999px;background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow);-webkit-backdrop-filter:blur(var(--blur));backdrop-filter:blur(var(--blur));overflow:hidden}
+.ticker:empty{display:none}
+.tk-lb{flex:none;display:flex;align-items:center;gap:8px;padding:9px 15px;border-radius:999px;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;font-size:11.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;box-shadow:0 6px 16px -6px var(--accent)}
+.tk-dot{width:8px;height:8px;border-radius:50%;background:#fff;animation:tkPulse 1.8s ease-out infinite}
+.tk-vp{flex:1;min-width:0;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 28px,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,transparent,#000 28px,#000 calc(100% - 28px),transparent)}
+.tk-tr{display:flex;width:max-content;animation:tkMove var(--tkd,45s) linear infinite}
+.tk-list{display:flex;gap:10px;margin:0;padding:0 10px 0 0;list-style:none}
+.tk-it{--tc:var(--accent);display:inline-flex;align-items:center;gap:8px;white-space:nowrap;padding:6px 14px 6px 6px;border-radius:999px;font-size:13px;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--border)}
+.tk-it.good{--tc:var(--good)} .tk-it.bad{--tc:var(--bad)} .tk-it.warn{--tc:#d97706} .tk-it.info{--tc:var(--accent)}
+.tk-ic{flex:none;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;color:var(--tc);background:color-mix(in srgb,var(--tc) 15%,transparent)}
+.tk-tag{font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--tc)}
+.tk-it b{color:var(--ink);font-weight:800}
+.tk-btn{flex:none;width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:var(--surface-solid);color:var(--ink);display:grid;place-items:center;cursor:pointer;transition:transform .15s,background .15s}
+.tk-btn:hover{background:var(--accent-soft)} .tk-btn:active{transform:scale(.94)}
+.tk-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ticker:hover .tk-tr,.ticker:focus-within .tk-tr,.ticker.paused .tk-tr{animation-play-state:paused}
+@keyframes tkMove{to{transform:translateX(-50%)}}
+@keyframes tkPulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.8)}70%{box-shadow:0 0 0 7px rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
+@media (max-width:760px){.ticker{border-radius:18px;margin-bottom:12px}.tk-lb{padding:9px 11px}.tk-lb span{display:none}.tk-it{font-size:12px}}
+@media (prefers-reduced-motion:reduce){.tk-tr{animation:none}.tk-vp{overflow-x:auto}.tk-list[aria-hidden]{display:none}.tk-dot{animation:none}}
+@media print{.tk-tr{animation:none;width:auto}.tk-list{flex-wrap:wrap;row-gap:6px}.tk-list[aria-hidden],.tk-btn{display:none}.tk-vp{-webkit-mask-image:none;mask-image:none}.ticker{border-radius:16px}}
+
+/* ---------- kunci running text + filter di atas layar ---------- */
+.lockbar{position:sticky;top:8px;z-index:30;display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+.lockbar .ticker{margin:0}
+.lockbar .filters{position:relative;top:auto;margin:0;z-index:auto}
+.lockbar.stuck .ticker,.lockbar.stuck .filters{box-shadow:0 14px 32px -14px rgba(30,40,100,.45)}
+.stick{top:calc(var(--lockH,60px) + 20px)}
+.lk-ft{display:none}
+@media (max-width:620px){
+  .lockbar{top:0;gap:6px;margin:0 -6px 12px;padding:6px;border-radius:0 0 18px 18px}
+  .lockbar.stuck{background:color-mix(in srgb,var(--surface-solid) 82%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+  .lk-ft{display:flex;align-items:center;justify-content:center;gap:8px;min-height:42px;border-radius:14px;border:1px solid var(--border);background:var(--surface-solid);color:var(--ink);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+  .lk-ft svg{transition:transform .2s} .lockbar.open .lk-ft svg{transform:rotate(180deg)}
+  .lockbar:not(.open) .filters{display:none}
+}
+@media print{.lockbar{position:static}.lk-ft{display:none}}
 </style>
 </head>
 <body>
@@ -329,10 +373,11 @@ tbody tr:hover td{background:var(--surface-2)}
   <nav class="nav" id="nav">
     <a href="#ringkasan" class="on"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>Dashboard</a>
     <a href="#distribusi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Distribusi</a>
-    <a href="#area"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Area &amp; KM</a>
-    <a href="#stok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4-9 4-9-4Zm0 5 9 4 9-4M3 17l9 4 9-4"/></svg>Penerimaan &amp; Stok</a>
-    <a href="#tongkang"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 15h18l-2 5H5l-2-5Zm3 0V9h12v6M12 9V4"/></svg>Tongkang</a>
-    <a href="#cek"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 2 20h20L12 3Zm0 6v5m0 3v.5"/></svg>Cek Data</a>
+    <a href="#filling" data-mini="show" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 20h18M5 20l5-9 3 4 2-3 4 8"/></svg>Filling Stockpile</a>
+    <a href="#area" data-mini="hide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Area &amp; KM</a>
+    <a href="#stok" data-mini="hide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4-9 4-9-4Zm0 5 9 4 9-4M3 17l9 4 9-4"/></svg>Penerimaan &amp; Stok</a>
+    <a href="#tongkang" data-mini="hide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 15h18l-2 5H5l-2-5Zm3 0V9h12v6M12 9V4"/></svg>Tongkang</a>
+    <a href="#cek" data-mini="hide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 2 20h20L12 3Zm0 6v5m0 3v.5"/></svg>Cek Data</a>
   </nav>
   <div class="lbl">Aksi cepat</div>
   <button class="qbtn" type="button" data-act="pdf"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z"/><path d="M14 3v6h6M8 14h8M8 17h5"/></svg>PDF Presentasi</button>
@@ -360,6 +405,9 @@ tbody tr:hover td{background:var(--surface-2)}
     </div>
   </header>
 
+  <div class="lockbar" id="lockbar">
+  <div class="ticker" id="ticker" role="region" aria-label="Info penting"></div>
+  <button class="lk-ft" id="lkFt" type="button" aria-expanded="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg><span>Filter</span></button>
   <div class="filters" role="group" aria-label="Filter">
     <label>Bulan <select id="fBulan"></select></label>
     <div class="rp" id="rp">
@@ -372,9 +420,10 @@ tbody tr:hover td{background:var(--surface-2)}
     <label>Area <select id="fArea"></select></label>
     <button class="reset" id="reset" type="button">Reset filter</button>
   </div>
+  </div>
 
-  <section class="kpis" id="ringkasan"></section>
-  <section class="minis" id="minis"></section>
+  <section class="kpis" id="ringkasan" data-mini="hide"></section>
+  <section class="minis" id="minis" data-mini="hide"></section>
 
   <section class="grid pg" data-title="Tren Tonase, Komposisi & Insight">
     <div class="stack c8">
@@ -383,22 +432,34 @@ tbody tr:hover td{background:var(--surface-2)}
         <div class="big" id="big1"></div>
         <div class="legend" id="lg1"></div><div id="c1"></div>
       </div>
-      <div class="insight" id="insight"></div>
+      <div class="insight" id="insight" data-mini="hide"></div>
     </div>
     <div class="stack c4">
       <div class="card">
         <div class="ch"><div><h2>Komposisi jenis batu</h2><p>Bagian dari tonase terfilter</p></div></div>
         <div class="donut" id="cMix"></div>
-        <div style="margin-top:16px"><div class="ch" style="margin-bottom:0"><div><h2>Shift</h2></div></div><div id="cShift"></div></div>
+        <div style="margin-top:16px" data-mini="hide"><div class="ch" style="margin-bottom:0"><div><h2>Shift</h2></div></div><div id="cShift"></div></div>
       </div>
-      <div class="card">
+      <div class="card" data-mini="hide">
         <div class="ch"><div><h2>Tongkang terakhir</h2></div><a class="lnk" href="#tongkang">Lihat semua</a></div>
         <div class="recent" id="recent"></div>
       </div>
     </div>
   </section>
 
-  <section class="grid pg" data-title="Distribusi per Area, Blok & KM">
+  <section class="grid pg" data-title="Filling Mini Stockpile" data-mini="show" hidden>
+    <div class="card c7" id="filling">
+      <div class="ch"><div><h2>Filling mini stockpile: dari asal &rarr; ke tujuan</h2><p id="pFill"></p></div><button class="tbtn" data-t="cFill">Tabel</button></div>
+      <div class="fsum" id="fillSum"></div>
+      <div class="legend" id="lgF"></div><div id="cFill" class="hb"></div>
+    </div>
+    <div class="card c5">
+      <div class="ch"><div><h2>Rincian per asal batu</h2><p id="pFill2">Dari stockpile asal (kolom Source) dikirim ke stockpile tujuan (kolom Dumping Location)</p></div></div>
+      <div class="tw" id="tFill"></div>
+    </div>
+  </section>
+
+  <section class="grid pg" data-title="Distribusi per Area, Blok & KM" data-mini="hide">
     <div class="card c7" id="area">
       <div class="ch">
         <div><h2>Distribusi per area &amp; blok</h2><p id="pArea">Ton ke area tujuan (tanpa filling mini stockpile). Klik baris untuk filter area.</p></div>
@@ -420,14 +481,14 @@ tbody tr:hover td{background:var(--surface-2)}
     </div>
   </section>
 
-  <section class="grid pg" data-title="Penerimaan, Stok & Rincian Angkutan">
+  <section class="grid pg" data-title="Penerimaan, Stok & Rincian Angkutan" data-mini="hide">
     <div class="card c7" id="stok">
       <div class="ch"><div><h2>Penerimaan tongkang vs distribusi</h2><p>Ton per bulan · penerimaan = tonase tongkang selesai bongkar · klik untuk pilih bulan</p></div><button class="tbtn" data-t="c2">Tabel</button></div>
       <div class="legend"><span><i style="background:var(--recv)"></i>Penerimaan</span><span><i style="background:var(--issue)"></i>Distribusi ke area</span></div>
       <div id="c2"></div>
     </div>
     <div class="card c5">
-      <div class="ch"><div><h2>Stok akhir bulan</h2><p>Port SBL + mini stockpile (EOM, dari Monthly Summary)</p></div><button class="tbtn" data-t="c3">Tabel</button></div>
+      <div class="ch"><div><h2>Stok akhir bulan</h2><p id="pStk">Port SBL + mini stockpile (EOM, dari Monthly Summary)</p></div><button class="tbtn" data-t="c3">Tabel</button></div>
       <div class="legend"><span><i style="background:var(--recv)"></i>Stok port</span><span><i style="background:var(--recv-2)"></i>Stok mini stockpile</span></div>
       <div id="c3"></div>
     </div>
@@ -443,20 +504,20 @@ tbody tr:hover td{background:var(--surface-2)}
     </div>
   </section>
 
-  <section class="grid pg" data-title="Rincian Angkutan">
+  <section class="grid pg" data-title="Rincian Angkutan" data-mini="hide">
     <div class="card c4"><div class="ch"><div><h2>Asal material</h2><p>Ton (ritase)</p></div></div><div id="cSrc" class="hb"></div></div>
     <div class="card c4"><div class="ch"><div><h2>Jenis pekerjaan</h2><p>Ton (ritase)</p></div></div><div id="cWork" class="hb"></div></div>
     <div class="card c4"><div class="ch"><div><h2>Vendor dump truck</h2><p>10 teratas · ton (ritase)</p></div></div><div id="cVen" class="hb"></div></div>
   </section>
 
-  <section class="grid pg" data-title="Daftar Tongkang & Cek Data">
+  <section class="grid pg" data-title="Daftar Tongkang & Cek Data" data-mini="hide">
     <div class="card c12" id="tongkang">
       <div class="ch"><div><h2>Penerimaan tongkang</h2><p id="pT"></p></div></div>
       <div class="tw" id="tTong"></div>
     </div>
     <div class="card c12" id="cek">
-      <div class="ch"><div><h2>Data yang perlu dicek</h2><p id="pCek"></p></div></div>
-      <div class="tw" id="tCek"></div>
+      <div class="ch"><div><h2>Data yang perlu dicek</h2><p id="pCek"></p></div><button class="tbtn" id="cekBtn" type="button" aria-expanded="false" aria-controls="tCek">Tampilkan</button></div>
+      <div class="tw" id="tCek" hidden></div>
     </div>
   </section>
 
@@ -471,6 +532,15 @@ const BLN = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","
 const BLNF = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 const HARI = ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
 const D = DATA.dims, F = DATA.fields.reduce((a,k,i)=>(a[k]=i,a),{});
+/* stok akhir bulan berjalan = angka Komposisi stok (tabel stockpile sheet Daily Summary), bukan Monthly Summary */
+const SP_RUN = (()=>{ const S=DATA.stockpile, m=DATA.meta.lastDate.slice(0,7);
+  if(!S || !S.items || !S.items.length || S.month!==m) return null;
+  const tot = it => Object.values(it.own||{}).reduce((a,o)=>a+Object.values(o).reduce((x,y)=>x+y,0),0);
+  const port = S.items.filter(it=>/port/i.test(it.name)).reduce((a,it)=>a+tot(it),0), all = S.items.reduce((a,it)=>a+tot(it),0);
+  const row = DATA.stock.find(x=>x.Bulan===m);
+  const v = {"Stok Port (t)":port, "Stok Mini Stockpile (t)":all-port, "Closing (t)":all, fromSP:true};
+  if(row) Object.assign(row, v); else DATA.stock.push({Bulan:m, ...v});
+  return m; })();
 const JEN = D.jenis;
 const JORDER = ["MMJ-Splite 10/20","MMJ-Splite 5/7","MMJ-Base Course"].map(n=>JEN.indexOf(n)).filter(i=>i>=0);
 const JCOL = {}; JORDER.forEach((j,k)=>JCOL[j]=["var(--s1)","var(--s2)","var(--s3)"][k]);
@@ -734,10 +804,15 @@ function spark(vals, activeIdx){
   return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--c);stop-opacity:.28"/><stop offset="1" style="stop-color:var(--c);stop-opacity:0"/></linearGradient></defs><path d="${area}" fill="url(#${gid})"/><path d="${d}" fill="none" style="stroke:var(--c)" stroke-width="2" vector-effect="non-scaling-stroke"/>${xs.map((x,i)=>i===activeIdx?`<circle cx="${x}" cy="${ys[i]}" r="4" style="fill:var(--surface-solid);stroke:var(--c)" stroke-width="2.5" vector-effect="non-scaling-stroke"/>`:"").join("")}</svg>`;
 }
 
+/* ---------- filling mini stockpile: tanggal = Date Unload, tujuan = Dumping Location ---------- */
+const MINI_K = D.kategori.indexOf("Filling Mini Stockpile");
+const DST = D.dst || [];
+const MINI_ROWS = (DATA.mini||[]).map(([i,du,ds])=>{ const r=DATA.rows[i].slice(); r[0]=du; r.dst=ds; return r; });
+const isMini = () => MINI_K>=0 && st.kat===String(MINI_K);
 /* ---------- aggregation ---------- */
 function filtered(ignoreMonth, areaOv){
   const src=st.source===""?-1:+st.source, kat=st.kat===""?-1:+st.kat, area=areaOv!==undefined?areaOv:(st.area===""?-1:+st.area);
-  return DATA.rows.filter(r=> st.jenis.has(r[F.jenis]) && (ignoreMonth||inRange(r[0]))
+  return (isMini() ? MINI_ROWS : DATA.rows).filter(r=> st.jenis.has(r[F.jenis]) && (ignoreMonth||inRange(r[0]))
     && (src<0||r[F.source]===src) && (kat<0||r[F.kategori]===kat) && (area<0||r[F.area]===area));
 }
 function groupJ(rows, keyFn){ const m=new Map(); for(const r of rows){ const k=keyFn(r); if(k==null) continue; let o=m.get(k); if(!o){o={total:0,n:0,j:{}};m.set(k,o);} o.total+=r[F.ton]; o.n++; o.j[r[F.jenis]]=(o.j[r[F.jenis]]||0)+r[F.ton]; } return m; }
@@ -754,7 +829,45 @@ const ICON = {
 };
 
 /* ---------- render ---------- */
+/* ---------- running text info penting ---------- */
+const TK_IC = (()=>{ const s=p=>`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+  return { truck:s('<path d="M2 16V7h11v9M13 10h4l4 4v2h-8"/><circle cx="6.5" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/>'),
+    cal:s('<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>'),
+    goal:s('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>'),
+    trend:s('<path d="m3 17 6-6 4 4 8-8M15 7h6v6"/>'),
+    trophy:s('<path d="M8 4h8v5a4 4 0 0 1-8 0V4ZM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M10 15h4v4h-4zM8 21h8"/>'),
+    alert:s('<path d="M12 3 2 20h20L12 3Z"/><path d="M12 10v4M12 17v.5"/>'),
+    chart:s('<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'),
+    flag:s('<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>'),
+    pin:s('<path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/>'),
+    ship:s('<path d="M3 15h18l-2 5H5l-2-5Zm3 0V9h12v6M12 9V4"/>'),
+    box:s('<path d="M3 7l9-4 9 4-9 4-9-4Zm0 5 9 4 9-4M3 17l9 4 9-4"/>'),
+    route:s('<circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h8a3 3 0 0 0 0-6H8a3 3 0 0 1 0-6h8"/>'),
+    clock:s('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
+    tool:s('<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4Z"/>'),
+    rain:s('<path d="M7 15a5 5 0 1 1 .9-9.9A6 6 0 0 1 19 9a4 4 0 0 1-1 7.9M8 19l-1 2M12 18l-1 3M16 19l-1 2"/>'),
+    drop:s('<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11Z"/>'),
+    pause:s('<path d="M9 5v14M15 5v14"/>'), play:s('<path d="M7 5l12 7-12 7V5Z"/>') }; })();
+function tickerRender(el, items){
+  if(!el) return;
+  const li = items.filter(Boolean).map(it=>`<li class="tk-it ${it.tone||"info"}"><span class="tk-ic">${TK_IC[it.ic]||TK_IC.alert}</span>${it.tag?`<span class="tk-tag">${it.tag}</span>`:""}<span>${it.html}</span></li>`).join("");
+  if(!li){ el.innerHTML=""; return; }
+  const paused = el.classList.contains("paused");
+  el.innerHTML = `<div class="tk-lb"><i class="tk-dot" aria-hidden="true"></i><span>Info penting</span></div><div class="tk-vp"><div class="tk-tr"><ul class="tk-list">${li}</ul><ul class="tk-list" aria-hidden="true">${li}</ul></div></div><button class="tk-btn" type="button" aria-pressed="${paused}" aria-label="${paused?"Jalankan":"Jeda"} running text" title="${paused?"Jalankan":"Jeda"}">${paused?TK_IC.play:TK_IC.pause}</button>`;
+  const w = el.querySelector(".tk-list").scrollWidth;
+  el.querySelector(".tk-tr").style.setProperty("--tkd", Math.max(25, w/60).toFixed(1)+"s");
+  el.querySelector(".tk-btn").onclick = ()=>{ el.classList.toggle("paused"); tickerRender(el, items); };
+}
+/* kunci running text + filter: tombol Filter (HP), tinggi untuk kartu sticky, bayangan saat menempel */
+(function(){ const lb=document.getElementById("lockbar"), bt=document.getElementById("lkFt"); if(!lb) return;
+  if(bt) bt.onclick=()=>{ const o=!lb.classList.contains("open"); lb.classList.toggle("open",o); bt.setAttribute("aria-expanded",o); bt.querySelector("span").textContent=o?"Tutup filter":"Filter"; };
+  const setH=()=>{ if(lb.parentElement) lb.parentElement.style.setProperty("--lockH", lb.offsetHeight+"px"); };
+  setH(); if(window.ResizeObserver) new ResizeObserver(setH).observe(lb);
+  addEventListener("scroll",()=>lb.classList.toggle("stuck", lb.getBoundingClientRect().top<=10), {passive:true});
+})();
 function render(){
+  const mini = isMini();
+  document.querySelectorAll("[data-mini]").forEach(el=>{ el.hidden = (el.dataset.mini==="hide")===mini; });
   fBulan.value=st.bulan;
   const hasRange = !!(st.dari||st.sampai);
   drawRP();
@@ -874,7 +987,7 @@ function render(){
   const nCek = (DATA.cek||[]).filter(c=>!c.hapus).length;
   insight.innerHTML = bw<0 ? "" : `<svg class="trophy" width="74" height="74" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#f59e0b"/></linearGradient></defs><ellipse cx="32" cy="58" rx="18" ry="4" fill="rgba(139,92,246,.45)"/><path d="M20 8h24v12a12 12 0 0 1-24 0Z" fill="url(#tg)"/><path d="M20 12h-7a7 7 0 0 0 7 9M44 12h7a7 7 0 0 1-7 9" fill="none" stroke="#f59e0b" stroke-width="3"/><rect x="28" y="31" width="8" height="12" fill="#f59e0b"/><rect x="21" y="43" width="22" height="9" rx="2" fill="#b45309"/><path d="m32 12 2.2 4.5 5 .7-3.6 3.5.8 5L32 23.4l-4.4 2.3.8-5-3.6-3.5 5-.7Z" fill="#fff8"/></svg>
     <div><div class="k">Insight</div><h3>${HARI[bw]} hari paling produktif ⚡</h3><p>Rata-rata ${fmt(bv)} t/hari, ${Math.round((bv/avgAll-1)*100)}% di atas rata-rata harian. Rekor: ${fmt(peak[1])} t pada ${dLabel(peak[0])}.</p></div>
-    <button type="button" onclick="document.getElementById('cek').scrollIntoView({behavior:'smooth'})">Cek data (${nCek})</button>`;
+    <button type="button" onclick="var b=document.getElementById('cekBtn');if(b&&b.getAttribute('aria-expanded')!=='true')b.click();document.getElementById('cek').scrollIntoView({behavior:'smooth'})">Cek data (${nCek})</button>`;
 
   /* tongkang terakhir */
   const last3 = [...tongAll].sort((a,b)=>b.selesai.localeCompare(a.selesai)).slice(0,3);
@@ -893,7 +1006,8 @@ function render(){
   const sm = DATA.stock.filter(s=>months.includes(s.Bulan));
   const t3 = cols(c3,{cats:sm.map(s=>s.Bulan), labels:sm.map(s=>mLabel(s.Bulan)), active:st.bulan||null, h:250,
     series:[{n:"Stok port",c:"var(--recv)",vals:sm.map(s=>s["Stok Port (t)"])},{n:"Stok mini stockpile",c:"var(--recv-2)",vals:sm.map(s=>s["Stok Mini Stockpile (t)"])}],
-    tipTitle:i=>"Akhir "+BLNF[+sm[i].Bulan.slice(5)-1]});
+    tipTitle:i=>sm[i].fromSP?`${BLNF[+sm[i].Bulan.slice(5)-1]} (berjalan, posisi ${dLabel(LAST)} · Komposisi stok)`:"Akhir "+BLNF[+sm[i].Bulan.slice(5)-1]});
+  pStk.textContent = SP_RUN ? `Port SBL + mini stockpile · EOM dari Monthly Summary · ${BLNF[+SP_RUN.slice(5)-1]} (berjalan) = Komposisi stok per ${dLabel(LAST)}` : "Port SBL + mini stockpile (EOM, dari Monthly Summary)";
   if(showTable.c3) c3.innerHTML=tableHTML(t3);
 
   /* area / blok */
@@ -965,9 +1079,63 @@ function render(){
   const fl = filterLabels();
   pinfo.textContent = `Periode: ${rangeText()} · ${fl.join(" · ")} · Dicetak ${new Date().toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"})}`;
   renderSP();
+  if(mini) renderFill(rows);
+
+  /* running text */
+  if(mini){
+    const g=groupJ(rows, r=>`${D.source[r[F.source]]} → ${DST[r.dst]??"(kosong)"}`), top=[...g.entries()].sort((x,y)=>y[1].total-x[1].total);
+    const td=[...groupJ(rows, r=>DST[r.dst]??"(kosong)").entries()].sort((x,y)=>y[1].total-x[1].total)[0];
+    const du=rows.map(r=>r[0]).sort(), lastU=du[du.length-1], lastT=rows.filter(r=>r[0]===lastU).reduce((a,r)=>a+r[F.ton],0);
+    tickerRender(ticker,[
+      {ic:"box",tone:"info",tag:"Filling mini stockpile",html:`<b>${fmt(tot)} t</b> · ${fmt(n)} rit · ${top.length} rute`},
+      top[0]&&{ic:"route",tone:"good",tag:"Rute utama",html:`<b>${top[0][0]}</b> ${fmt(top[0][1].total)} t (${tot?Math.round(top[0][1].total/tot*100):0}%)`},
+      td&&{ic:"pin",tone:"info",tag:"Tujuan terbesar",html:`<b>${td[0]}</b> menerima ${fmt(td[1].total)} t`},
+      lastU&&{ic:"cal",tone:lastU<LAST?"warn":"good",tag:"Unload terakhir",html:`${dLabel(lastU)} · <b>${fmt(lastT)} t</b>${lastU<LAST?` · data angkutan sudah s/d ${dLabel(LAST)}, cek kolom Date Unload`:""}`},
+      top.length>1&&{ic:"route",tone:"info",tag:"Rute lainnya",html:top.slice(1,4).map(([k,o])=>`${k} <b>${fmt(o.total)} t</b>`).join(" · ")},
+    ]);
+  } else {
+    const lastR=rowsAllM.filter(r=>r[0]===ld), lastTon=lastR.reduce((a,r)=>a+r[F.ton],0);
+    const lt=[...tongAll].sort((x,y)=>y.selesai.localeCompare(x.selesai))[0];
+    const dv=pm>=0?delta(mTon[mi],mTon[pm]):null, dvT=dv==null?"":` · ${dv>=0?"naik":"turun"} ${Math.abs(dv).toFixed(1).replace(".",",")}% vs ${BLNF[+months[pm].slice(5)-1]}`;
+    tickerRender(ticker,[
+      {ic:"truck",tone:dv==null?"info":dv>=0?"good":"warn",tag:st.kat===""?"Total tonase":D.kategori[+st.kat],html:`<b>${fmt(tot)} t</b> · ${fmt(n)} rit${dvT}`},
+      {ic:"cal",tone:lastTon>0?"good":"warn",tag:`Hari terakhir · ${dLabel(ld)}`,html:`<b>${fmt(lastTon)} t</b> · ${fmt(lastR.length)} rit`},
+      topB&&{ic:"pin",tone:"good",tag:"Area teratas",html:`<b>${BLOK_LABEL[topB[0]]||topB[0]}</b> ${fmt(topB[1].total)} t (${dist?Math.round(topB[1].total/dist*100):0}% distribusi)`},
+      days&&{ic:"trend",tone:"info",tag:"Rata-rata harian",html:`<b>${fmt(tot/days)} t/hari</b> · ${days} hari operasi`},
+      recv>0&&{ic:"ship",tone:"good",tag:"Penerimaan tongkang",html:`<b>${fmt(recv)} t</b> dari ${tong.length} tongkang`},
+      lt&&{ic:"ship",tone:"info",tag:"Tongkang terakhir",html:`<b>${lt.kode}</b> ${fmt(lt.ton)} t · selesai ${dLabel(lt.selesai)}`},
+      sk&&{ic:"box",tone:"info",tag:"Stok akhir",html:`<b>${fmt(sk["Closing (t)"])} t</b> · ${mLabel(sk.Bulan)}`},
+      lost>0.5&&{ic:"alert",tone:"warn",tag:"Lost tonase",html:`<b>${nf1.format(lost)} t</b> (${tot?(lost/tot*100).toFixed(2).replace(".",","):0}%)`},
+    ]);
+  }
   EXP = {rows, tot, n, dist, lost, days, tong, recv, sk, items, gk, bins, kmStep, kmLab, kmTitle: kmA<0?"semua area":D.area[kmA]};
 }
 let EXP = null, EXPSP = null;
+function renderFill(rows){
+  legend(lgF);
+  const tot = rows.reduce((a,r)=>a+r[F.ton],0), n = rows.length;
+  const g = groupJ(rows, r=>r[F.source]+"|"+r.dst);
+  const items = [...g.entries()].map(([k,o])=>{ const [s,d]=k.split("|").map(Number);
+    return {label:`${D.source[s]} → ${DST[d]??"(kosong)"}`, total:o.total, n:o.n, segs:segs(o)}; }).sort((a,b)=>b.total-a.total);
+  const tF = hbars(cFill, items, {extra:it=>fmt(it.n)+" rit"});
+  if(showTable.cFill) cFill.innerHTML = tableHTML({h:["Asal (Source) → tujuan (Dumping Location)",...tF.h.slice(1)], r:tF.r});
+  const ds = rows.map(r=>r[0]).sort(), nDst = new Set(rows.map(r=>r.dst)).size;
+  pFill.textContent = `Dibaca: asal batu (Source) → stockpile tujuan (Dumping Location) · tanggal unload ${ds.length?`${dLabel(ds[0])} – ${dLabel(ds[ds.length-1])}`:"–"}`;
+  fillSum.innerHTML = [["Total filling", fmt(tot), "ton"], ["Ritase", fmt(n), `rit · ${nf1.format(n?tot/n:0)} t/rit`], ["Stockpile tujuan", fmt(nDst), `lokasi · ${items.length} rute`]]
+    .map(x=>`<div><div class="l">${x[0]}</div><div class="v">${x[1]}<small>${x[2]}</small></div></div>`).join("");
+  /* rincian per asal batu: Asal (Source) -> Tujuan (Dumping Location) */
+  if(!rows.length){ tFill.innerHTML='<div class="empty">Tidak ada filling pada filter ini</div>'; return; }
+  const byS = new Map();
+  rows.forEach(r=>{ const s=r[F.source]; let o=byS.get(s); if(!o){ o={t:0,n:0,d:new Map()}; byS.set(s,o); }
+    o.t+=r[F.ton]; o.n++; const x=o.d.get(r.dst)||{t:0,n:0}; x.t+=r[F.ton]; x.n++; o.d.set(r.dst,x); });
+  const pct = v => tot ? nf1.format(v/tot*100)+"%" : "–";
+  tFill.innerHTML = `<table><thead><tr><th>Asal batu (Source)</th><th>Tujuan (Dumping Location)</th><th class="r">Ton</th><th class="r">Rit</th><th class="r">%</th></tr></thead><tbody>`
+    + [...byS.entries()].sort((x,y)=>y[1].t-x[1].t).map(([sIdx,o])=>
+        `<tr class="grp"><td colspan="2"><b>Dari ${D.source[sIdx]}</b></td><td class="r"><b>${fmt(o.t)}</b></td><td class="r"><b>${fmt(o.n)}</b></td><td class="r"><b>${pct(o.t)}</b></td></tr>`
+        + [...o.d.entries()].sort((x,y)=>y[1].t-x[1].t).map(([d,x])=>`<tr><td style="color:var(--muted)">${D.source[sIdx]}</td><td>→ ${DST[d]??"(kosong)"}</td><td class="r">${fmt(x.t)}</td><td class="r">${fmt(x.n)}</td><td class="r">${pct(x.t)}</td></tr>`).join("")
+      ).join("")
+    + `</tbody><tfoot><tr><td colspan="2">Total filling</td><td class="r">${fmt(tot)}</td><td class="r">${fmt(n)}</td><td class="r">100%</td></tr></tfoot></table>`;
+}
 /* ---------- stok akhir per stockpile & jenis batu (sheet Daily Summary) ---------- */
 function renderSP(){
   const S = DATA.stockpile;
@@ -989,7 +1157,7 @@ function renderSP(){
   const neg = rowsSP.flatMap(r=>r.v.map((x,k)=>x<-0.5?`${r.name} ${jName(J[k])} (−${fmt(-x)} t)`:null)).filter(Boolean);
   spNote.textContent = (neg.length?`Nilai minus perlu dicek di Daily Summary: ${neg.join(", ")}. `:"")
     + (owners.some(o=>o!=="MMJ")?`Termasuk stok ${owners.filter(o=>o!=="MMJ").join(", ")}. `:"")
-    + "Angka ini bisa berbeda dengan Stok akhir bulan (Monthly Summary) karena sumber hitungnya berbeda.";
+    + (SP_RUN ? "Angka ini juga dipakai sebagai Stok akhir bulan berjalan; bulan sebelumnya tetap dari Monthly Summary." : "Angka ini bisa berbeda dengan Stok akhir bulan (Monthly Summary) karena sumber hitungnya berbeda.");
   const pos = tot.map(x=>Math.max(x,0)), P = pos.reduce((a,b)=>a+b,0);
   cSPmix.innerHTML = `<div class="spmix"><div class="l" style="font-size:12px;color:var(--ink-2)">Total stok</div><div class="big2">${fmt(T)}<small>ton</small></div>
     <div class="split">${J.map((j,k)=>pos[k]>0?`<div style="flex:${pos[k]};background:${JCOL[j]}"></div>`:"").join("")}</div>
@@ -1157,9 +1325,12 @@ async function exportExcel(btn){
 }
 document.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>{ if(b.dataset.act==="pdf") presentPDF(); else exportExcel(b); });
 
-/* cek data (statis) */
+/* cek data (statis) - tabel tertutup sampai tombol Tampilkan diklik */
 {
   const ck = DATA.cek || [];
+  cekBtn.textContent = `Tampilkan (${fmt(ck.length)})`;
+  cekBtn.onclick = ()=>{ const open = tCek.hidden; tCek.hidden = !open; cekBtn.setAttribute("aria-expanded", open);
+    cekBtn.textContent = open ? "Sembunyikan" : `Tampilkan (${fmt(ck.length)})`; };
   pCek.textContent = `${ck.filter(c=>c.hapus).length} baris tidak dihitung (duplikat persis) · ${ck.filter(c=>!c.hapus).length} baris ditandai, tetap dihitung · cari di sheet Data Input pakai kolom No`;
   tCek.innerHTML = `<table><thead><tr><th>No (Data Input)</th><th>ID Trans</th><th>Tanggal</th><th>No DT</th><th>Jenis batu</th><th class="r">Tonase (t)</th><th>Area</th><th>Masalah</th></tr></thead><tbody>`
     + (ck.length ? ck.map(c=>`<tr><td>${c.no}</td><td>${c.id??""}</td><td>${c.d}</td><td>${c.dt??""}</td><td>${(c.jenis??"").replace("MMJ-","")}</td><td class="r">${nf1.format(c.ton)}</td><td>${c.area??""}</td><td style="${c.hapus?"color:var(--crit);font-weight:600":""}">${c.msg}</td></tr>`).join("")

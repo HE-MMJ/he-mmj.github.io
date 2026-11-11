@@ -140,6 +140,7 @@ def main():
         idcount[rec.get("ID Trans")] = idcount.get(rec.get("ID Trans"), 0) + 1
 
     rows_out = []
+    mini_raw = []  # [index baris, tanggal unload, Dumping Location]
     dims = {k: {} for k in ["jenis", "sub", "source", "area", "blok", "kerja", "shift", "vendor", "kategori", "muat", "route", "loader"]}
 
     def enc(key, v):
@@ -175,6 +176,12 @@ def main():
         work = WORK_FIX.get(rec.get("Type Work"), rec.get("Type Work"))
         muat = (rec.get("Type Muat") or "").capitalize() or None
         km = num(rec.get("Dumping Location"))
+        if kategori == "Filling Mini Stockpile":
+            # filling mini stockpile: tujuan = kolom Dumping Location, tanggal = Date Unload
+            du = to_date(rec.get("Date Unload")) or rec["_d"]
+            dst = rec.get("Dumping Location")
+            dst = " ".join(str(dst).split()) if dst not in (None, 0) else "(kosong)"
+            mini_raw.append([len(rows_out), du.strftime("%Y-%m-%d"), dst])
         rows_out.append([
             rec["_d"].strftime("%Y-%m-%d"),
             enc("jenis", rec.get("Class Splite")), enc("sub", rec.get("MMJ-Splite")), enc("source", rec.get("Source")),
@@ -304,12 +311,22 @@ def main():
     if "Day" not in dims_sorted["shift"]:
         dims_sorted["shift"].append("Day")
 
+    # tujuan filling: ejaan beda huruf besar/kecil (mis. "Stockpile IsP") disatukan ke ejaan yang paling sering
+    spell = {}
+    for _, _, dst in mini_raw:
+        spell.setdefault(dst.upper(), {}).setdefault(dst, 0)
+        spell[dst.upper()][dst] += 1
+    canon = {u: max(c, key=c.get) for u, c in spell.items()}
+    dst_list = sorted(set(canon.values()), key=lambda s: (s == "(kosong)", s))
+    dims_sorted["dst"] = dst_list
+    mini = [[i, du, dst_list.index(canon[dst.upper()])] for i, du, dst in mini_raw]
+
     cek.sort(key=lambda c: (not c["hapus"], c["no"] if isinstance(c["no"], (int, float)) else 1e9))
     last = max(r[0] for r in rows_out)
     stock = [s for s in stock if s["Bulan"] <= last[:7]]  # buang bulan yang belum berjalan
     payload = {
         "dims": dims_sorted, "rows": rows_out, "fields": fields, "tongkang": tongkang, "stock": stock,
-        "opening": opening, "cek": cek, "stockpile": stockpile,
+        "opening": opening, "cek": cek, "stockpile": stockpile, "mini": mini,
         "meta": {"raw": len(raw), "clean": len(rows_out), "dupRemoved": dup_removed,
                  "flagged": sum(1 for c in cek if not c["hapus"]), "lastDate": last,
                  "erm_ton": round(erm_ton, 2), "erm_rit": erm_rit, "source": os.path.basename(src),
