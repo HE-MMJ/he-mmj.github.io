@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0B1F3A">
-  <meta name="description" content="Dashboard Timesheet Heavy Equipment MMJ — periode November 2026">>
+  <meta name="description" content="Dashboard Timesheet Heavy Equipment MMJ — periode November 2026">
   <title>Dashboard Timesheet HE — MMJ November 2026</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <div class="dash-section" id="he">
   <header class="app-header">
     <div class="header-inner">
       <div class="header-text">
@@ -24,6 +25,10 @@
           <span class="chip-period">November 2026</span>
           <span class="sub-vendors">GIP H1 &middot; GIP H2 &middot; JTU &middot; BDK &middot; SKN</span>
         </p>
+        <nav class="header-nav" aria-label="Pindah bagian">
+          <a href="#he" class="active">Heavy Equipment</a>
+          <a href="#wt">Water Truck</a>
+        </nav>
       </div>
       <div class="header-brand">
         <img class="header-logo" src="assets/logo-mmj.png" alt="Musi Mitra Jaya">
@@ -39,11 +44,22 @@
           <span class="select-wrap">
             <select id="fVendor">
               <option value="ALL">Semua Vendor</option>
-              <option value="GIP H1">GIP H1</option>
-              <option value="GIP H2">GIP H2</option>
-              <option value="JTU">JTU</option>
-              <option value="BDK">BDK</option>
-              <option value="SKN">SKN</option>
+              <optgroup label="Heavy Equipment">
+                <option value="GIP H1">GIP H1</option>
+                <option value="GIP H2">GIP H2</option>
+                <option value="JTU">JTU</option>
+                <option value="BDK">BDK</option>
+                <option value="SKN">SKN</option>
+              </optgroup>
+              <optgroup label="Water Truck">
+                <option value="WT SKN">WT SKN</option>
+                <option value="WT TSA">WT TSA</option>
+                <option value="WT PBT">WT PBT</option>
+                <option value="WT ASA">WT ASA</option>
+                <option value="WT FBS">WT FBS</option>
+                <option value="WT TJP">WT TJP</option>
+                <option value="WT TLK">WT TLK</option>
+              </optgroup>
             </select>
           </span>
         </label>
@@ -75,6 +91,12 @@
   </div>
 
   <main class="wrap">
+    <div class="running-text">
+      <div class="running-text-track" id="runTextTrack">
+        <span class="rt-set"><span class="running-text-item">Memuat data unit&hellip;</span></span>
+      </div>
+    </div>
+
     <section class="cards" id="cards" aria-label="Ringkasan indikator"></section>
 
     <section class="panel charts">
@@ -105,10 +127,38 @@
       </div>
     </section>
 
+    <!-- Grafik Penyiraman (WT) — diletakkan langsung di bawah grafik HM -->
+    <section class="panel charts" id="wtChartPanel">
+      <div class="chart-box wt-chart-box">
+        <div class="chart-head">
+          <div class="chart-head-main">
+            <span class="wt-range-wrap">
+              <button type="button" id="wtRangeBtn" class="range-box" title="Klik untuk memilih rentang tanggal">
+                <svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M7 3v3m10-3v3M4 9h16M5 6h14a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z"/></svg>
+                <span class="range-cap">Rentang Waktu</span>
+                <span id="wtRangeVal">01 Nov &ndash; 30 Nov 2026</span>
+                <span class="range-caret" aria-hidden="true">&#9662;</span>
+              </button>
+              <input type="date" id="wtFrom" min="2026-11-01" max="2026-11-30" value="2026-11-01" hidden>
+              <input type="date" id="wtTo" min="2026-11-01" max="2026-11-30" value="2026-11-30" hidden>
+              <div id="wtCalPop" class="cal-pop" hidden></div>
+            </span>
+            <h2 id="wtChartTitle">Grafik Penyiraman (Bar) &amp; MA (Garis) &mdash; Top 15 Water Truck</h2>
+          </div>
+          <div class="seg" id="wtCmpMenu">
+            <button type="button" class="seg-btn active" data-cmp="MA">Penyiraman VS MA</button>
+            <button type="button" class="seg-btn" data-cmp="RATIO">Penyiraman VS Fuel Ration</button>
+            <button type="button" class="seg-btn" data-cmp="PA">Penyiraman VS PA</button>
+          </div>
+        </div>
+        <div class="chart-scroll"><canvas id="wtChart" height="380"></canvas></div>
+        <p class="note" id="wtChartNote"></p>
+      </div>
+    </section>
+
     <section class="panel">
       <div class="panel-head">
         <h2>Tabel Review Unit</h2>
-        <span class="panel-sub">Kinerja per unit &mdash; HM, MA, PA, fuel &middot; Min. hours <b>240 jam/bulan</b></span>
       </div>
       <div class="table-wrap">
         <table class="grid">
@@ -133,15 +183,46 @@
       <p class="note">Sisa HM = Min. hours 240 jam &minus; HM bulan berjalan tiap unit (tidak berubah saat rentang tanggal dipersempit). Nilai negatif berarti pemakaian sudah melebihi jatah bulanan.</p>
     </section>
 
+    <!-- ==================== WATER TRUCK: tabel penyiraman ==================== -->
+    <div class="dash-section wt-inline" id="wt">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Tabel Penyiraman per Unit (WT)</h2>
+          <span class="panel-sub">
+            <span class="live-chip" title="Jumlah unit WT yang sedang ditampilkan">
+              <svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M3 7h13l5 5v5h-3M3 7v10h3M6 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0Zm9 0a2 2 0 1 0 4 0 2 2 0 0 0-4 0Z"/></svg>
+              <b id="wtCountUnit">0</b><span>unit WT</span>
+            </span>
+          </span>
+        </div>
+        <div class="table-wrap">
+          <table class="grid" id="wtTable">
+            <thead>
+              <tr>
+                <th>Unit ID</th>
+                <th class="col-optional">Vendor</th>
+                <th class="col-optional">Area Kerja</th>
+                <th class="col-optional">Model / Capacity</th>
+                <th class="wt-sortable num" data-sort="P" title="Klik untuk mengurutkan">Total Penyiraman <span class="wt-arrow" data-arrow="P"></span></th>
+                <th class="num" title="Jumlah hari yang ada penyiraman dalam rentang terpilih">Hari Ada</th>
+                <th class="num">Rata-rata / Hari</th>
+                <th class="wt-sortable num" data-sort="CMP" title="Klik untuk mengurutkan"><span id="wtCmpColLabel">MA</span> <span class="wt-arrow" data-arrow="CMP"></span></th>
+              </tr>
+            </thead>
+            <tbody id="wtTbody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
     <section class="panel">
       <div class="panel-head">
         <h2>Tabel Timesheet Belum di Terima</h2>
-        <span class="panel-sub">Sumber: blok Timesheet Belum di Terima, sheet Review Unit</span>
       </div>
       <p class="legend">
-        <span class="lg"><span class="lg-chip ok">&#10003;</span> sudah diterima</span>
+        <span class="lg"><span class="lg-chip ok"><svg class="chk" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.5 L5 9 L9.5 3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span> sudah diterima</span>
         <span class="lg"><span class="lg-chip no">-</span> belum diterima</span>
-        <span class="lg"><span class="lg-chip miss">-</span> terlewat (sudah jatuh tempo)</span>
+        <span class="lg"><span class="lg-chip miss">-</span> Terlambat &gt;1 Hari</span>
       </p>
       <div class="table-wrap">
         <table class="grid grid-days">
@@ -156,14 +237,37 @@
           <tbody id="belumTbody"></tbody>
         </table>
       </div>
+      <h3 class="subtable-title">Water Truck (WT) &mdash; S = siang, M = malam</h3>
+      <div class="table-wrap">
+        <table class="grid grid-days">
+          <thead>
+            <tr>
+              <th rowspan="2">Kode Unit</th>
+              <th rowspan="2">Area</th>
+              <th class="num" colspan="2">1</th><th class="num" colspan="2">2</th><th class="num" colspan="2">3</th><th class="num" colspan="2">4</th><th class="num" colspan="2">5</th><th class="num" colspan="2">6</th><th class="num" colspan="2">7</th><th class="num" colspan="2">8</th><th class="num" colspan="2">9</th><th class="num" colspan="2">10</th><th class="num" colspan="2">11</th><th class="num" colspan="2">12</th><th class="num" colspan="2">13</th><th class="num" colspan="2">14</th><th class="num" colspan="2">15</th><th class="num" colspan="2">16</th><th class="num" colspan="2">17</th><th class="num" colspan="2">18</th><th class="num" colspan="2">19</th><th class="num" colspan="2">20</th><th class="num" colspan="2">21</th><th class="num" colspan="2">22</th><th class="num" colspan="2">23</th><th class="num" colspan="2">24</th><th class="num" colspan="2">25</th><th class="num" colspan="2">26</th><th class="num" colspan="2">27</th><th class="num" colspan="2">28</th><th class="num" colspan="2">29</th><th class="num" colspan="2">30</th>
+              <th rowspan="2" class="num">Total</th>
+            </tr>
+            <tr>
+              <th class="num day-sub">S</th><th class="num day-sub">M</th><th class="num day-sub">S</th><th class="num day-sub">M</th><th class="num day-sub">S</th><th class="num day-sub">M</th><th class="num day-sub">S</th><th class="num day-sub">M</th><th class="num day-sub">S</th><th class="num day-sub">M</th><th class="num day-sub">S</th><th class="num day-sub">M</th><th class="num day-sub">S</th><th class="num day-sub">M</th><th class="num day-sub">S</th><th class="num day-sub">M</th><th class="num day-sub">S</th><th class="num day-sub">M</th><th class="num day-sub">S</th><th class="num day-sub">M</th><th class="num day-sub">S</th><th class="num day-sub">M</th><th class="num day-sub">S</th><th class="num day-sub">M</th><th class="num day-sub">S</th><th class="num day-sub">M</th><th class="num day-sub">S</th><th class="num day-sub">M</th><th class="num day-sub">S</th><th class="num day-sub">M</th><th class="num day-sub">S</th><th class="num day-sub">M</th><th class="num day-sub">S</th><th class="num day-sub">M</th><th class="num day-sub">S</th><th class="num day-sub">M</th><th class="num day-sub">S</th><th class="num day-sub">M</th><th class="num day-sub">S</th><th class="num day-sub">M</th><th class="num day-sub">S</th><th class="num day-sub">M</th><th class="num day-sub">S</th><th class="num day-sub">M</th><th class="num day-sub">S</th><th class="num day-sub">M</th><th class="num day-sub">S</th><th class="num day-sub">M</th><th class="num day-sub">S</th><th class="num day-sub">M</th><th class="num day-sub">S</th><th class="num day-sub">M</th><th class="num day-sub">S</th><th class="num day-sub">M</th><th class="num day-sub">S</th><th class="num day-sub">M</th><th class="num day-sub">S</th><th class="num day-sub">M</th><th class="num day-sub">S</th><th class="num day-sub">M</th>
+            </tr>
+          </thead>
+          <tbody id="belumWtTbody"></tbody>
+        </table>
+      </div>
     </section>
 
     <footer class="app-footer">
-      Dashboard internal &mdash; data dari file timesheet HE MMJ November 2026.
+      Dashboard internal &mdash; data dari file timesheet HE &amp; WT MMJ November 2026.
     </footer>
   </main>
+  </div>
 
   <script src="js/data.js"></script>
+  <script src="js/wt-data.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/wt.js"></script>
 </body>
 </html>
+
+
+

@@ -1635,7 +1635,7 @@
 },{
     "Unit":  "FT-03 GIP H2",
     "Vendor":  "GIP H2",
-    "Area":  "All Area",
+    "Area":  "Area Mendis",
     "Jenis":  "Fuel Truck",
     "Src":  "review",
     "Days":  {
@@ -1711,7 +1711,7 @@
 },{
     "Unit":  "MG-03 GIP H2",
     "Vendor":  "GIP H2",
-    "Area":  "Area B 80",
+    "Area":  "Area Mendis",
     "Jenis":  "Motor Grader",
     "Src":  "review",
     "Days":  {
@@ -2015,7 +2015,7 @@
 },{
     "Unit":  "EX-02 JTU",
     "Vendor":  "JTU",
-    "Area":  "Area ISP (Enviro)",
+    "Area":  "Area ISP",
     "Jenis":  "Excavator",
     "Src":  "review",
     "Days":  {

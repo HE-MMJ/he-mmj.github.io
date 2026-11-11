@@ -1,6 +1,13 @@
 ﻿// Dashboard Timesheet HE - MMJ November 2026
 // Data berasal dari js/data.js (const DATA dan const DAILY) - tidak perlu server.
 
+// Unit Water Truck (WT SKN-01..04) sudah tampil di tabel Penyiraman (WT),
+// jadi dikeluarkan dari dashboard HE supaya tidak dobel.
+if (Array.isArray(DATA)) {
+  const tanpaWT = DATA.filter(d => (d.Jenis || '') !== 'Water Truck');
+  if (tanpaWT.length !== DATA.length) DATA.splice(0, DATA.length, ...tanpaWT);
+}
+
 // ---------- pilihan perbandingan ----------
 let CMP = 'MA'; // 'MA' | 'RATIO' | 'PA'
 
@@ -61,16 +68,35 @@ function filtered() {
   const v = document.getElementById('fVendor').value;
   const area = document.getElementById('fArea').value;
   const jenis = document.getElementById('fJenis').value;
+  // Dropdown dipakai bersama HE & WT. Nilai yang hanya ada di data WT
+  // (mis. vendor "WT TSA") tidak boleh mengosongkan tabel HE.
+  const pakaiV = v !== 'ALL' && DATA.some(d => d.Vendor === v);
+  const pakaiA = area !== 'ALL' && DATA.some(d => (d.Area || '') === area);
+  const pakaiJ = jenis !== 'ALL' && DATA.some(d => (d.Jenis || '-') === jenis);
   return DATA.filter(d =>
-    (v === 'ALL' || d.Vendor === v) &&
-    (area === 'ALL' || (d.Area || '') === area) &&
-    (jenis === 'ALL' || (d.Jenis || '-') === jenis)
+    (!pakaiV || d.Vendor === v) &&
+    (!pakaiA || (d.Area || '') === area) &&
+    (!pakaiJ || (d.Jenis || '-') === jenis)
   );
 }
 
 // ---------- rentang waktu (kalender) ----------
 // DAILYUNIT: [{ Unit, Vendor, D: { "1": [hm, mohh, bd, idle, ops, q, fuel], ... } }]
 const DU = (typeof DAILYUNIT !== 'undefined' && Array.isArray(DAILYUNIT)) ? DAILYUNIT : [];
+
+// data Water Truck (dipakai bersama: kartu ringkasan + dropdown filter)
+const WTD = (typeof WT_DATA !== 'undefined' && Array.isArray(WT_DATA)) ? WT_DATA : [];
+
+// helper filter WT (mirror dari js/wt.js) dipakai tabel Belum & dropdown
+const WT_SHIFT1 = ['TLK', 'FBS', 'ASA'];
+const CHK_OK = '<svg class="chk" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.5 L5 9 L9.5 3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function wtVendorKey(s) { return String(s || '').toUpperCase().replace(/^WT\s+/, '').trim(); }
+function wtNormKey(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, ''); }
+function wtJenisCocok(d, j) {
+  if (!j || j === 'ALL') return true;
+  if (wtNormKey(j) === 'watertruck') return true;
+  return wtNormKey(d.Model) === wtNormKey(j);
+}
 const DU_MAP = {};
 DU.forEach(r => { DU_MAP[unitKey(r.Unit)] = r.D || {}; });
 
@@ -145,6 +171,11 @@ function fmt(v, dec = 1) {
   });
 }
 
+// bulat tanpa desimal (pemisah ribuan gaya Indonesia)
+function fmt0(v) {
+  return Math.round(Number(v) || 0).toLocaleString('id-ID');
+}
+
 // skala "bulat" untuk sumbu kanan (1, 2, 2.5, 5, 10 x 10^n)
 function niceMax(v) {
   if (!(v > 0)) return 1;
@@ -156,6 +187,94 @@ function niceMax(v) {
 
 // ---------- state sortir tabel ----------
 let SORT = { col: null, dir: 1 }; // col: 'HMTotal' | 'MA' | 'Fuel' | 'FuelRatio'
+
+// ---------- running text (ticker) ----------
+// Aturan warna tiap unit. Tambah aturan baru di sini:
+//   { id, test(d) -> true bila kondisi terpenuhi, cls (kelas CSS) }
+// cls "rt-alert" = merah (kritis), "rt-warn" = oranye, "rt-ok" = hijau.
+const RUN_RULES = [
+  { id: 'hm-gt-ma', test: d => num(d.HMTotal) > num(d.MA), cls: 'rt-alert' }
+];
+
+// kecepatan geser running text (px per detik) -越小 = lebih lambat
+const RUN_TEXT_SPEED = 40;
+
+// kelas kondisi yang ditampilkan di running text (unit normal disembunyikan)
+const RUN_TEXT_SHOW = ['rt-alert', 'rt-warn'];
+
+function escHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// baris unit WT untuk running text (HM total & MA dari data WT)
+function wtRunRows() {
+  const fV = document.getElementById('fVendor').value;
+  const fA = document.getElementById('fArea').value;
+  const fJ = document.getElementById('fJenis').value;
+  const pakaiV = fV !== 'ALL' && WTD.some(d => wtVendorKey(d.Vendor) === wtVendorKey(fV));
+  const pakaiA = fA !== 'ALL' && WTD.some(d => wtNormKey(d.Area) === wtNormKey(fA));
+  const pakaiJ = fJ !== 'ALL' && WTD.some(d => wtJenisCocok(d, fJ));
+  return WTD.filter(d =>
+    (!pakaiV || wtVendorKey(d.Vendor) === wtVendorKey(fV)) &&
+    (!pakaiA || wtNormKey(d.Area) === wtNormKey(fA)) &&
+    (!pakaiJ || wtJenisCocok(d, fJ))
+  ).map(d => {
+    let hm = 0, p = 0;
+    const D = d.Days || {};
+    for (const k in D) { hm += num(D[k].HM); p += num(D[k].P); }
+    return { Unit: d.Unit, HMTotal: hm, MA: num(d.MA), P: p, Vendor: d.Vendor };
+  });
+}
+
+// bangun isi ticker: hanya unit dengan kondisi alert/warn yang ditampilkan
+function renderRunText() {
+  const track = document.getElementById('runTextTrack');
+  if (!track) return;
+  const heRows = lastRows || [];
+  const wtRows = wtRunRows();
+
+  // bikin html 1 item + daftar kelas kondisinya
+  const build = d => {
+    const cls = RUN_RULES.filter(r => { try { return r.test(d); } catch (e) { return false; } })
+      .map(r => r.cls).join(' ');
+    const hm = fmt(num(d.HMTotal), 1);
+    const ma = fmt(num(d.MA), 1) + '%';
+    const peny = (d.P !== undefined) ? ' \u00b7 Penyiraman ' + fmt0(d.P) + ' rit' : '';
+    const teks = escHtml(d.Unit || '-') + ' \u00b7 HM ' + hm + ' jam \u00b7 MA ' + ma + peny;
+    const tampil = cls.split(' ').some(c => RUN_TEXT_SHOW.indexOf(c) >= 0);
+    return { cls: cls, tampil: tampil, html: '<span class="running-text-item' + (cls ? ' ' + cls : '') + '">' + teks + '</span>' };
+  };
+
+  const heItems = heRows.map(build).filter(x => x.tampil);
+  const wtItems = wtRows.map(build).filter(x => x.tampil);
+
+  if (!heItems.length && !wtItems.length) {
+    const pesan = (heRows.length || wtRows.length)
+      ? 'Semua unit dalam kondisi baik \u2014 tidak ada peringatan.'
+      : 'Tidak ada unit yang cocok dengan filter di atas.';
+    track.innerHTML = '<span class="rt-set"><span class="running-text-item rt-ok">' + pesan + '</span></span>';
+    track.style.animationDuration = '';
+    return;
+  }
+
+  let items = heItems.map(x => x.html).join('');
+  if (wtItems.length) {
+    items += '<span class="running-text-item rt-sep">Water Truck \u00b7</span>';
+    items += wtItems.map(x => x.html).join('');
+  }
+
+  // dua set identik supaya loop marquee tidak terputus
+  track.innerHTML = '<span class="rt-set">' + items + '</span>' +
+                    '<span class="rt-set" aria-hidden="true">' + items + '</span>';
+
+  // kecepatan konstan: durasi animasi disesuaikan lebar isi (tidak ikut jumlah unit)
+  requestAnimationFrame(() => {
+    const w = track.scrollWidth / 2;           // lebar satu set = jarak satu putaran
+    if (w > 0) track.style.animationDuration = Math.round(w / RUN_TEXT_SPEED) + 's';
+  });
+}
 
 function render() {
   const hb = hitungBelum();
@@ -180,17 +299,26 @@ function render() {
   })();
   const sumRatio = rows.filter(d => num(d.FuelRatio) > 0);
   const avgRatio = sumRatio.length ? sumRatio.reduce((s, d) => s + num(d.FuelRatio), 0) / sumRatio.length : 0;
-  const totalUnit = (typeof DATA !== 'undefined' && Array.isArray(DATA)) ? DATA.length : rows.length;
+  const totalUnit = DATA.length + WTD.length;
+  const wtInfo = (typeof window.WT_summary === 'function') ? window.WT_summary() : null;
+  const wtPenyiraman = wtInfo ? wtInfo.total : WTD.reduce((s, d) => {
+    const D = d.Days || {};
+    let p = 0;
+    for (const k in D) p += num(D[k].P);
+    return s + p;
+  }, 0);
+
   const cards = [
-    ['Unit tampil', String(rows.length), '#1E40AF', 'unit', 'dari ' + totalUnit + ' unit'],
+    ['Ketersediaan Unit', String(totalUnit), '#1E40AF', 'unit', 'unit HE + WT'],
     ['Total HM (Jam)', sumHM.toFixed(1), '#2563EB', 'clock', 'jam operasi'],
     ['Rata-rata MA', avgMA.toFixed(1) + '%', '#D97706', 'activity', 'Mechanical Availability'],
     ['Rata-rata PA', avgPA.toFixed(1) + '%', '#7C3AED', 'gauge', 'Physical Availability'],
     ['Total Fuel (L)', fmt(sumFuel, 0), '#0D9488', 'fuel', 'liter terpakai'],
-    ['Rata-rata Fuel Ratio', fmt(avgRatio, 2), '#1D4ED8', 'trend', 'liter / jam']
+    ['Rata-rata Fuel Ratio', fmt(avgRatio, 2), '#1D4ED8', 'trend', 'liter / jam'],
+    ['Total Penyiraman (WT)', fmt(wtPenyiraman, 0), '#0891B2', 'fuel', 'rit penyiraman WT', 'total']
   ];
-  document.getElementById('cards').innerHTML = cards.map(([l, v, c, ic, sub]) =>
-    `<div class="card" style="--c:${c}">
+  document.getElementById('cards').innerHTML = cards.map(([l, v, c, ic, sub, key]) =>
+    `<div class="card" style="--c:${c}"${key ? ` data-wt="${key}"` : ''}>
       <div class="card-top">
         <div class="label">${l}</div>
         <span class="card-ico" aria-hidden="true"><svg viewBox="0 0 24 24">${CARD_ICO[ic] || ''}</svg></span>
@@ -246,6 +374,7 @@ function render() {
   updateChartNote();
   animateChart();
   renderBelum();
+  renderRunText();
 }
 
 // keterangan bawah grafik: jelaskan batang merah (timesheet belum lengkap)
@@ -339,6 +468,7 @@ function labelHari(h) { return h + ' ' + BULAN_ID[PERIODE.m - 1]; }
 
 function renderBelum() {
   const tb = document.getElementById('belumTbody');
+  const tbWt = document.getElementById('belumWtTbody');
   if (!tb) return;
   const raw = (typeof BELUM !== 'undefined') ? BELUM : [];
   const all = Array.isArray(raw) ? raw : (raw ? [raw] : []);
@@ -346,12 +476,31 @@ function renderBelum() {
   const fV = document.getElementById('fVendor').value;
   const fA = document.getElementById('fArea').value;
   const fJ = document.getElementById('fJenis').value;
+  const pakaiV = fV !== 'ALL' && all.some(d => d.Vendor === fV);
+  const pakaiA = fA !== 'ALL' && all.some(d => (d.Area || '') === fA);
+  const pakaiJ = fJ !== 'ALL' && all.some(d => (d.Jenis || '-') === fJ);
   const list = all.filter(d =>
-    (fV === 'ALL' || d.Vendor === fV) &&
-    (fA === 'ALL' || (d.Area || '') === fA) &&
-    (fJ === 'ALL' || (d.Jenis || '-') === fJ)
+    (!pakaiV || d.Vendor === fV) &&
+    (!pakaiA || (d.Area || '') === fA) &&
+    (!pakaiJ || (d.Jenis || '-') === fJ)
   );
 
+  // WT units (shift S/M) ikut filter yang sama
+  const wtPakaiV = fV !== 'ALL' && WTD.some(d => wtVendorKey(d.Vendor) === wtVendorKey(fV));
+  const wtPakaiA = fA !== 'ALL' && WTD.some(d => wtNormKey(d.Area) === wtNormKey(fA));
+  const wtPakaiJ = fJ !== 'ALL' && WTD.some(d => wtJenisCocok(d, fJ));
+  const wtRows = WTD.filter(d =>
+    (!wtPakaiV || wtVendorKey(d.Vendor) === wtVendorKey(fV)) &&
+    (!wtPakaiA || wtNormKey(d.Area) === wtNormKey(fA)) &&
+    (!wtPakaiJ || wtJenisCocok(d, fJ))
+  ).map(d => {
+    const single = WT_SHIFT1.indexOf(wtVendorKey(d.Vendor)) >= 0 || (d.Shift2 === false || d.Shift2 === 0);
+      const S = (Array.isArray(d.BelumS) && d.BelumS.length === 30) ? d.BelumS.slice() : new Array(30).fill(0);
+      const M = (Array.isArray(d.BelumM) && d.BelumM.length === 30) ? d.BelumM.slice() : new Array(30).fill(0);
+    return { Unit: d.Unit, Area: d.Area || '-', single: single, S: S, M: M };
+  });
+
+  // ---- HE table (1 ceklis per hari) ----
   tb.innerHTML = list.map(d => {
     const adaHari = belumDays(d);
     let total = 0;
@@ -359,9 +508,9 @@ function renderBelum() {
     for (let hari = 1; hari <= 30; hari++) {
       const ada = adaHari[hari - 1];
       if (ada) total++;
-      const telat = !ada && hari <= BBATAS;
+      const telat = !ada && hari <= BBATAS - 1;
       const cls = ada ? 'day-cell day-ok' : ('day-cell' + (telat ? ' day-miss' : ' day-none'));
-      cells += `<td class="${cls}"><span class="chip">${ada ? '✓' : '-'}</span></td>`;
+      cells += `<td class="${cls}"><span class="chip">${ada ? CHK_OK : '-'}</span></td>`;
     }
     return `<tr>
       <td><b>${d.Unit || '-'}</b></td>
@@ -369,7 +518,38 @@ function renderBelum() {
       ${cells}
       <td class="num"><b>${total}</b></td>
     </tr>`;
-  }).join('');
+  }).join('') || '<tr><td colspan="33" class="wt-empty">Tidak ada unit HE yang cocok dengan filter di atas.</td></tr>';
+
+  // ---- WT table (S/M per hari) ----
+  if (tbWt) {
+    tbWt.innerHTML = wtRows.map(d => {
+      let total = 0;
+      let cells = '';
+      for (let hari = 1; hari <= 30; hari++) {
+        const s = d.S[hari - 1], m = d.M[hari - 1];
+        const telat = !s && hari <= BBATAS - 1;
+        if (d.single) {
+          const ada = !!(s || m);
+          if (ada) total++;
+          const cls = ada ? 'day-cell day-ok' : ('day-cell' + (telat && !(s || m) ? ' day-miss' : ' day-none'));
+          cells += `<td class="${cls}" colspan="2"><span class="chip">${ada ? CHK_OK : '-'}</span></td>`;
+        } else {
+          if (s) total++;
+          if (m) total++;
+          const clsS = s ? 'day-cell day-ok' : ('day-cell' + (telat && !s ? ' day-miss' : ' day-none'));
+          const clsM = m ? 'day-cell day-ok' : ('day-cell' + (telat && !m ? ' day-miss' : ' day-none'));
+          cells += `<td class="${clsS}"><span class="chip">${s ? CHK_OK : '-'}</span></td>`;
+          cells += `<td class="${clsM}"><span class="chip">${m ? CHK_OK : '-'}</span></td>`;
+        }
+      }
+      return `<tr class="wt-row">
+        <td><b>${d.Unit || '-'}</b></td>
+        <td>${d.Area || '-'}</td>
+        ${cells}
+        <td class="num"><b>${total}</b></td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="63" class="wt-empty">Tidak ada unit WT yang cocok dengan filter di atas.</td></tr>';
+  }
 }
 
 // ---------- animasi: batang & garis tumbuh dari 0 ----------
@@ -855,16 +1035,29 @@ function drawTooltip(ctx, d, i, cfg, geo, barW, maxHM, baseY, plotH) {
 })();
 
 // ---------- isi dropdown Area Kerja sesuai vendor ----------
+// ---------- isi dropdown Area Kerja sesuai vendor (HE + WT) ----------
+// WT memakai penulisan area yang sedikit berbeda ("Area B80" vs "Area B 80"),
+// jadi digabung memakai kunci yang dinormalkan.
+function normArea(s) {
+  return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
 function fillAreas() {
   const v = document.getElementById('fVendor').value;
   const sel = document.getElementById('fArea');
   const prev = sel.value;
 
-  const areas = [...new Set(
-    DATA.filter(d => v === 'ALL' || d.Vendor === v)
-        .map(d => (d.Area || '').trim())
-        .filter(a => a)
-  )].sort((a, b) => a.localeCompare(b));
+  const map = new Map();
+  const add = a => {
+    const t = String(a || '').trim();
+    if (!t) return;
+    const k = normArea(t);
+    if (!map.has(k)) map.set(k, t);
+  };
+  DATA.filter(d => v === 'ALL' || d.Vendor === v).forEach(d => add(d.Area));
+  WTD.filter(d => v === 'ALL' || wtVendorKey(d.Vendor) === wtVendorKey(v)).forEach(d => add(d.Area));
+
+  const areas = [...map.values()].sort((a, b) => a.localeCompare(b));
 
   sel.innerHTML = '<option value="ALL">Semua Area</option>' +
     areas.map(a => `<option value="${a}">${a}</option>`).join('');
@@ -872,24 +1065,34 @@ function fillAreas() {
   sel.value = (prev === 'ALL' || areas.includes(prev)) ? prev : 'ALL';
 }
 
-// ---------- isi dropdown Unit Type (JENIS) sesuai vendor + area ----------
+// ---------- isi dropdown Unit Type sesuai vendor + area (HE jenis + WT model) ----------
 function fillJenis() {
   const v = document.getElementById('fVendor').value;
   const area = document.getElementById('fArea').value;
   const sel = document.getElementById('fJenis');
   const prev = sel.value;
 
-  const rows = DATA.filter(d =>
+  const heRows = DATA.filter(d =>
     (v === 'ALL' || d.Vendor === v) &&
     (area === 'ALL' || (d.Area || '') === area)
   );
+  const wtRows = WTD.filter(d =>
+    (v === 'ALL' || wtVendorKey(d.Vendor) === wtVendorKey(v)) &&
+    (area === 'ALL' || wtNormKey(d.Area) === wtNormKey(area))
+  );
 
-  const jenisList = [...new Set(rows.map(d => d.Jenis || '-'))].sort((a, b) => a.localeCompare(b));
+  const jenisList = [...new Set(heRows.map(d => d.Jenis || '-'))].sort((a, b) => a.localeCompare(b));
+  const modelList = [...new Set(wtRows.map(d => d.Model || '-'))]
+    .filter(m => m && m !== '-')
+    .sort((a, b) => a.localeCompare(b));
 
+  const opt = (val, label) => `<option value="${val}">${label}</option>`;
   sel.innerHTML = '<option value="ALL">Semua Unit Type</option>' +
-    jenisList.map(j => `<option value="${j}">${j}</option>`).join('');
+    (jenisList.length ? `<optgroup label="Heavy Equipment">${jenisList.map(j => opt(j, j)).join('')}</optgroup>` : '') +
+    (modelList.length ? `<optgroup label="Water Truck">${modelList.map(m => opt(m, m)).join('')}</optgroup>` : '');
 
-  sel.value = (prev === 'ALL' || jenisList.includes(prev)) ? prev : 'ALL';
+  const semua = jenisList.concat(modelList);
+  sel.value = (prev === 'ALL' || semua.includes(prev)) ? prev : 'ALL';
 }
 
 // ---------- sortir kolom tabel via klik header ----------

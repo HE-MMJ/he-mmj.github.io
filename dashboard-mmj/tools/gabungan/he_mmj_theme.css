@@ -1,0 +1,223 @@
+/* =====================================================================
+   Tema dashboard-mmj (glass indigo) untuk tab "Timesheet HE"
+   Dipakai hanya di halaman gabungan (dashboard-mmj/gabungan.html).
+   Ditempel SETELAH css/style.css dashboard HE, jadi aturan di sini yang menang.
+   ===================================================================== */
+
+:root {
+  /* token MMJ */
+  --page:#edf2fb; --bg-a:#c4d8ff; --bg-b:#e2d9ff; --bg-c:#cfeeff;
+  --side:rgba(255,255,255,.55);
+  --surface:rgba(255,255,255,.62); --surface-solid:#ffffff;
+  --surface-2:rgba(232,237,251,.9); --surface-3:#e6eafb;
+  --ink:#121833; --ink-2:#4d5677; --muted:#8a92ad;
+  --hair:rgba(20,30,80,.08); --axis:rgba(20,30,80,.16);
+  --accent:#4f46e5; --accent-2:#5650e6; --accent-soft:rgba(99,102,241,.13);
+  --good:#0f8a4f; --bad:#c2410c; --warn-bg:rgba(255,247,228,.85); --warn-ink:#7a5200;
+  --shadow:0 10px 30px rgba(40,60,140,.08), inset 0 1px 0 rgba(255,255,255,.85);
+  --blur:blur(18px) saturate(160%);
+  --h1-grad:linear-gradient(90deg,#4f46e5,#7c3aed 55%,#2a78d6);
+
+  /* token HE -> dipetakan ke MMJ */
+  --bg:transparent;
+  --card:var(--surface);
+  --border:rgba(255,255,255,.8);
+  --border-soft:var(--hair);
+  --text:var(--ink);
+  --text-2:var(--ink-2);
+  --muted-2:var(--muted);
+  --primary:var(--accent);
+  --primary-600:var(--accent-2);
+  --navy-900:var(--ink);
+  --teal:#13a08a;
+  --danger:var(--bad);
+  --ok:var(--good);
+  --font:"Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --shadow-1:var(--shadow);
+  --shadow-2:var(--shadow);
+  --shadow-3:var(--shadow);
+  --r-sm:10px; --r-md:16px; --r-lg:20px;
+}
+
+html, body { margin: 0; }
+body {
+  background:
+    radial-gradient(900px 640px at -5% -10%, var(--bg-a), transparent 62%),
+    radial-gradient(820px 620px at 105% 0%, var(--bg-b), transparent 60%),
+    radial-gradient(1000px 700px at 55% 115%, var(--bg-c), transparent 62%),
+    var(--page);
+  background-attachment: fixed;
+  color: var(--ink);
+  font: 14px/1.5 var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------------- shell sidebar (sama seperti dashboard-mmj) --------------- */
+.app {
+  display: grid;
+  grid-template-columns: 236px minmax(0, 1fr);
+  gap: 22px;
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 20px;
+}
+.side {
+  position: sticky; top: 20px; height: calc(100vh - 40px);
+  background: var(--side); border: 1px solid var(--border); border-radius: 24px;
+  padding: 20px 14px; display: flex; flex-direction: column; gap: 4px;
+  box-shadow: var(--shadow);
+  backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+}
+.logo { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 0 4px 18px; text-align: center; }
+.logo img { display: block; height: 80px; width: auto; }
+.logo .nm { font-size: 10.5px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.nav a { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 12px; text-decoration: none; color: var(--ink-2); font-weight: 500; font-size: 13.5px; }
+.nav a:hover { background: var(--accent-soft); color: var(--ink); }
+.nav svg { width: 18px; height: 18px; flex: none; }
+#heChartPanel, #wtChartPanel, #heReviewUnit, #wt, #heBelum { scroll-margin-top: 20px; }
+.theme {
+  margin-top: auto; border: 1px solid var(--hair); background: transparent; color: var(--ink-2);
+  border-radius: 10px; padding: 7px 10px; cursor: pointer; font-size: 12px;
+}
+.theme:hover { background: var(--accent-soft); color: var(--accent); }
+.wrap { max-width: none; margin: 0; padding: 0; }
+
+/* ---------------- header HE -> versi glass indigo ---------------- */
+.app-header {
+  background: linear-gradient(135deg, rgba(79,70,229,.97), rgba(124,58,237,.93) 55%, rgba(42,120,214,.93));
+  border: 0; border-radius: 22px; padding: 18px 22px 20px; margin: 0 0 16px;
+  box-shadow: var(--shadow); color: #fff;
+}
+.app-header::before { display: none; }
+.app-header::after {
+  right: -70px; top: -100px; width: 320px; height: 320px;
+  background: radial-gradient(circle, rgba(255,255,255,.20) 0%, rgba(255,255,255,0) 70%);
+}
+.app-header h1 { color: #fff; font-size: 30px; font-weight: 750; letter-spacing: -.02em; }
+.app-header h1 .h1-sep { color: rgba(255,255,255,.42); }
+.eyebrow { color: rgba(255,255,255,.74); }
+.eyebrow .dot { background: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,.22); }
+.chip-period { background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.3); color: #fff; }
+.sub-vendors { color: rgba(255,255,255,.78); }
+.header-nav a { background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.28); color: rgba(255,255,255,.92); }
+.header-nav a:hover { background: rgba(255,255,255,.26); color: #fff; }
+.header-nav a.active { background: #fff; color: var(--accent); border-color: #fff; box-shadow: 0 6px 14px rgba(20,30,80,.18); }
+.header-brand { display: none; }        /* logo dipindah ke sidebar */
+
+/* ---------------- filter bar ---------------- */
+.filterbar {
+  background: rgba(255,255,255,.62);
+  backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  border: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  border-radius: 20px; box-shadow: var(--shadow);
+  margin-bottom: 16px; top: 12px;
+}
+.filterbar-inner { padding: 12px 16px; max-width: none; }
+.field-cap { color: var(--muted); }
+.select-wrap select, select {
+  background: var(--surface-solid); border-color: var(--hair); color: var(--text); border-radius: 12px;
+}
+.btn-ghost { background: var(--surface-solid); border-color: var(--hair); color: var(--text-2); border-radius: 12px; }
+.btn-ghost:hover { background: var(--accent-soft); border-color: rgba(99,102,241,.28); color: var(--accent); }
+.live-chip { background: var(--accent-soft); border-color: rgba(99,102,241,.22); color: var(--accent); }
+.running-text { background: var(--surface); border-color: var(--border); box-shadow: var(--shadow); }
+
+/* ---------------- kartu & panel ---------------- */
+.cards { gap: 14px; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.card {
+  background: var(--surface);
+  backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  border: 1px solid var(--border); border-radius: 20px; box-shadow: var(--shadow);
+  padding: 15px 16px 16px;
+}
+.card::before { background: linear-gradient(180deg, var(--c, var(--accent)), color-mix(in srgb, var(--c, var(--accent)) 45%, transparent)); }
+.card::after { background: color-mix(in srgb, var(--c, var(--accent)) 10%, transparent); }
+.card:hover { border-color: color-mix(in srgb, var(--c, var(--accent)) 28%, var(--border)); box-shadow: var(--shadow); }
+.card .label { color: var(--ink-2); }
+.card-ico { background: color-mix(in srgb, var(--c, var(--accent)) 13%, transparent); border-radius: 12px; }
+
+.panel {
+  background: var(--surface);
+  backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  border: 1px solid var(--border); border-radius: 20px; box-shadow: var(--shadow);
+  padding: 16px 18px; margin-bottom: 16px;
+}
+.panel-head { margin-bottom: 12px; }
+.panel-head h2 { color: var(--ink); }
+.panel-sub { color: var(--muted); }
+.chart-box {
+  background: var(--surface-solid); border: 1px solid var(--hair); border-radius: 16px; padding: 12px;
+}
+.chart-head h2, #chartTitle, #wtChartTitle { color: var(--ink); }
+.note { color: var(--muted); }
+
+/* ---------------- tabel ---------------- */
+table.grid { background: var(--surface-solid); border-color: var(--hair); border-radius: 16px; }
+table.grid thead th {
+  background: var(--surface-2); color: var(--ink-2); border-bottom-color: var(--hair);
+  font-family: var(--font); letter-spacing: .04em;
+}
+table.grid tbody td, table.grid tbody th { border-bottom-color: var(--hair); }
+table.grid tbody tr:nth-child(even) { background: rgba(255,255,255,.42); }
+table.grid tbody tr:hover { background: var(--accent-soft); }
+.grid-days td.day-cell { border-bottom-color: var(--hair); }
+.day-ok .chip { background: rgba(16,185,129,.13); color: var(--good); box-shadow: inset 0 0 0 1px rgba(16,185,129,.25); }
+.day-miss .chip { background: rgba(194,65,12,.12); color: var(--bad); box-shadow: inset 0 0 0 1px rgba(194,65,12,.25); }
+.day-none .chip { background: rgba(20,30,80,.05); color: var(--muted); }
+.legend .lg-chip.ok { background: rgba(16,185,129,.13); color: var(--good); }
+.legend .lg-chip.miss { background: rgba(194,65,12,.12); color: var(--bad); }
+.legend .lg-chip.no { background: rgba(20,30,80,.06); color: var(--muted); }
+
+/* ---------------- tombol segmentasi (HM vs MA / Penyiraman VS ..) ------------- */
+.seg {
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 3px;
+  box-shadow: var(--shadow);
+}
+.seg-btn {
+  background: none; border: 0; color: var(--ink-2); font-size: 13px; font-weight: 600;
+  padding: 8px 14px; border-radius: 9px; cursor: pointer; white-space: nowrap;
+}
+.seg-btn:hover { color: var(--accent); }
+.seg-btn.active { background: var(--accent); color: #fff; }
+.range-box { background: var(--surface-solid); border-color: var(--hair); }
+.range-box:hover { background: var(--accent-soft); border-color: rgba(99,102,241,.28); }
+.range-box .ico { stroke: var(--accent); }
+
+:root[data-theme="dark"]{
+  --page:#0a0c1d; --bg-a:rgba(79,70,229,.34); --bg-b:rgba(124,58,237,.26); --bg-c:rgba(42,120,214,.22);
+  --side:rgba(22,25,54,.66); --surface:rgba(24,27,60,.62); --surface-solid:#181b3c;
+  --surface-2:rgba(42,46,94,.7); --surface-3:#272b5e;
+  --ink:#eef0ff; --ink-2:#b7bce0; --muted:#8a90b8;
+  --hair:rgba(255,255,255,.08); --border:rgba(255,255,255,.09);
+  --accent:#818cf8; --accent-soft:rgba(129,140,248,.18);
+  --good:#34d399; --bad:#f87171;
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+  --h1-grad:linear-gradient(90deg,#a5b4fc,#c4b5fd);
+}
+:root[data-theme="dark"] .app-header{
+  background: linear-gradient(135deg, rgba(49,46,129,.95), rgba(76,29,149,.92) 55%, rgba(30,58,138,.92));
+}
+:root[data-theme="dark"] table.grid tbody tr:nth-child(even){ background: rgba(255,255,255,.03); }
+:root[data-theme="dark"] table.grid tbody tr:hover{ background: var(--accent-soft); }
+/* canvas grafik digambar sendiri (latar putih) -> pertahankan panel terang agar grafik tetap tajam */
+:root[data-theme="dark"] .chart-box { background: #ffffff; }
+:root[data-theme="dark"] .chart-box .note { color: #64748B; }
+:root[data-theme="dark"] .chart-box h2,
+:root[data-theme="dark"] .chart-box .chart-head h2,
+:root[data-theme="dark"] .chart-box .chart-head-main h2,
+:root[data-theme="dark"] #chartTitle,
+:root[data-theme="dark"] #wtChartTitle { color: #121833; }
+:root[data-theme="dark"] .chart-box .range-box { background: #f3f6fb; border-color: #dde2f0; color: #121833; }
+:root[data-theme="dark"] .chart-box .range-box .range-cap,
+:root[data-theme="dark"] .chart-box .range-box .range-caret { color: #64748B; }
+:root[data-theme="dark"] .filterbar { background: rgba(24, 27, 60, .78); }
+:root[data-theme="dark"] .field-cap { color: #b7bce0; }
+:root[data-theme="dark"] .live-chip { background: rgba(129, 140, 248, .18); color: #a5b4fc; border-color: rgba(129, 140, 248, .3); }
+
+/* ---------------- responsif ---------------- */
+@media (max-width: 1000px) {
+  .app { grid-template-columns: minmax(0,1fr); gap: 14px; padding: 12px; }
+  .side { position: static; height: auto; }
+  .app-header { padding: 16px 16px 18px; }
+  .app-header h1 { font-size: 24px; }
+}

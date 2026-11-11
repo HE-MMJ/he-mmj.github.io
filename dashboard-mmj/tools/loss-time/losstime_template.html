@@ -1,0 +1,1384 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loss Time & Curah Hujan MMJ</title>
+<link rel="icon" href="__LOGO__">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ---------- tema terang "glass" (default) — sama dengan Dashboard Batu Split ---------- */
+:root{
+  color-scheme:light;
+  --page:#edf2fb; --bg-a:#c4d8ff; --bg-b:#e2d9ff; --bg-c:#cfeeff;
+  --side:rgba(255,255,255,.55); --surface:rgba(255,255,255,.62); --surface-solid:#ffffff;
+  --surface-2:rgba(232,237,251,.9); --surface-3:#e6eafb;
+  --ink:#121833; --ink-2:#4d5677; --muted:#8a92ad;
+  --grid:rgba(20,30,80,.07); --axis:rgba(20,30,80,.16); --border:rgba(255,255,255,.8); --hair:rgba(20,30,80,.08);
+  --accent:#4f46e5; --accent-2:#5650e6; --accent-soft:rgba(99,102,241,.13);
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
+  --rain:#2a78d6; --line:#d03b3b;
+  --good:#0f8a4f; --bad:#c2410c; --crit:#d03b3b;
+  --warn-bg:rgba(255,247,228,.85); --warn-ink:#7a5200;
+  --shadow:0 10px 30px rgba(40,60,140,.08),inset 0 1px 0 rgba(255,255,255,.85);
+  --blur:blur(18px) saturate(160%);
+  --k1:#4f6bed; --k2:#2a78d6; --k3:#eb6834; --k4:#13a08a;
+  --tip-bg:linear-gradient(155deg,#6366f1,#4338ca);
+  --ins-bg:linear-gradient(110deg,rgba(224,231,255,.9),rgba(237,233,254,.75) 55%,rgba(255,255,255,.55));
+  --h1-grad:linear-gradient(90deg,#4f46e5,#7c3aed 55%,#2a78d6);
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#0a0c1d; --bg-a:rgba(79,70,229,.34); --bg-b:rgba(124,58,237,.26); --bg-c:rgba(42,120,214,.22);
+  --side:rgba(22,25,54,.66); --surface:rgba(24,27,60,.62); --surface-solid:#181b3c;
+  --surface-2:rgba(42,46,94,.7); --surface-3:#272b5e;
+  --ink:#eef0ff; --ink-2:#b7bce0; --muted:#8a90b8;
+  --grid:rgba(255,255,255,.07); --axis:rgba(255,255,255,.18); --border:rgba(255,255,255,.09); --hair:rgba(255,255,255,.08);
+  --accent:#818cf8; --accent-2:#a5b4fc; --accent-soft:rgba(129,140,248,.18);
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+  --rain:#4a9bf0; --line:#f87171;
+  --good:#34d399; --bad:#f87171; --crit:#f87171;
+  --warn-bg:rgba(250,178,25,.10); --warn-ink:#f6cf74;
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+  --k1:#7b93ff; --k2:#4a9bf0; --k3:#f08a5d; --k4:#2dd4bf;
+  --tip-bg:linear-gradient(155deg,#4338ca,#1e1b4b);
+  --ins-bg:linear-gradient(110deg,rgba(67,56,202,.45),rgba(30,27,75,.55));
+  --h1-grad:linear-gradient(90deg,#a5b4fc,#c4b5fd);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:radial-gradient(900px 640px at -5% -10%,var(--bg-a),transparent 62%),radial-gradient(820px 620px at 105% 0%,var(--bg-b),transparent 60%),radial-gradient(1000px 700px at 55% 115%,var(--bg-c),transparent 62%),var(--page);background-attachment:fixed;color:var(--ink);font:14px/1.5 "Inter",system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;letter-spacing:-.003em}
+a{color:inherit}
+button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{display:grid;grid-template-columns:236px minmax(0,1fr);gap:22px;max-width:1500px;margin:0 auto;padding:20px}
+.side,.card,.mini,.kpi,.filters,.period,.insight{backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur)}
+
+/* sidebar */
+.side{position:sticky;top:20px;height:calc(100vh - 40px);background:var(--side);border:1px solid var(--border);border-radius:24px;padding:20px 14px;display:flex;flex-direction:column;gap:4px;box-shadow:var(--shadow)}
+.logo{display:flex;flex-direction:column;align-items:center;gap:8px;padding:0 4px 18px;text-align:center}
+.logo .badge{display:grid;place-items:center;width:100%}
+.logo img{display:block;height:80px;width:auto}
+.logo .nm{font-size:10.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.nav a{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;text-decoration:none;color:var(--ink-2);font-weight:500;font-size:13.5px;transition:background .15s,color .15s}
+.nav a:hover{background:var(--accent-soft);color:var(--ink)}
+.nav a.on{background:var(--accent-soft);color:var(--accent);font-weight:600;box-shadow:inset 3px 0 0 var(--accent)}
+.nav svg{width:18px;height:18px;flex:none}
+.side .lbl{font-size:10.5px;letter-spacing:.16em;color:var(--muted);margin:18px 10px 6px;text-transform:uppercase;font-weight:600}
+.qbtn{display:flex;align-items:center;gap:10px;width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--hair);background:var(--surface);color:var(--ink);font:inherit;font-weight:600;font-size:13px;cursor:pointer}
+.qbtn:hover{background:var(--accent-soft);color:var(--accent)}
+.tipcard{margin-top:auto;border-radius:18px;padding:16px;background:var(--tip-bg);color:#fff;position:relative;overflow:hidden;box-shadow:0 12px 26px rgba(67,56,202,.28)}
+.tipcard .pill{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;background:rgba(255,255,255,.18);border-radius:999px;padding:3px 10px;margin-bottom:10px}
+.tipcard b{display:block;font-size:15px;line-height:1.35;font-weight:700}
+.tipcard p{margin:6px 0 0;font-size:12px;color:rgba(255,255,255,.78)}
+.tipcard svg{position:absolute;right:-10px;bottom:-12px;opacity:.2}
+.theme{margin-top:10px;border:1px solid var(--hair);background:transparent;color:var(--ink-2);border-radius:10px;padding:7px 10px;cursor:pointer;font:inherit;font-size:12px}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px;align-items:flex-start;padding:4px 4px 16px}
+.eyebrow{font-size:11.5px;font-weight:600;letter-spacing:.16em;color:var(--accent);text-transform:uppercase}
+h1{margin:6px 0 0;font-size:36px;line-height:1.1;letter-spacing:-.025em;font-weight:750}
+h1 span{display:block;background:var(--h1-grad);-webkit-background-clip:text;background-clip:text;color:transparent;padding-bottom:2px}
+.sub{color:var(--ink-2);font-size:14px;margin-top:8px}
+.tright{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.period{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px 16px;font-weight:600;font-size:13.5px;color:var(--ink);box-shadow:var(--shadow)}
+.period svg{color:var(--accent)}
+.stamp{font-size:11.5px;color:var(--muted);text-align:right;line-height:1.4}
+.ttl{display:flex;gap:16px;align-items:center}
+.plogo,.pinfo{display:none}
+
+/* filters */
+.filters{position:sticky;top:8px;z-index:6;display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 12px;margin-bottom:18px;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow)}
+.filters label{font-size:12px;color:var(--ink-2);display:flex;align-items:center;gap:6px;font-weight:500}
+select,input[type=search]{font:inherit;font-size:13px;color:var(--ink);background:var(--surface-solid);border:1px solid var(--hair);border-radius:10px;padding:6px 9px;max-width:200px}
+input[type=search]{max-width:260px;width:100%}
+.rp{position:relative}
+.rpbtn{display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:13px;font-weight:500;color:var(--ink);background:var(--surface-solid);border:1px solid var(--hair);border-radius:10px;padding:6px 10px 6px 12px;cursor:pointer;white-space:nowrap}
+.rpbtn svg{color:var(--accent);flex:none}.rpbtn .chev{color:var(--muted)}
+.rp.on .rpbtn{background:var(--accent-soft);color:var(--accent);border-color:transparent;font-weight:600}
+.rppop{position:absolute;top:calc(100% + 8px);left:0;z-index:40;display:flex;background:var(--surface-solid);border:1px solid var(--hair);border-radius:16px;box-shadow:0 22px 50px rgba(30,40,100,.22);overflow:hidden}
+.rppop[hidden]{display:none}
+.rpp{display:flex;flex-direction:column;gap:2px;padding:10px;border-right:1px solid var(--hair);min-width:150px;background:var(--surface-2)}
+.rpp button{font:inherit;font-size:13px;text-align:left;border:0;background:none;color:var(--ink-2);padding:8px 10px;border-radius:8px;cursor:pointer;white-space:nowrap}
+.rpp button:hover{background:var(--accent-soft);color:var(--ink)}
+.rpp button.on{background:var(--accent);color:#fff}
+.rpc{padding:12px 14px}
+.rpnav{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;color:var(--muted);margin-bottom:8px}
+.rpnav button{width:30px;height:30px;border-radius:9px;border:1px solid var(--hair);background:var(--surface-solid);color:var(--ink);font-size:18px;line-height:1;cursor:pointer}
+.rpnav button:hover{background:var(--accent-soft)}
+.rpms{display:flex;gap:20px}
+.rpmh{text-align:center;font-weight:600;font-size:13px;margin-bottom:6px}
+.rpg{display:grid;grid-template-columns:repeat(7,34px);row-gap:2px}
+.rpw{font-size:11px;color:var(--muted);text-align:center;padding:4px 0}
+.rpd{height:32px;border:0;background:none;font:inherit;font-size:12.5px;color:var(--ink);cursor:pointer;border-radius:8px;font-variant-numeric:tabular-nums;position:relative;padding:0}
+.rpd:hover{background:var(--accent-soft)}
+.rpd.in{background:var(--accent-soft);border-radius:0}
+.rpd.end{background:var(--accent);color:#fff;border-radius:8px}
+.rpd:disabled{color:var(--muted);opacity:.35;cursor:default;background:none}
+.rpd.last::after{content:"";position:absolute;bottom:3px;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--accent)}
+.rpd.end.last::after{background:#fff}
+.rpf{font-size:11.5px;color:var(--muted);margin-top:8px}
+@media (max-width:700px){.rppop{flex-direction:column;width:min(calc(100vw - 48px),330px)}.rpp{flex-direction:row;flex-wrap:wrap;border-right:0;border-bottom:1px solid var(--hair);min-width:0}.rpg{grid-template-columns:repeat(7,1fr)}}
+.exp{display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:13px;font-weight:600;color:var(--ink);background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 14px;cursor:pointer;box-shadow:var(--shadow);backdrop-filter:var(--blur)}
+.exp:hover{color:var(--accent)}
+.exp.pri{background:var(--accent);color:#fff;border-color:transparent;box-shadow:0 8px 20px color-mix(in srgb,var(--accent) 32%,transparent)}
+.exp.pri:hover{color:#fff;filter:brightness(1.08)}
+.exp[disabled]{opacity:.6;cursor:progress}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font:inherit;font-size:12px;font-weight:500;border:1px solid var(--hair);background:var(--surface-solid);color:var(--ink-2);border-radius:999px;padding:6px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.chip[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:transparent;font-weight:600}
+.chip i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.reset{margin-left:auto;font:inherit;font-size:12px;background:none;border:0;color:var(--accent);cursor:pointer;font-weight:500}
+
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:16px}
+.kpi{position:relative;border-radius:22px;padding:18px 18px 10px;color:var(--ink);overflow:hidden;background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow);min-width:0}
+.kpi::before{content:"";position:absolute;right:-40px;top:-40px;width:150px;height:150px;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--c) 18%,transparent),transparent);pointer-events:none}
+.kpi .hd{display:flex;gap:12px;align-items:flex-start;position:relative}
+.kpi .ic{width:40px;height:40px;border-radius:12px;background:color-mix(in srgb,var(--c) 14%,transparent);color:var(--c);display:grid;place-items:center;flex:none;font-weight:800;font-size:13px}
+.kpi .l{font-size:11.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.kpi .v{font-size:28px;font-weight:750;letter-spacing:-.025em;line-height:1.15;margin-top:3px;white-space:nowrap}
+.kpi .v small{font-size:13px;font-weight:500;color:var(--muted);margin-left:4px}
+.kpi .d{display:inline-flex;align-items:center;font-size:11.5px;font-weight:600;margin-left:8px;padding:2px 8px;border-radius:999px;vertical-align:middle;color:var(--c);background:color-mix(in srgb,var(--c) 12%,transparent)}
+.kpi .n{font-size:12px;color:var(--ink-2);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative}
+.kpi svg.spark{display:block;width:100%;height:48px;margin-top:8px;overflow:visible}
+.kpi.off{opacity:.45}
+.kpi.clk{cursor:pointer;transition:box-shadow .15s,transform .15s}
+.kpi.clk:hover{transform:translateY(-1px)}
+.kpi.sel{box-shadow:0 0 0 2px var(--c),var(--shadow)}
+.kpi .pick{position:absolute;right:12px;top:6px;font-size:10.5px;font-weight:600;color:var(--c);z-index:1}
+.minis[hidden]{display:none!important}
+.minis .mhd{grid-column:1/-1;font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);display:flex;align-items:center;gap:8px;margin-bottom:-6px}
+.minis .mhd i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.minis .mhd button{margin-left:auto;font:inherit;font-size:11px;background:none;border:0;color:var(--accent);cursor:pointer;font-weight:600;text-transform:none;letter-spacing:0}
+.subnav{display:flex;flex-direction:column;gap:2px;margin:2px 0 4px 30px;border-left:2px solid var(--hair);padding-left:8px}
+.subnav[hidden]{display:none}
+.subnav a{padding:6px 10px!important;font-size:12.5px!important}
+.nav .caret{margin-left:auto;transition:transform .15s}
+.nav a[aria-expanded="true"] .caret{transform:rotate(90deg)}
+[data-mcp][hidden],[data-av][hidden],.dtl[hidden],.tw[hidden],input[hidden]{display:none!important}
+.tbtn.on{background:var(--accent);color:#fff;border-color:transparent}
+body[data-v="lt"] [data-view="rf"], body[data-v="rf"] [data-view="lt"],
+body[data-v="lt"] [data-nv="rf"], body[data-v="rf"] [data-nv="lt"]{display:none!important}
+.viewsw{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:4px 0 10px;padding:3px;background:var(--surface-2);border:1px solid var(--border);border-radius:12px}
+.viewsw button{display:flex;align-items:center;justify-content:center;gap:5px;font:inherit;font-size:12px;font-weight:600;border:0;background:none;color:var(--ink-2);padding:8px 4px;border-radius:9px;cursor:pointer;white-space:nowrap}
+.viewsw button svg{flex:none}
+.viewsw button[aria-selected="true"]{background:var(--accent);color:#fff;box-shadow:0 6px 14px color-mix(in srgb,var(--accent) 30%,transparent)}
+@media (max-width:1000px){.viewsw{order:2;margin:0 0 0 8px}}
+.dtl{margin-top:12px;border-top:1px dashed var(--hair);padding-top:10px}
+.dtl table{font-size:12px}
+.dtl td,.dtl th{padding:6px 8px}
+.dtl .bar{display:block;height:6px;border-radius:3px;margin-top:3px;min-width:2px}
+.minis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:18px}
+.mini{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow);min-width:0}
+.mini .dot{width:36px;height:36px;border-radius:11px;background:var(--accent-soft);display:grid;place-items:center;color:var(--accent);flex:none}
+.mini .l{font-size:12px;color:var(--ink-2)}
+.mini .v{font-size:18px;font-weight:700;letter-spacing:-.01em;white-space:nowrap}
+.mini .v small{font-size:12px;color:var(--muted);font-weight:500;margin-left:3px}
+
+/* cards */
+.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
+.grid+.grid{margin-top:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:18px;box-shadow:var(--shadow);min-width:0;scroll-margin-top:80px}
+.c12{grid-column:span 12}.c8{grid-column:span 8}.c7{grid-column:span 7}.c6{grid-column:span 6}.c5{grid-column:span 5}.c4{grid-column:span 4}
+.stack{display:flex;flex-direction:column;gap:16px;min-width:0}
+.ch{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.ch h2{font-size:13px;margin:0;letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+.ch p{margin:3px 0 0;font-size:12px;color:var(--ink-2)}
+.ctl{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.big{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:-2px 0 2px}
+.big b{font-size:30px;letter-spacing:-.02em}
+.big .vs{font-size:12px;color:var(--ink-2);width:100%}
+.tbtn{font:inherit;font-size:11px;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:4px 9px;cursor:pointer;white-space:nowrap}
+.seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:2px}
+.seg button{font:inherit;font-size:11px;border:0;background:none;color:var(--ink-2);padding:4px 10px;border-radius:8px;cursor:pointer;white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--ink-2);margin-bottom:8px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.legend i.ln{height:3px;border-radius:2px;width:14px}
+svg{display:block;overflow:visible}
+svg text{fill:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
+
+/* horizontal bars */
+.hb{display:flex;flex-direction:column;gap:7px}
+.hbr{display:grid;grid-template-columns:minmax(80px,150px) minmax(0,1fr) minmax(70px,auto);align-items:center;gap:10px;font-size:12px}
+.hbr .lb{color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hbr .tr{height:12px;display:flex;gap:2px;background:var(--surface-2);border-radius:6px;overflow:hidden}
+.hbr .tr b{display:block;height:100%}
+.hbr .vl{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--ink)}
+.hbr .vl em{font-style:normal;color:var(--muted)}
+.hbr:hover .lb{color:var(--ink)}
+.hbr.zero .lb,.hbr.zero .vl{color:var(--muted)}
+.hgrp{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent-2);margin-top:8px;padding-top:6px;border-top:1px dashed var(--hair);display:flex;align-items:center;gap:8px}
+.hgrp:first-child{margin-top:0;border-top:0;padding-top:0}
+.hgrp i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.hgrp span{margin-left:auto;color:var(--muted);font-weight:600;letter-spacing:0;text-transform:none}
+
+/* donut */
+.donut{display:grid;grid-template-columns:170px 1fr;gap:18px;align-items:center}
+.dl-list{display:flex;flex-direction:column;gap:7px;max-height:230px;overflow:auto}
+.dl-list div{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12.5px}
+.dl-list span{display:inline-flex;align-items:center;gap:9px;color:var(--ink)}
+.dl-list i{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
+.dl-list b{font-variant-numeric:tabular-nums;white-space:nowrap}
+.dl-list b small{font-weight:500;color:var(--muted);margin-left:6px}
+.split{display:flex;height:12px;border-radius:6px;overflow:hidden;gap:2px;margin:10px 0 8px}
+
+/* insight */
+.insight{display:flex;align-items:center;gap:20px;background:var(--ins-bg);border:1px solid var(--border);border-radius:22px;padding:20px 22px;box-shadow:var(--shadow)}
+.insight .icn{flex:none}
+.insight .k{font-size:11.5px;font-weight:600;letter-spacing:.16em;color:var(--accent);text-transform:uppercase}
+.insight h3{margin:4px 0;font-size:20px;letter-spacing:-.015em;font-weight:700}
+.insight p{margin:0;color:var(--ink-2);font-size:13px}
+.insight button{margin-left:auto;flex:none;font:inherit;font-weight:600;font-size:13px;color:#fff;background:var(--accent);border:0;border-radius:12px;padding:11px 18px;cursor:pointer;box-shadow:0 8px 20px color-mix(in srgb,var(--accent) 35%,transparent)}
+:root[data-theme="dark"] .insight button{color:#1e1b4b;background:#fff}
+
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--grid);text-align:left;white-space:nowrap}
+th{color:var(--ink-2);font-weight:600;background:var(--surface-3);position:sticky;top:0;font-size:11.5px;letter-spacing:.02em;z-index:1}
+td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
+td.c,th.c{text-align:center}
+td.wrap{white-space:normal;min-width:260px}
+tbody tr:hover td{background:var(--surface-2)}
+tr.tot td{font-weight:700;background:var(--surface-3)}
+.tw{overflow:auto;max-height:380px;border:1px solid var(--hair);border-radius:14px;background:var(--surface-solid)}
+.tag{display:inline-flex;align-items:center;gap:6px}
+.tag i{width:8px;height:8px;border-radius:2px;display:inline-block}
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;color:#fff}
+
+/* matrix (route x tipe) */
+.mx td.v{text-align:right;font-variant-numeric:tabular-nums;cursor:pointer}
+.mx td.v.z{color:var(--muted)}
+.mx tr.sel td{outline:2px solid var(--accent);outline-offset:-2px}
+.mx th.rt{text-align:right}
+
+/* heatmap */
+.hm{overflow-x:auto;padding-bottom:4px}
+.hm table{border-collapse:separate;border-spacing:3px;font-size:11px;width:auto;min-width:100%}
+.hm th,.hm td{border:0;padding:0;background:none;position:static}
+.hm th{font-weight:600;color:var(--muted);text-align:center;font-size:10.5px;padding:2px 0}
+.hm td.p{white-space:nowrap;padding-right:10px;color:var(--ink-2);font-size:12px;text-align:left}
+.hm td.g{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent-2);padding-top:8px}
+.hm td.cell{width:34px;min-width:30px;height:30px;border-radius:7px;text-align:center;font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink);background:var(--surface-2);cursor:default}
+.hm td.cell.z{color:transparent}
+.hm td.cell.dk{color:#fff}
+.hm td.tt{padding-left:10px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.scale{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);margin-top:8px}
+.scale b{display:block;width:140px;height:8px;border-radius:4px}
+
+#tip{position:fixed;pointer-events:none;z-index:50;background:var(--surface-solid);color:var(--ink);border:1px solid var(--hair);border-radius:12px;padding:10px 12px;font-size:12px;box-shadow:0 14px 34px rgba(30,40,100,.18);min-width:170px;max-width:340px;display:none}
+#tip .t{font-weight:700;margin-bottom:5px}
+#tip .row{display:flex;justify-content:space-between;gap:14px;font-variant-numeric:tabular-nums}
+#tip .row span:first-child{display:inline-flex;align-items:center;gap:6px;color:var(--ink-2)}
+#tip i{width:8px;height:8px;border-radius:2px;display:inline-block;flex:none}
+#tip .tot{border-top:1px solid var(--grid);margin-top:5px;padding-top:5px;font-weight:700}
+#tip .x{color:var(--muted);font-size:11px;margin-top:5px;white-space:normal}
+.note{background:var(--warn-bg);color:var(--warn-ink);border-radius:14px;padding:12px 16px;font-size:12px;margin-top:16px;display:flex;gap:8px;align-items:flex-start}
+.empty{color:var(--muted);font-size:12px;padding:30px 0;text-align:center}
+section[hidden]{display:none!important}
+.mini.clk{cursor:pointer;transition:border-color .15s}
+.mini.clk:hover{border-color:var(--accent)}
+.mini .go{margin-left:auto;color:var(--accent);font-size:12px;font-weight:600;white-space:nowrap}
+.rtitle{display:flex;align-items:center;gap:8px}
+.rtitle i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.rbig{font-size:22px;font-weight:750;letter-spacing:-.02em;margin:-4px 0 4px}
+.rbig small{font-size:12px;font-weight:500;color:var(--muted);margin-left:4px}
+.h0box{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+.h0box div{background:var(--surface-2);border-radius:12px;padding:8px 10px}
+.h0box span{display:block;font-size:11px;color:var(--ink-2)}
+.h0box b{font-size:15px;font-variant-numeric:tabular-nums}
+.grp td.v{text-align:right;font-variant-numeric:tabular-nums}
+.grp th.r,.grp td.r{text-align:right}
+.grp tr.h0 td{font-weight:700;background:var(--accent-soft)}
+.grp .sep{border-left:2px solid var(--hair)}
+.sopnote{font-size:11.5px;color:var(--ink-2);margin-top:10px;line-height:1.55}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+@media (max-width:1180px){.kpis,.minis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:1000px){
+  .app{grid-template-columns:minmax(0,1fr);padding:12px}
+  .side{min-width:0;position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:12px;border-radius:16px}
+  .logo{flex-direction:row;padding:0;gap:10px;text-align:left}
+  .logo .badge{width:auto;padding:6px 12px;border-radius:12px}
+  .logo img{height:46px}
+  .nav{display:flex;gap:4px;overflow-x:auto;flex:1 1 100%;min-width:0;order:3}
+  .nav a{padding:8px 12px;white-space:nowrap}
+  .side .lbl,.tipcard,.qbtn{display:none}
+  .theme{margin:0 0 0 auto}
+  .c8,.c7,.c6,.c5,.c4{grid-column:span 12}
+  h1{font-size:30px}
+}
+@media (max-width:620px){
+  .kpis,.minis{grid-template-columns:1fr}
+  .filters{position:relative;top:0;z-index:20}
+  .donut{grid-template-columns:1fr;justify-items:center}
+  .insight{flex-wrap:wrap}.insight button{margin-left:0}
+  h1{font-size:26px}
+}
+@page{size:A4 landscape;margin:9mm 10mm}
+@media print{
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{background:#fff!important;font-size:12px}
+  .app{display:block;padding:0;max-width:none}
+  .side,.filters,.tbtn,.seg,.insight button,.exp,.stamp,#tip,.note,#qEvt{display:none!important}
+  .card,.mini,.kpi,.period,.insight{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:none!important;background:#fff!important;border:1px solid #dde2f0!important}
+  .kpi::before{display:none}
+  .top{padding:0 0 10px;border-bottom:2px solid #4f46e5;margin-bottom:12px}
+  .plogo{display:block;height:64px;width:auto}
+  .pinfo{display:block;font-size:11px;color:#4d5677;margin-top:4px}
+  h1{font-size:26px} .sub{font-size:12px;margin-top:4px}
+  .kpis,.minis{gap:10px;margin-bottom:10px;grid-template-columns:repeat(4,minmax(0,1fr))!important}
+  .kpi{padding:12px 14px 6px} .kpi .v{font-size:21px} .kpi svg.spark{height:30px;margin-top:4px}
+  .mini{padding:8px 12px} .mini .v{font-size:15px}
+  .c8{grid-column:span 8!important}.c7{grid-column:span 7!important}.c6{grid-column:span 6!important}.c5{grid-column:span 5!important}.c4{grid-column:span 4!important}
+  .grid{gap:10px}
+  .grid.pg{break-before:page;page-break-before:always}
+  .grid.pg::before{content:attr(data-title);grid-column:1/-1;font-size:18px;font-weight:700;color:#121833;padding-bottom:6px;border-bottom:2px solid #4f46e5}
+  .card,.kpi,.mini,.insight,.hbr{break-inside:avoid;page-break-inside:avoid}
+  .card{padding:12px;border-radius:14px}
+  .tw{max-height:none;overflow:visible;border:0}
+  th{position:static}
+  .hm td.cell{height:22px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<aside class="side">
+  <div class="logo">
+    <div class="badge"><img src="__LOGO__" alt="Logo PT. Musi Mitra Jaya"></div>
+    <div class="nm">Loss Time &amp; Curah Hujan</div>
+  </div>
+  <nav class="nav" id="nav">
+    <a href="#top" class="on" id="navDash"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>Dashboard</a>
+    <div class="viewsw" id="viewSw" role="tablist" aria-label="Pilih dashboard">
+      <button type="button" role="tab" data-view-btn="lt"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>Loss Time</button>
+      <button type="button" role="tab" data-view-btn="rf"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 15a5 5 0 1 1 .9-9.9A6 6 0 0 1 19 9a4 4 0 0 1-1 7.9M8 19l-1 2M12 18l-1 3M16 19l-1 2"/></svg>Rainfall</button>
+    </div>
+    <a href="#mmj" data-nv="lt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 1 0 9 9h-9Z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15Z"/></svg>MMJ vs Bukan MMJ</a>
+    <a href="#losstime" data-nv="lt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Total Loss Time (H0)</a>
+    <a href="#route" data-nv="lt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Route &amp; Area</a>
+    <a href="#sop" data-nv="lt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4zM4 10h16M10 10v10"/></svg>Kelompok Loss Time</a>
+    <a href="#mitra" id="navMc" data-nv="lt" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 11a4 4 0 1 0-8 0M3 21a9 9 0 0 1 18 0"/><circle cx="12" cy="7" r="0.5"/></svg>Mitra Company<span class="caret" aria-hidden="true">›</span></a>
+    <div class="subnav" id="mcSub" hidden>
+      <a href="#mitra" data-mcv="t2">Per Desc Type2</a>
+      <a href="#mitra" data-mcv="day">Harian / bulanan</a>
+      <a href="#mitra" data-mcv="desc">Penyebab</a>
+    </div>
+    <a href="#hujan" data-nv="rf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>Curah Hujan per Pos</a>
+    <a href="#rfRh" data-nv="rf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Rainfall vs Rain Hours</a>
+    <a href="#rfPos" data-nv="rf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Total per Pos</a>
+    <a href="#rfCb" data-nv="rf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>Hujan vs Loss Time</a>
+    <a href="#rincian" data-nv="lt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Rincian</a>
+  </nav>
+  <div class="lbl">Aksi cepat</div>
+  <button class="qbtn" type="button" data-act="pdf"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z"/><path d="M14 3v6h6M8 14h8M8 17h5"/></svg>PDF Presentasi</button>
+  <button class="qbtn" type="button" data-act="xls" style="margin-top:6px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 8 8 8M16 8l-8 8"/></svg>Export Excel</button>
+  <div class="tipcard" id="tipcard"></div>
+  <button class="theme" id="themeBtn" type="button">Tema: gelap</button>
+</aside>
+
+<main>
+  <header class="top">
+    <div class="ttl">
+      <img class="plogo" src="__LOGO__" alt="">
+      <div>
+        <div class="eyebrow" id="eyebrow">Loss time hauling</div>
+        <h1><b id="h1t" style="font-weight:inherit">Loss Time Hauling</b><span>PT. Musi Mitra Jaya</span></h1>
+        <div class="sub" id="sub"></div>
+        <div class="pinfo" id="pinfo"></div>
+      </div>
+    </div>
+    <div class="tright">
+      <div class="period"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span id="periodTxt"></span></div>
+      <button class="exp" type="button" data-act="pdf"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z"/><path d="M14 3v6h6"/></svg>PDF</button>
+      <button class="exp pri" type="button" data-act="xls"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 21h16"/></svg>Excel</button>
+      <div class="stamp" id="stamp"></div>
+    </div>
+  </header>
+
+  <div class="filters" role="group" aria-label="Filter">
+    <label>Bulan <select id="fBulan"></select></label>
+    <div class="rp" id="rp">
+      <button class="rpbtn" id="rpBtn" type="button" aria-haspopup="dialog"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span id="rpTxt">Semua tanggal</span><svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <div class="rppop" id="rpPop" role="dialog" aria-label="Pilih rentang tanggal" hidden></div>
+    </div>
+    <div class="chips" id="fRoute" aria-label="Route"></div>
+    <label data-view="lt">Tipe <select id="fType"></select></label>
+    <button class="reset" id="reset" type="button">Reset filter</button>
+  </div>
+
+  <section class="kpis" id="ringkasan" data-view="lt"></section>
+  <section class="minis" id="minis" data-view="lt"></section>
+  <section class="kpis" id="rfKpi" data-view="rf"></section>
+
+  <section class="grid pg" data-title="Loss Time MMJ vs Bukan MMJ" id="mmj" data-view="lt" style="margin-bottom:16px">
+    <div class="card c8">
+      <div class="ch"><div><h2 id="tGt">Tren kelompok loss time (H0)</h2><p>Warna hangat = disebabkan MMJ · biru/abu/ungu = bukan MMJ</p></div>
+        <div class="ctl"><div class="seg" id="segGv" role="group" aria-label="Tampilan kelompok"><button type="button" data-v="mmj">MMJ vs Bukan MMJ</button><button type="button" data-v="grp">8 kelompok</button></div><button class="tbtn" data-t="cGt">Tabel</button></div></div>
+      <div class="big" id="bGt"></div>
+      <div class="legend" id="lgGt"></div><div id="cGt"></div>
+    </div>
+    <div class="card c4">
+      <div class="ch"><div><h2>MMJ vs Bukan MMJ</h2><p>Porsi per route &amp; H0 (abaikan filter tipe)</p></div></div>
+      <div id="cMmj"></div>
+    </div>
+  </section>
+
+  <section class="grid pg" data-title="Total Loss Time (H0) & Komposisi" data-view="lt">
+    <div class="stack c8">
+      <div class="card" id="losstime">
+        <div class="ch"><div><h2 id="t1">Total loss time (H0)</h2><p>Gabungan H1 + ISP + H2, jam yang terjadi bersamaan di beberapa route dihitung sekali</p></div>
+          <div class="ctl"><button class="tbtn dtb" type="button" data-dt="H0">Detail penyebab</button><button class="tbtn" data-t="c1">Tabel</button></div></div>
+        <div class="big" id="big1"></div>
+        <div class="legend" id="lg1"></div><div id="c1"></div><div class="dtl" id="dt_H0" hidden></div>
+      </div>
+      <div class="insight" id="insight"></div>
+    </div>
+    <div class="stack c4">
+      <div class="card">
+        <div class="ch"><div><h2>Komposisi tipe (H0)</h2><p>Porsi jam H0 · klik Mitra Company untuk detail</p></div></div>
+        <div class="donut" id="cMix"></div>
+      </div>
+      <div class="card">
+        <div class="ch"><div><h2>Route vs H0</h2><p>Jumlah 3 route dikurangi jam tumpang tindih = H0</p></div></div>
+        <div id="cSplit"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid pg" data-title="Loss Time per Route" data-view="lt">
+    <div class="card c4" id="route"><div class="ch"><div><h2 class="rtitle"><i style="background:var(--s1)"></i><span id="tR_H1">H1</span></h2><p>KM 130 – KM 70 · warna = tipe</p></div><div class="ctl"><button class="tbtn dtb" type="button" data-dt="H1">Detail</button><button class="tbtn" data-t="cR_H1">Tabel</button></div></div><div class="rbig" id="bR_H1"></div><div id="cR_H1"></div><div class="dtl" id="dt_H1" hidden></div></div>
+    <div class="card c4"><div class="ch"><div><h2 class="rtitle"><i style="background:var(--s2)"></i><span id="tR_ISP">ISP</span></h2><p>KM 70 – KM 65 · warna = tipe</p></div><div class="ctl"><button class="tbtn dtb" type="button" data-dt="ISP">Detail</button><button class="tbtn" data-t="cR_ISP">Tabel</button></div></div><div class="rbig" id="bR_ISP"></div><div id="cR_ISP"></div><div class="dtl" id="dt_ISP" hidden></div></div>
+    <div class="card c4"><div class="ch"><div><h2 class="rtitle"><i style="background:var(--s3)"></i><span id="tR_H2">H2</span></h2><p>KM 65 – KM 0 · warna = tipe</p></div><div class="ctl"><button class="tbtn dtb" type="button" data-dt="H2">Detail</button><button class="tbtn" data-t="cR_H2">Tabel</button></div></div><div class="rbig" id="bR_H2"></div><div id="cR_H2"></div><div class="dtl" id="dt_H2" hidden></div></div>
+    <div class="legend c12" id="lgR" style="justify-content:center;margin:0"></div>
+  </section>
+
+  <section class="grid pg" data-title="Kelompok Loss Time, Area & Route x Tipe" data-view="lt">
+    <div class="card c12" id="sop">
+      <div class="ch"><div><h2>Kelompok loss time</h2><p>Jam · Loss Time MMJ = Technical + Traffic + Dust &amp; Social · Bukan MMJ = Idle + NH + FM + RG + Mitra Company</p></div><button class="tbtn" id="mcBtn2" type="button">Detail Mitra Company</button></div>
+      <div class="tw grp" id="cGrp" style="max-height:none"></div>
+    </div>
+    <div class="card c12" id="area">
+      <div class="ch"><div><h2>Loss time per area kerja</h2><p id="pArea">Jam, dikelompokkan per route · warna = tipe</p></div>
+        <div class="ctl"><div class="seg" id="segArea" role="group" aria-label="Tampilan area"><button type="button" data-v="bar">Grafik</button><button type="button" data-v="tbl">Tabel per tipe</button></div></div></div>
+      <div data-av="bar"><div class="legend" id="lgA"></div><div id="cArea" class="hb"></div></div>
+      <div data-av="tbl"><div class="tw grp" id="cT5" style="max-height:none"></div></div>
+    </div>
+    <div class="card c12" id="mxCard">
+      <div class="ch"><div><h2>Rekap loss time route × tipe</h2><p>Jam · klik baris untuk filter tipe · baris MC membuka detail Mitra Company</p></div></div>
+      <div class="tw" id="cMx" style="max-height:none"></div>
+    </div>
+  </section>
+
+  <section class="grid pg" data-title="Detail Mitra Company" id="mitraSec" data-view="lt" hidden>
+    <div class="card c12" id="mitra">
+      <div class="ch"><div><h2>Detail Mitra Company</h2><p id="pMc">Jam (kejadian) · warna = route</p></div>
+        <div class="ctl"><div class="seg" id="segMc" role="group" aria-label="Sub menu Mitra Company"><button type="button" data-v="t2">Per Desc Type2</button><button type="button" data-v="day">Harian / bulanan</button><button type="button" data-v="desc">Penyebab</button></div><button class="tbtn" id="mcClose" type="button">Tutup ✕</button></div></div>
+      <div data-mcp="t2"><div class="legend" id="lgMc"></div><div id="cMc" class="hb"></div></div>
+      <div data-mcp="day"><div class="ch" style="margin-bottom:6px"><div><h2 id="tMc2" style="font-size:12px">Mitra Company harian</h2><p>Jam per Desc Type2</p></div><button class="tbtn" data-t="cMc2">Tabel</button></div><div class="legend" id="lgMc2"></div><div id="cMc2"></div></div>
+      <div data-mcp="desc"><div class="ch" style="margin-bottom:6px"><div><p>Dikelompokkan per keterangan · urut jam terbesar</p></div></div><div class="tw" id="tMc"></div></div>
+    </div>
+  </section>
+
+  <section class="grid pg" data-title="Curah Hujan per Pos" data-view="rf">
+    <div class="card c12" id="hujan">
+      <div class="ch"><div><h2 id="tHm">Curah hujan harian per pos</h2><p id="pHm">Akumulasi per hari per pos dari Input TCH</p></div>
+        <div class="ctl"><div class="seg" id="segPos" role="group" aria-label="Acuan pos ISP68" title="Acuan pos untuk rata-rata rainfall per route"><button type="button" data-v="dash">ISP68 = ISP</button><button type="button" data-v="sop">ISP68 = H1 + ISP + H2</button></div><div class="seg" id="segHm" role="group" aria-label="Nilai heatmap"><button type="button" data-v="mm">Rainfall (mm)</button><button type="button" data-v="h">Durasi hujan (jam)</button></div></div></div>
+      <div class="hm" id="cHm"></div>
+      <div class="scale" id="scHm"></div>
+    </div>
+    <div class="card c7" id="rfRh">
+      <div class="ch"><div><h2>Rainfall vs rain hours</h2><p>Batang = rata-rata rainfall pos (mm) · garis = rata-rata durasi hujan pos (jam)</p></div>
+        <div class="ctl"><div class="seg" id="segRh" role="group" aria-label="Route"></div><button class="tbtn" data-t="cRh">Tabel</button></div></div>
+      <div class="legend" id="lgRh"></div><div id="cRh"></div>
+    </div>
+    <div class="card c5" id="rfPos">
+      <div class="ch"><div><h2>Total per pos</h2><p>Rainfall (mm) · jam hujan · hari hujan</p></div><button class="tbtn" data-t="cPos">Tabel</button></div>
+      <div id="cPos" class="hb"></div>
+    </div>
+    <div class="card c12" id="rfCb">
+      <div class="ch"><div><h2>Curah hujan vs loss time hujan</h2><p>Batang = rata-rata rainfall pos (mm) · garis = loss time Idle (Rain + Slippery) dalam jam · "Semua" memakai H0</p></div>
+        <div class="ctl"><div class="seg" id="segCb" role="group" aria-label="Route"></div><button class="tbtn" data-t="cCb">Tabel</button></div></div>
+      <div class="legend" id="lgCb"></div><div id="cCb"></div>
+    </div>
+  </section>
+
+  <section class="grid pg" data-title="Rincian Kejadian" data-view="lt">
+    <div class="card c12" id="rincian">
+      <div class="ch"><div><h2>Rincian kejadian stop hauling</h2><p id="pEvt"></p></div><div class="ctl"><input type="search" id="qEvt" placeholder="Cari keterangan, area, KM…" aria-label="Cari kejadian" hidden><button class="tbtn tog" type="button" data-open="evt" aria-expanded="false">Tampilkan ▾</button></div></div>
+      <div class="tw" id="tEvt" hidden></div>
+    </div>
+    <div class="card c12" id="cek">
+      <div class="ch"><div><h2>Data yang perlu dicek</h2><p id="pCek"></p></div><button class="tbtn tog" type="button" data-open="cek" aria-expanded="false">Tampilkan ▾</button></div>
+      <div class="tw" id="tCek" hidden></div>
+    </div>
+  </section>
+
+  <div class="note" id="note"></div>
+</main>
+</div>
+<div id="tip" role="tooltip"></div>
+
+<script>
+const DATA = /*DATA*/null;
+const $ = id => document.getElementById(id);
+const BLN = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+const BLNF = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+const HARI = ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
+const ROUTES = DATA.routes;
+const RCOL = {H1:"var(--s1)", ISP:"var(--s2)", H2:"var(--s3)"};
+const TYPES = DATA.types, TN = Object.fromEntries(TYPES.map(t=>[t.c,t.n]));
+const TCOL = {R:"#2a78d6",S:"#5bb8e8",A:"#d03b3b",E:"#e0842a",M:"#8b5cf6",T:"#f2b632",NH:"#94a3b8",CP:"#e2559b",D:"#a47148",SI:"#14b8a6",FM:"#64748b",MC:"#5b4bd6",RG:"#7fb13a"};
+const MCPAL = ["#5b4bd6","#8f7cf0","#2f9e8f","#e0842a","#d9578a","#5bb8e8","#a47148","#94a3b8"];
+const POS = DATA.pos, POSR = Object.fromEntries(POS.map(p=>[p.n,p.r]));
+const nf0 = new Intl.NumberFormat("id-ID",{maximumFractionDigits:0});
+const nf1 = new Intl.NumberFormat("id-ID",{maximumFractionDigits:1,minimumFractionDigits:1});
+const nf2 = new Intl.NumberFormat("id-ID",{maximumFractionDigits:2,minimumFractionDigits:2});
+const fh = v => nf2.format(v||0);                       // jam
+const fmm = v => nf1.format(v||0);                      // mm
+const hm = h => { const m=Math.round((h||0)*60); return `${Math.floor(m/60)}j ${String(m%60).padStart(2,"0")}m`; };
+const pct = (a,b) => b>0 ? Math.round(a/b*100) : 0;
+const dLabel = d => `${+d.slice(8)} ${BLN[+d.slice(5,7)-1]} ${d.slice(0,4)}`;
+const dayName = d => HARI[new Date(d+"T00:00:00").getDay()];
+const mLabel = m => BLN[+m.slice(5,7)-1]+" "+m.slice(2,4);
+const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const FIRST = DATA.meta.first, LAST = DATA.meta.last;
+const months = [...new Set([...DATA.stop,...DATA.rain].map(r=>r.d.slice(0,7)))].sort();
+const addDays = (s,n) => { const d=new Date(s+"T00:00:00Z"); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); };
+const monthRange = m => [m+"-01", m+"-"+String(new Date(+m.slice(0,4), +m.slice(5), 0).getDate()).padStart(2,"0")];
+
+let pref = {}; try{ pref = JSON.parse(localStorage.getItem("ltDashPref")||"{}"); }catch(e){}
+const savePref = () => { try{ localStorage.setItem("ltDashPref", JSON.stringify({hm:st.hm, gv:st.gv, pos:st.pos, av:st.av, view:st.view})); }catch(e){} };
+const st = {bulan:"", dari:"", sampai:"", routes:new Set(ROUTES), type:"", hm:pref.hm||"mm", gv:pref.gv||"mmj", pos:pref.pos||"dash", cb:"all", rh:"all", mc:false, mcv:"t2", kp:"", av:pref.av||"bar", view:pref.view||"lt", dt:new Set(), open:{evt:false, cek:false}, q:""};
+/* acuan pos: "dash" = ISP68 hanya ISP · "sop" = ISP68 dipakai bersama H1, ISP & H2 (SOP 8.2) */
+const posRoutes = p => (st.pos==="sop" && POSR[p]==="ISP") ? ["H1","ISP","H2"] : [POSR[p]];
+const posIn = (p, r) => posRoutes(p).includes(r);
+const inRange = d => (!st.dari || d>=st.dari) && (!st.sampai || d<=st.sampai);
+function setMonth(m){ if(!m){ st.bulan=""; st.dari=""; st.sampai=""; } else { st.bulan=m; [st.dari,st.sampai]=monthRange(m); } render(); }
+function setRange(a,b){
+  if(a && b && a>b) [a,b]=[b,a];
+  st.dari=a||""; st.sampai=b||"";
+  const m = a ? a.slice(0,7) : "";
+  st.bulan = (a && b && monthRange(m)[0]===a && monthRange(m)[1]===b) ? m : "";
+  render();
+}
+
+/* ---------- filters ---------- */
+function opts(sel, items, all){ sel.innerHTML = `<option value="">${all}</option>` + items.map(([v,t])=>`<option value="${v}">${t}</option>`).join(""); }
+opts($("fBulan"), months.map(m=>[m, BLNF[+m.slice(5)-1]+" "+m.slice(0,4)]), "Semua bulan");
+opts($("fType"), TYPES.map(t=>[t.c, `${t.c} · ${t.n}`]), "Semua tipe");
+$("fRoute").innerHTML = ROUTES.map(r=>`<button class="chip" type="button" data-r="${r}" aria-pressed="true"><i style="background:${RCOL[r]}"></i>${r}</button>`).join("");
+$("fRoute").onclick = e => { const b=e.target.closest(".chip"); if(!b) return; const r=b.dataset.r;
+  if(st.routes.has(r) && st.routes.size>1) st.routes.delete(r); else st.routes.add(r); render(); };
+$("fBulan").onchange = ()=>setMonth($("fBulan").value);
+$("fType").onchange = ()=>{ st.type=$("fType").value; render(); };
+$("reset").onclick = ()=>{ Object.assign(st,{bulan:"",dari:"",sampai:"",type:"",routes:new Set(ROUTES),cb:"all",rh:"all",q:""}); $("qEvt").value=""; render(); };
+function openMc(v){ st.mc=true; if(typeof v==="string") st.mcv=v; render(); $("mitraSec").scrollIntoView({behavior:"smooth"}); }
+$("mcClose").onclick = ()=>{ st.mc=false; render(); $("sop").scrollIntoView({behavior:"smooth"}); };
+$("mcBtn2").onclick = ()=>openMc();
+$("navMc").onclick = e => { e.preventDefault(); if(st.mc){ st.mc=false; render(); } else openMc(); };
+$("mcSub").onclick = e => { const a=e.target.closest("[data-mcv]"); if(!a) return; e.preventDefault(); openMc(a.dataset.mcv); };
+function setView(v){ st.view=v; savePref(); render(); scrollTo({top:0, behavior:"smooth"}); }
+$("viewSw").onclick = e => { const b=e.target.closest("[data-view-btn]"); if(b) setView(b.dataset.viewBtn); };
+$("navDash").onclick = e => { e.preventDefault(); scrollTo({top:0, behavior:"smooth"}); };
+$("segArea").onclick =e => { const b=e.target.closest("button"); if(!b) return; st.av=b.dataset.v; savePref(); render(); };
+document.addEventListener("click", e => {
+  const d=e.target.closest(".dtb"); if(d){ const k=d.dataset.dt; st.dt.has(k)?st.dt.delete(k):st.dt.add(k); render(); return; }
+  const t=e.target.closest(".tog"); if(t){ const k=t.dataset.open; st.open[k]=!st.open[k]; applyOpen(); if(k==="evt") renderEvents(); }
+});
+function applyOpen(){
+  document.querySelectorAll(".tog").forEach(b=>{ const o=st.open[b.dataset.open]; b.textContent=o?"Sembunyikan ▴":"Tampilkan ▾"; b.setAttribute("aria-expanded",o); });
+  $("tEvt").hidden=!st.open.evt; $("qEvt").hidden=!st.open.evt; $("tCek").hidden=!st.open.cek;
+}
+$("segMc").onclick =e => { const b=e.target.closest("button"); if(!b) return; st.mcv=b.dataset.v; render(); };
+$("ringkasan").onclick = e => { const k=e.target.closest(".kpi.clk"); if(!k) return; st.kp = st.kp===k.dataset.kp ? "" : k.dataset.kp; render(); };
+$("ringkasan").onkeydown = e => { if(e.key!=="Enter" && e.key!==" ") return; const k=e.target.closest(".kpi.clk"); if(!k) return; e.preventDefault(); st.kp = st.kp===k.dataset.kp ? "" : k.dataset.kp; render(); };
+$("segRh").innerHTML = [["all","Semua"],...ROUTES.map(r=>[r,r])].map(([v,t])=>`<button type="button" data-v="${v}">${t}</button>`).join("");
+$("segGv").onclick = e => { const b=e.target.closest("button"); if(!b) return; st.gv=b.dataset.v; savePref(); render(); };
+$("segPos").onclick = e => { const b=e.target.closest("button"); if(!b) return; st.pos=b.dataset.v; savePref(); render(); };
+$("segRh").onclick =e => { const b=e.target.closest("button"); if(!b) return; st.rh=b.dataset.v; render(); };
+$("segHm").onclick = e => { const b=e.target.closest("button"); if(!b) return; st.hm=b.dataset.v; savePref(); render(); };
+$("segCb").innerHTML = [["all","Semua"],...ROUTES.map(r=>[r,r])].map(([v,t])=>`<button type="button" data-v="${v}">${t}</button>`).join("");
+$("segCb").onclick = e => { const b=e.target.closest("button"); if(!b) return; st.cb=b.dataset.v; render(); };
+let qT; $("qEvt").oninput = ()=>{ clearTimeout(qT); qT=setTimeout(()=>{ st.q=$("qEvt").value.trim().toLowerCase(); renderEvents(); },150); };
+
+/* ---------- range picker ---------- */
+const RP = {open:false, a:null, hover:null, view:null};
+const addMonths = (m,n) => { let y=+m.slice(0,4), mo=+m.slice(5)-1+n; y+=Math.floor(mo/12); mo=((mo%12)+12)%12; return `${y}-${String(mo+1).padStart(2,"0")}`; };
+const rangeText = () => { if(!st.dari && !st.sampai) return "Semua tanggal"; const a=st.dari||FIRST, b=st.sampai||LAST; return a===b ? dLabel(a) : `${dLabel(a).replace(a.slice(0,4)===b.slice(0,4)?/ \d{4}$/:/$^/,"")} – ${dLabel(b)}`; };
+function rpPresets(){
+  const lm = LAST.slice(0,7);
+  return [["Semua tanggal","",""],["7 hari terakhir",addDays(LAST,-6),LAST],["14 hari terakhir",addDays(LAST,-13),LAST],
+          ["Bulan ini",lm+"-01",LAST],["Bulan lalu",...monthRange(addMonths(lm,-1))]]
+    .map(p=>[p[0], p[1]&&p[1]<FIRST?FIRST:p[1], p[2]]);
+}
+function monthGrid(m){
+  const [a,z]=monthRange(m), off=(new Date(a+"T00:00:00Z").getUTCDay()+6)%7, nd=+z.slice(8);
+  let h=`<div class="rpm"><div class="rpmh">${BLNF[+m.slice(5)-1]} ${m.slice(0,4)}</div><div class="rpg">`+["Sen","Sel","Rab","Kam","Jum","Sab","Min"].map(x=>`<span class="rpw">${x}</span>`).join("")+"<span></span>".repeat(off);
+  for(let d=1; d<=nd; d++){ const ds=`${m}-${String(d).padStart(2,"0")}`, dis=ds<FIRST||ds>LAST;
+    h+=`<button type="button" class="rpd${ds===LAST?" last":""}" data-d="${ds}"${dis?" disabled":""}>${d}</button>`; }
+  return h+"</div></div>";
+}
+function paintRP(){
+  let x = RP.a || st.dari, y = RP.a ? (RP.hover||RP.a) : st.sampai;
+  if(!RP.a && (st.dari||st.sampai)){ x=st.dari||FIRST; y=st.sampai||LAST; }
+  if(x && y && x>y) [x,y]=[y,x];
+  $("rpPop").querySelectorAll(".rpd").forEach(b=>{ const d=b.dataset.d;
+    b.classList.toggle("in", !!(x&&y&&d>x&&d<y)); b.classList.toggle("end", d===x||d===y); });
+}
+function drawRP(){
+  const pop=$("rpPop");
+  $("rpTxt").textContent = rangeText();
+  $("rp").classList.toggle("on", !!(st.dari||st.sampai));
+  pop.hidden = !RP.open; $("rpBtn").setAttribute("aria-expanded", RP.open);
+  if(!RP.open) return;
+  const two = innerWidth > 760, m2 = RP.view, m1 = two ? addMonths(m2,-1) : m2, P = rpPresets();
+  pop.innerHTML = `<div class="rpp">${P.map((p,i)=>`<button type="button" data-p="${i}" class="${st.dari===p[1]&&st.sampai===p[2]?"on":""}">${p[0]}</button>`).join("")}</div>
+    <div class="rpc"><div class="rpnav"><button type="button" data-nav="-1" aria-label="Bulan sebelumnya">‹</button><span>${RP.a?`Mulai ${dLabel(RP.a)} · pilih tanggal akhir`:"Klik tanggal awal, lalu tanggal akhir"}</span><button type="button" data-nav="1" aria-label="Bulan berikutnya">›</button></div>
+    <div class="rpms">${two?monthGrid(m1):""}${monthGrid(m2)}</div><div class="rpf">Data tersedia ${dLabel(FIRST)} – ${dLabel(LAST)} · titik = data terakhir</div></div>`;
+  paintRP();
+  pop.querySelectorAll("[data-p]").forEach(b=>b.onclick=e=>{ e.stopPropagation(); const p=P[+b.dataset.p]; RP.open=false; RP.a=null; setRange(p[1],p[2]); });
+  pop.querySelectorAll("[data-nav]").forEach(b=>b.onclick=e=>{ e.stopPropagation(); RP.view=addMonths(RP.view,+b.dataset.nav); drawRP(); });
+  pop.querySelectorAll(".rpd:not(:disabled)").forEach(b=>{
+    b.onclick=e=>{ e.stopPropagation(); const d=b.dataset.d;
+      if(!RP.a){ RP.a=d; RP.hover=d; drawRP(); }
+      else { let a=RP.a, z=d; if(z<a) [a,z]=[z,a]; RP.a=null; RP.open=false; setRange(a,z); } };
+    b.onmouseenter=()=>{ if(RP.a){ RP.hover=b.dataset.d; paintRP(); } };
+  });
+}
+$("rpBtn").onclick = e => { e.stopPropagation(); RP.open=!RP.open; RP.a=null; RP.view=(st.sampai||LAST).slice(0,7); drawRP(); };
+$("rpPop").onclick = e => e.stopPropagation();
+document.addEventListener("click", ()=>{ if(RP.open){ RP.open=false; RP.a=null; drawRP(); } });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape" && RP.open){ RP.open=false; RP.a=null; drawRP(); $("rpBtn").focus(); } });
+
+/* tema */
+function applyTheme(t){ if(t==="dark") document.documentElement.setAttribute("data-theme","dark"); else document.documentElement.removeAttribute("data-theme"); $("themeBtn").textContent="Tema: "+(t==="dark"?"gelap":"terang"); }
+let theme="light"; try{theme=localStorage.getItem("dashTheme3")||"light"}catch(e){} applyTheme(theme);
+$("themeBtn").onclick=()=>{theme=theme==="dark"?"light":"dark"; applyTheme(theme); try{localStorage.setItem("dashTheme3",theme)}catch(e){} render();};
+
+/* nav aktif saat scroll */
+const navLinks=[...document.querySelectorAll("#nav a")];
+const secs=navLinks.map(a=>document.querySelector(a.getAttribute("href")));
+addEventListener("scroll",()=>{ let k=0; secs.forEach((s,i)=>{ if(s && s.offsetParent!==null && s.getBoundingClientRect().top<160) k=i; }); navLinks.forEach((a,i)=>a.classList.toggle("on",i===k)); },{passive:true});
+
+/* ---------- tooltip ---------- */
+const tipEl = $("tip");
+function tip(e, title, rows, total, extra){
+  tipEl.innerHTML = `<div class="t">${title}</div>` + rows.map(r=>`<div class="row"><span>${r.c?`<i style="background:${r.c}"></i>`:""}${r.n}</span><span>${r.v}</span></div>`).join("")
+    + (total!=null?`<div class="row tot"><span>Total</span><span>${total}</span></div>`:"") + (extra?`<div class="x">${extra}</div>`:"");
+  tipEl.style.display="block";
+  const w=tipEl.offsetWidth,h=tipEl.offsetHeight; let x=e.clientX+14,y=e.clientY+14;
+  if(x+w>innerWidth-8) x=e.clientX-w-14; if(y+h>innerHeight-8) y=e.clientY-h-14;
+  tipEl.style.left=Math.max(4,x)+"px"; tipEl.style.top=Math.max(4,y)+"px";
+}
+const hide=()=>tipEl.style.display="none";
+
+/* ---------- table toggle ---------- */
+const showTable = {};
+document.querySelectorAll(".tbtn[data-t]").forEach(b=>b.onclick=()=>{const k=b.dataset.t; showTable[k]=!showTable[k]; b.textContent=showTable[k]?"Grafik":"Tabel"; render();});
+function tableHTML(t){ return `<div class="tw"><table><thead><tr>${t.h.map((x,i)=>`<th class="${i?"r":""}">${x}</th>`).join("")}</tr></thead><tbody>${t.r.map(r=>`<tr>${r.map((x,i)=>`<td class="${i?"r":""}">${x}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`; }
+
+/* ---------- column chart ---------- */
+function niceStep(v){ if(v<=0) return 1; const p=Math.pow(10,Math.floor(Math.log10(v))); const n=v/p; return (n<=1?1:n<=2?2:n<=2.5?2.5:n<=5?5:10)*p; }
+const axisFmt = v => new Intl.NumberFormat("id-ID",{maximumFractionDigits:1}).format(v);
+/* ---------- label data grafik (angka di setiap batang / titik) ---------- */
+const DLF = {
+  full: v => new Intl.NumberFormat("id-ID",{maximumFractionDigits:1,minimumFractionDigits:1}).format(v),
+  cmp: v => { const a=Math.abs(v), f=(x,d)=>new Intl.NumberFormat("id-ID",{maximumFractionDigits:d,minimumFractionDigits:d}).format(x);
+    return a>=1e4 ? f(v/1e3,1)+"rb" : a>=1e3 ? f(v/1e3,2)+"rb" : a>=100 ? f(v,0) : f(v,1); }
+};
+const dlW = s => String(s).length*6+10;
+const dlPick = (v, room) => { const f=DLF.full(v); return dlW(f)<=room ? f : DLF.cmp(v); };
+function dlChip(x, yTop, txt, col, dy=3){ const w=dlW(txt), h=16, y=yTop-h-dy;
+  return `<g pointer-events="none"><rect x="${(x-w/2).toFixed(1)}" y="${y.toFixed(1)}" width="${w}" height="${h}" rx="8" fill="var(--surface-solid)" stroke="${col}" stroke-width="1.3"/><text x="${x.toFixed(1)}" y="${(y+11.5).toFixed(1)}" text-anchor="middle" style="font-size:10px;font-weight:700;fill:${col}">${txt}</text></g>`; }
+function dlRot(x, yTop, txt, col){ const xx=(x+3.5).toFixed(1), yy=(yTop-5).toFixed(1); return `<text x="${xx}" y="${yy}" transform="rotate(-90 ${xx} ${yy})" pointer-events="none" style="font-size:9.5px;font-weight:700;fill:${col}">${txt}</text>`; }
+function dlIn(x, yMid, txt){ return `<text x="${x.toFixed(1)}" y="${(yMid+3.4).toFixed(1)}" text-anchor="middle" pointer-events="none" style="font-size:9px;font-weight:700;fill:#fff;paint-order:stroke;stroke:rgba(0,0,0,.28);stroke-width:2.2px">${txt}</text>`; }
+function dlPt(x, y, txt, col){ return `<text x="${x.toFixed(1)}" y="${(y-8).toFixed(1)}" text-anchor="middle" pointer-events="none" style="font-size:10px;font-weight:700;fill:${col};paint-order:stroke;stroke:var(--surface-solid);stroke-width:3px">${txt}</text>`; }
+function dlPlan(vals, band){ const room=band-2, chip=vals.every(v=>!v || dlW(DLF.cmp(v))<=room), allFull=chip && vals.every(v=>!v || dlW(DLF.full(v))<=room);
+  const txt=vals.map(v=>v>0 ? (allFull ? DLF.full(v) : DLF.cmp(v)) : "");
+  return {chip, txt, head: chip ? 22 : Math.max(0,...txt.map(t=>t.length*5.7))+10}; }
+function cols(el, {cats, labels, series, h=270, tipTitle, unit="jam", vf=fh, onClick, ymax}){
+  const W = Math.max(el.clientWidth, 260), m={l:40,r:6,t:22,b:26}, iw=W-m.l-m.r;
+  const tot = cats.map((_,i)=>series.reduce((a,s)=>a+(s.vals[i]||0),0));
+  const P = dlPlan(tot, iw/cats.length), dcol = series.length===1 ? series[0].c : "var(--accent)";
+  m.t += P.head; const H = h + P.head, ih=H-m.t-m.b;
+  const raw = Math.max(...tot,0,ymax||0);
+  const step = niceStep(raw/4 || 1), nt = Math.max(1, Math.ceil(raw/step)), mx = step*nt;
+  const y = v => m.t + ih - v/mx*ih;
+  const band = iw/cats.length, bw = Math.min(30, band*0.62);
+  let g = "";
+  for(let k=0;k<=nt;k++){ const v=step*k, yy=y(v);
+    g+=`<line x1="${m.l}" x2="${W-m.r}" y1="${yy}" y2="${yy}" stroke="${k?"var(--grid)":"var(--axis)"}" ${k?'stroke-dasharray="3 4"':""}/>`;
+    g+=`<text x="${m.l-8}" y="${yy+4}" text-anchor="end">${axisFmt(v)}</text>`; }
+  g+=`<text x="${m.l-32}" y="10" text-anchor="start" style="font-size:10px">${unit}</text>`;
+  const lw = Math.max(...labels.map(l=>String(l).length),1)*6.4+10;
+  const every = Math.ceil(cats.length / Math.max(1, Math.floor(iw/lw)));
+  const top = (x,yy,w,hh,c)=>{ const r=Math.min(4,hh,w/2); return `<path d="M${x},${yy+hh} V${yy+r} Q${x},${yy} ${x+r},${yy} H${x+w-r} Q${x+w},${yy} ${x+w},${yy+r} V${yy+hh} Z" fill="${c}"/>`; };
+  cats.forEach((c,i)=>{
+    const cx = m.l + band*i + band/2;
+    if(i%every===0) g+=`<text x="${cx}" y="${H-7}" text-anchor="middle">${labels[i]}</text>`;
+    let acc=0; const vis = series.filter(s=>(s.vals[i]||0)>0);
+    vis.forEach((s,si)=>{ const v=s.vals[i]; const y0=y(acc), y1=y(acc+v); acc+=v;
+      const x=cx-bw/2, hh=Math.max(y0-y1-(si?1.5:0),0.6);
+      g += si===vis.length-1 && hh>3 ? top(x,y1,bw,hh,s.c) : `<rect x="${x}" y="${y1}" width="${bw}" height="${hh}" fill="${s.c}"/>`; });
+    if(P.txt[i]) g += P.chip ? dlChip(cx,y(tot[i]),P.txt[i],dcol) : dlRot(cx,y(tot[i]),P.txt[i],dcol);
+    g+=`<rect class="hit" data-i="${i}" x="${m.l+band*i}" y="${m.t}" width="${band}" height="${ih}" fill="transparent" style="cursor:${onClick?"pointer":"default"}"/>`;
+  });
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;height:auto" role="img" aria-label="Grafik batang">${g}</svg>`;
+  el.querySelectorAll(".hit").forEach(r=>{
+    const i=+r.dataset.i;
+    r.onmousemove=e=>tip(e, tipTitle?tipTitle(i):labels[i], series.filter(s=>(s.vals[i]||0)>0).map(s=>({n:s.n,c:s.c,v:vf(s.vals[i])+" "+unit})), series.length>1?vf(tot[i])+" "+unit:null);
+    r.onmouseleave=hide;
+    if(onClick) r.onclick=()=>{hide(); onClick(cats[i]);};
+  });
+  const withTot = series.length>1;
+  return {h:["Periode",...series.map(s=>`${s.n} (${unit})`),...(withTot?[`Total (${unit})`]:[])],
+          r:cats.map((c,i)=>[labels[i],...series.map(s=>vf(s.vals[i]||0)),...(withTot?[vf(tot[i])]:[])])};
+}
+
+/* ---------- combo: bar (mm) + line (jam) ---------- */
+function combo(el, {cats, labels, bars, line, h=260, tipTitle}){
+  const LC = line.c || "var(--line)", LU = line.u || "jam";
+  const W0 = Math.max(el.clientWidth, 260), bmax = Math.max(...bars.flatMap(s=>s.vals),0), lmax=Math.max(...line.vals,0);
+  const head = Math.max(0,...bars.flatMap(s=>s.vals).map(v=>v>0?DLF.cmp(v).length*5.7:0))+12;
+  const W = W0, H=h+head, m={l:40,r:40,t:24+head,b:26};
+  const iw=W-m.l-m.r, ih=H-m.t-m.b;
+  const s1=niceStep(bmax/4||1), n1=Math.max(1,Math.ceil(bmax/s1)), s2=niceStep(lmax/4||1), n2=Math.max(1,Math.ceil(lmax/s2));
+  const nt=Math.max(n1,n2), M1=s1*nt, M2=s2*nt;
+  const y1=v=>m.t+ih-v/M1*ih, y2=v=>m.t+ih-v/M2*ih;
+  const band=iw/cats.length, nb=bars.length, bw=Math.min(nb>1?12:26, band*(nb>1?0.26:0.6));
+  let g="";
+  for(let k=0;k<=nt;k++){ const yy=y1(s1*k);
+    g+=`<line x1="${m.l}" x2="${W-m.r}" y1="${yy}" y2="${yy}" stroke="${k?"var(--grid)":"var(--axis)"}" ${k?'stroke-dasharray="3 4"':""}/>`;
+    g+=`<text x="${m.l-8}" y="${yy+4}" text-anchor="end">${axisFmt(s1*k)}</text><text x="${W-m.r+8}" y="${yy+4}" text-anchor="start" style="fill:${LC}">${axisFmt(s2*k)}</text>`; }
+  g+=`<text x="${m.l-32}" y="10" text-anchor="start" style="font-size:10px">mm</text><text x="${W-m.r+8}" y="10" style="font-size:10px;fill:${LC}">${LU}</text>`;
+  const lw = Math.max(...labels.map(l=>String(l).length),1)*6.4+10;
+  const every = Math.ceil(cats.length / Math.max(1, Math.floor(iw/lw)));
+  const pts=[];
+  cats.forEach((c,i)=>{
+    const cx=m.l+band*i+band/2;
+    if(i%every===0) g+=`<text x="${cx}" y="${H-7}" text-anchor="middle">${labels[i]}</text>`;
+    bars.forEach((s,si)=>{ const v=s.vals[i]||0; if(v<=0) return; const x=cx-(nb*bw+(nb-1)*2)/2+si*(bw+2), yy=y1(v);
+      g+=`<rect x="${x}" y="${yy}" width="${bw}" height="${Math.max(y1(0)-yy,0.6)}" rx="${Math.min(3,bw/2)}" fill="${s.c}" opacity=".85"/>`;
+      g+=dlRot(x+bw/2-1,yy,DLF.cmp(v),s.c); });
+    pts.push([cx, y2(line.vals[i]||0)]);
+  });
+  if(pts.length){ g+=`<path d="${pts.map((p,i)=>(i?"L":"M")+p[0]+","+p[1]).join(" ")}" fill="none" stroke="${LC}" stroke-width="2.2" stroke-linejoin="round"/>`;
+    pts.forEach((p,i)=>{ if((line.vals[i]||0)>0) g+=`<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="var(--surface-solid)" stroke="${LC}" stroke-width="2"/>`; });
+    const kk=Math.max(1,Math.ceil(30/band)); pts.forEach((p,i)=>{ const v=line.vals[i]||0; if(v>0 && i%kk===0) g+=dlPt(p[0],p[1],DLF.cmp(v),LC); }); }
+  cats.forEach((c,i)=>{ g+=`<rect class="hit" data-i="${i}" x="${m.l+band*i}" y="${m.t}" width="${band}" height="${ih}" fill="transparent"/>`; });
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;height:auto" role="img" aria-label="Grafik curah hujan dan loss time">${g}</svg>`;
+  el.querySelectorAll(".hit").forEach(r=>{ const i=+r.dataset.i;
+    r.onmousemove=e=>tip(e, tipTitle?tipTitle(i):labels[i], [...bars.map(s=>({n:s.n,c:s.c,v:fmm(s.vals[i])+" mm"})),{n:line.n,c:LC,v:fh(line.vals[i])+" "+LU}]);
+    r.onmouseleave=hide; });
+  return {h:["Periode",...bars.map(s=>s.n+" (mm)"),`${line.n} (${LU})`], r:cats.map((c,i)=>[labels[i],...bars.map(s=>fmm(s.vals[i])),fh(line.vals[i])])};
+}
+
+/* ---------- horizontal bars ---------- */
+function hbars(el, items, {extra, unit="jam", vf=fh, onClick}={}){
+  const bars = items.filter(it=>!it.header);
+  if(!bars.length){ el.innerHTML='<div class="empty">Tidak ada data untuk filter ini</div>'; return {h:[],r:[]}; }
+  const mx = Math.max(...bars.map(it=>it.total), 1e-9);
+  el.innerHTML = items.map((it,k)=> it.header
+    ? `<div class="hgrp">${it.c?`<i style="background:${it.c}"></i>`:""}${esc(it.label)}<span>${vf(it.total)} ${unit}</span></div>`
+    : `<div class="hbr${it.total?"":" zero"}" data-k="${k}" style="${onClick?"cursor:pointer":""}"><span class="lb" title="${esc(it.label)}">${esc(it.label)}</span><span class="tr">${it.segs.filter(s=>s.v>0).map(s=>`<b style="width:${s.v/mx*100}%;background:${s.c}"></b>`).join("")}</span><span class="vl">${it.total?vf(it.total):"–"}${extra&&it.total?` <em>(${extra(it)})</em>`:""}</span></div>`).join("");
+  el.querySelectorAll(".hbr").forEach(row=>{ const it=items[+row.dataset.k];
+    row.onmousemove=e=>tip(e,esc(it.label),it.segs.filter(s=>s.v>0).map(s=>({n:s.n,c:s.c,v:vf(s.v)+" "+unit})).concat(it.more||[]), it.segs.length>1?vf(it.total)+" "+unit:null);
+    row.onmouseleave=hide; if(onClick) row.onclick=()=>{hide(); onClick(it);}; });
+  return {h:["Nama",...bars[0].segs.map(s=>`${s.n} (${unit})`),`Total (${unit})`], r:bars.map(it=>[it.label,...it.segs.map(s=>vf(s.v)),vf(it.total)])};
+}
+
+/* ---------- donut ---------- */
+function donut(el, parts, sub, onPick){
+  const total = parts.reduce((a,p)=>a+p.v,0);
+  if(!total){ el.innerHTML='<div class="empty">Tidak ada loss time</div>'; return; }
+  const R=68, C=2*Math.PI*R, gap=parts.filter(p=>p.v>0).length>1?3:0; let off=0, arcs="";
+  parts.forEach((p,i)=>{ if(!p.v) return; const len=p.v/total*C; const dl=Math.max(len-gap,0.5);
+    arcs+=`<circle class="arc" data-i="${i}" cx="85" cy="85" r="${R}" fill="none" stroke="${p.c}" stroke-width="22" stroke-dasharray="${dl} ${C-dl}" stroke-dashoffset="${-off}" transform="rotate(-90 85 85)"/>`;
+    const sh=p.v/total; if(sh>=0.05){ const a=(off+len/2)/C*2*Math.PI-Math.PI/2; arcs+=`<text x="${(85+R*Math.cos(a)).toFixed(1)}" y="${(85+R*Math.sin(a)+3.5).toFixed(1)}" text-anchor="middle" pointer-events="none" style="font-size:10px;font-weight:800;fill:#fff;paint-order:stroke;stroke:rgba(0,0,0,.3);stroke-width:2.4px">${Math.round(sh*100)}%</text>`; }
+    off+=len; });
+  el.innerHTML = `<svg width="170" height="170" viewBox="0 0 170 170" role="img" aria-label="Komposisi tipe"><circle cx="85" cy="85" r="${R}" fill="none" stroke="var(--surface-2)" stroke-width="22"/>${arcs}
+    <text x="85" y="82" text-anchor="middle" style="fill:var(--ink);font-size:22px;font-weight:800">${nf1.format(total)}</text><text x="85" y="102" text-anchor="middle" style="font-size:11px">${sub}</text></svg>
+    <div class="dl-list">${parts.map((p,i)=>p.v>0?`<div data-i="${i}" style="${onPick&&onPick.can(p)?"cursor:pointer":""}"><span><i style="background:${p.c}"></i>${p.n}${onPick&&onPick.can(p)?' <small style="color:var(--accent);font-weight:600">detail ›</small>':""}</span><b>${pct(p.v,total)}%<small>${fh(p.v)} j</small></b></div>`:"").join("")}</div>`;
+  el.querySelectorAll(".arc").forEach(a=>{ const p=parts[+a.dataset.i]; a.onmousemove=e=>tip(e,p.n,[{n:"Loss time",c:p.c,v:fh(p.v)+" jam"},{n:"Durasi",v:hm(p.v)},{n:"Porsi",v:pct(p.v,total)+"%"}],null,onPick&&onPick.can(p)?"Klik untuk detail":""); a.onmouseleave=hide;
+    if(onPick&&onPick.can(p)){ a.style.cursor="pointer"; a.onclick=()=>{hide(); onPick.go(p);}; } });
+  if(onPick) el.querySelectorAll(".dl-list [data-i]").forEach(r=>{ const p=parts[+r.dataset.i]; if(onPick.can(p)) r.onclick=()=>onPick.go(p); });
+}
+
+/* ---------- sparkline ---------- */
+function spark(vals){
+  const W=260,H=46,p=5; const mx=Math.max(...vals,1e-9), mn=0;
+  const xs=vals.map((_,i)=>p+i*(W-2*p)/Math.max(vals.length-1,1)), ys=vals.map(v=>H-p-(v-mn)/(mx-mn||1)*(H-2*p));
+  if(!xs.length) return "";
+  let d=`M${xs[0]},${ys[0]}`; for(let i=1;i<xs.length;i++){ const cx=(xs[i-1]+xs[i])/2; d+=` C${cx},${ys[i-1]} ${cx},${ys[i]} ${xs[i]},${ys[i]}`; }
+  const area=d+` L${xs[xs.length-1]},${H} L${xs[0]},${H} Z`;
+  const gid="sg"+Math.random().toString(36).slice(2,8);
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--c);stop-opacity:.28"/><stop offset="1" style="stop-color:var(--c);stop-opacity:0"/></linearGradient></defs><path d="${area}" fill="url(#${gid})"/><path d="${d}" fill="none" style="stroke:var(--c)" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`;
+}
+
+/* ---------- agregasi ---------- */
+function buckets(){
+  const a=st.dari||FIRST, b=st.sampai||LAST, ds=[];
+  for(let d=a; d<=b && ds.length<800; d=addDays(d,1)) ds.push(d);
+  if(ds.length<=62){ const multi=a.slice(0,7)!==b.slice(0,7);
+    return {daily:true, keys:ds, key:d=>d, label:k=>multi?`${+k.slice(8)}/${+k.slice(5,7)}`:String(+k.slice(8)), title:k=>`${dayName(k)}, ${dLabel(k)}`, n:ds.length}; }
+  const ms=months.filter(m=>m>=a.slice(0,7) && m<=b.slice(0,7));
+  return {daily:false, keys:ms, key:d=>d.slice(0,7), label:mLabel, title:k=>`${BLNF[+k.slice(5)-1]} ${k.slice(0,4)}`, n:ds.length};
+}
+const stopRows = (opt={}) => DATA.stop.filter(s=>inRange(s.d) && (opt.allRoutes||st.routes.has(s.r)) && (opt.allTypes||!st.type||s.c===st.type));
+const rainRows = () => DATA.rain.filter(x=>inRange(x.d) && posRoutes(x.p).some(r=>st.routes.has(r)));
+const sum = (arr, f) => arr.reduce((a,x)=>a+f(x),0);
+function groupBy(arr, kf, vf){ const m=new Map(); arr.forEach(x=>{ const k=kf(x); m.set(k,(m.get(k)||0)+vf(x)); }); return m; }
+const ICON = {
+  clock:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>',
+  rain:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 15a5 5 0 1 1 .9-9.9A6 6 0 0 1 19 9a4 4 0 0 1-1 7.9M8 19l-1 2M12 18l-1 3M16 19l-1 2"/></svg>',
+  mitra:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5a6.5 6.5 0 0 1 3.5 5.5"/></svg>',
+  drop:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3s6 6.4 6 11a6 6 0 0 1-12 0c0-4.6 6-11 6-11Z"/></svg>',
+  hour:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h12M6 21h12M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9"/></svg>',
+};
+let EXP = null;
+
+/* ---------- H0: gabungan 3 route tanpa jam ganda ----------
+   Per hari operasional (06.00-06.00): pada rentang jam yang sama di lebih dari satu route,
+   hanya SATU route yang dihitung, yaitu route yang memuat penyebab berprioritas tertinggi
+   (SOP 8.4: R > S > T > SI > D > lainnya; seri = beban terbesar). Bobot tiap kejadian =
+   Convert Duration / (To - From), jadi rumus Mitra terdampak sebagian (SOP 8.7) tetap ikut.
+   Dalam satu route bebannya dibatasi maksimal 100% waktu (SOP 8.4 butir 4). */
+const PRI = {R:0, S:1, T:2, SI:3, D:4};
+const tmin = s => { const m=/^(\d{1,2}):(\d{2})/.exec(s||""); if(!m) return null; const v=+m[1]*60 + +m[2]; return v<360 ? v+1440 : v; };
+DATA.stop.forEach(s=>{ const a=tmin(s.f); let b=tmin(s.t); if(a==null||b==null||!(s.h>0)){ s.a=null; return; } if(b<=a) b+=1440; s.a=a; s.b=b; s.fr=s.h/((b-a)/60); });
+function calcH0(rows){
+  const out=new Map();
+  const add=(d,c,h)=>{ let o=out.get(d); if(!o){o={t:0,c:{}};out.set(d,o);} o.t+=h; o.c[c]=(o.c[c]||0)+h; };
+  const byDay=new Map();
+  rows.forEach(s=>{ if(!(s.h>0)) return; if(s.a==null){ add(s.d,s.c,s.h); return; } let l=byDay.get(s.d); if(!l){l=[];byDay.set(s.d,l);} l.push(s); });
+  const pr = e => PRI[e.c]??5;
+  byDay.forEach((ev,d)=>{
+    const pts=[...new Set(ev.flatMap(e=>[e.a,e.b]))].sort((x,y)=>x-y);
+    for(let i=0;i<pts.length-1;i++){
+      const x=pts[i], y=pts[i+1], len=(y-x)/60;
+      const act=ev.filter(e=>e.a<=x && e.b>=y); if(!act.length) continue;
+      let best=null, bp=99, bl=-1;
+      for(const r of ROUTES){ const ar=act.filter(e=>e.r===r); if(!ar.length) continue;
+        const p=Math.min(...ar.map(pr)), l=Math.min(1, ar.reduce((a,e)=>a+e.fr,0));
+        if(p<bp || (p===bp && l>bl)){ bp=p; bl=l; best=ar; } }
+      // satu route maksimal 100% waktu: kapasitas dibagi mulai penyebab berprioritas tertinggi
+      let cap=1; [...best].sort((u,v)=>pr(u)-pr(v) || v.fr-u.fr).forEach(e=>{ const f=Math.min(e.fr,cap); if(f>1e-9){ add(d,e.c,f*len); cap-=f; } });
+    }
+  });
+  return out;
+}
+const GROUPS = [["Technical",["T"],1],["Traffic",["A","E","M"],1],["Dust & Social",["CP","D","SI"],1],["Idle",["R","S"],0],["National Holiday",["NH"],0],["Force Majeure",["FM"],0],["Regulation",["RG"],0],["Mitra Company",["MC"],0]];
+const MMJ_CODES = new Set(["T","A","E","M","CP","D","SI"]);
+const AREA_SOP = new Set(["Area Mekar Sari","Area Ketapat","Area Bintialo","Area Dayung","Area ISP","Area Selaro","Area Pakerin","Area B 80","Area Mendis"]);
+
+/* ---------- render ---------- */
+function render(){
+  document.body.dataset.v = st.view;
+  $("viewSw").querySelectorAll("[data-view-btn]").forEach(b=>b.setAttribute("aria-selected", b.dataset.viewBtn===st.view));
+  $("h1t").textContent = st.view==="lt" ? "Loss Time Hauling" : "Rainfall & Curah Hujan";
+  document.title = st.view==="lt" ? "Loss Time MMJ" : "Rainfall MMJ";
+  $("fBulan").value=st.bulan; $("fType").value=st.type; drawRP();
+  $("fRoute").querySelectorAll(".chip").forEach(b=>b.setAttribute("aria-pressed", st.routes.has(b.dataset.r)));
+  [["segHm",st.hm],["segCb",st.cb],["segRh",st.rh],["segGv",st.gv],["segPos",st.pos],["segArea",st.av]].forEach(([id,v])=>$(id).querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.v===v)));
+  const B = buckets();
+  const SA = stopRows({allTypes:true}), S = stopRows(), R = rainRows();
+  const tf = c => !st.type || c===st.type;
+  const H0m = calcH0(SA);
+  const h0Type = {}; H0m.forEach(o=>{ for(const c in o.c) h0Type[c]=(h0Type[c]||0)+o.c[c]; });
+  const g0 = codes => sum(codes.filter(tf), c=>h0Type[c]||0);
+  const H0 = g0(TYPES.map(t=>t.c));
+  const sumR = sum(S, s=>s.h), ovl = Math.max(0, sumR-H0);
+  const h0B = codes => { const cs=(codes||TYPES.map(t=>t.c)).filter(tf); const m=new Map(); H0m.forEach((o,d)=>{ const k=B.key(d); m.set(k,(m.get(k)||0)+sum(cs,c=>o.c[c]||0)); }); return B.keys.map(k=>m.get(k)||0); };
+  const h0DayVal = o => sum(TYPES.map(t=>t.c).filter(tf), c=>o.c[c]||0);
+  const evN = S.filter(s=>s.h>0).length;
+  const ltDays = [...H0m.values()].filter(o=>h0DayVal(o)>0).length;
+  const a=st.dari||FIRST, b=st.sampai||LAST;
+  const routesSel = ROUTES.filter(r=>st.routes.has(r));
+  const typeTxt = st.type ? ` · tipe ${TN[st.type]}` : "";
+  const byRoute = Object.fromEntries(ROUTES.map(r=>[r, S.filter(s=>s.r===r)]));
+  const rTot = Object.fromEntries(ROUTES.map(r=>[r, sum(byRoute[r],s=>s.h)]));
+
+  /* header */
+  $("periodTxt").textContent = `${dLabel(a).replace(a.slice(0,4)===b.slice(0,4)?/ \d{4}$/:/$^/,"")} – ${dLabel(b)}`;
+  const vw = st.view==="lt" ? "Loss time" : "Rainfall";
+  $("eyebrow").textContent = st.bulan ? `${vw} ${BLNF[+st.bulan.slice(5)-1]} ${st.bulan.slice(0,4)}` : (st.dari||st.sampai) ? `${vw} periode terpilih` : `${vw} ${months.length===1?BLNF[+months[0].slice(5)-1]+" "+months[0].slice(0,4):"2026"}`;
+  $("sub").textContent = st.view==="lt" ? `${evN} kejadian stop hauling · route ${routesSel.join(", ")}${typeTxt} · data sampai ${dLabel(LAST)}`
+    : `${R.length} catatan hujan Input TCH · route ${routesSel.join(", ")} · data sampai ${dLabel(LAST)}`;
+  $("stamp").innerHTML = `Diperbarui<br>${DATA.meta.generated||""}`;
+
+  /* KPI */
+  const perB = arr => { const m=groupBy(arr, s=>B.key(s.d), s=>s.h); return B.keys.map(k=>m.get(k)||0); };
+  const topType = arr => { const m=groupBy(arr,s=>s.c,s=>s.h); const t=[...m.entries()].sort((x,y)=>y[1]-x[1])[0]; return t&&t[1]>0?t:null; };
+  const K = [{c:"var(--k1)", ic:'<b>H0</b>', l:"Total loss time (H0)", v:fh(H0), u:"jam", d:"",
+              n:`Jumlah route ${fh(sumR)} j − overlap ${fh(ovl)} j · ${ltDays} hari ada stop`, s:h0B(), off:false}];
+  ROUTES.forEach((r,i)=>{ const arr=byRoute[r], t=rTot[r], tt=topType(arr);
+    K.push({c:["var(--k2)","var(--k3)","var(--k4)"][i], ic:`<b>${r}</b>`, l:`Loss time ${r}`, v:st.routes.has(r)?fh(t):"–", u:"jam", d:st.routes.has(r)&&H0?pct(t,H0)+"% H0":"",
+      n: !st.routes.has(r) ? "Route tidak dipilih di filter" : tt ? `Terbesar: ${TN[tt[0]]} ${fh(tt[1])} j · ${arr.filter(s=>s.h>0).length} kejadian` : "Tidak ada loss time", s:perB(arr), off:!st.routes.has(r)}); });
+  K[0].kp="H0"; ROUTES.forEach((r,i)=>{ K[i+1].kp=r; });
+  if(st.kp && st.kp!=="H0" && !st.routes.has(st.kp)) st.kp="";
+  $("ringkasan").innerHTML = K.map(k=>{ const can=!k.off; return `<div class="kpi${k.off?" off":""}${can?" clk":""}${st.kp===k.kp?" sel":""}" style="--c:${k.c}"${can?` data-kp="${k.kp}" role="button" tabindex="0" aria-pressed="${st.kp===k.kp}" title="Klik untuk rincian ${k.kp}"`:""}>${can?`<span class="pick">${st.kp===k.kp?"Tutup ✕":"Rincian ›"}</span>`:""}<div class="hd"><div class="ic">${k.ic}</div><div style="min-width:0"><div class="l">${k.l}</div><div class="v">${k.v}<small>${k.u}</small>${k.d?`<span class="d">${k.d}</span>`:""}</div></div></div><div class="n" title="${esc(k.n)}">${k.n}</div>${spark(k.s)}</div>`; }).join("");
+
+  /* rata-rata curah hujan: rata-rata dari akumulasi harian per pos pada hari hujan (bukan penjumlahan) */
+  const rainAvg = rows => { const mm=groupBy(rows, x=>x.p+"|"+x.d, x=>x.mm), hh=groupBy(rows, x=>x.p+"|"+x.d, x=>x.h);
+    const keys=[...mm.keys()].filter(k=>(mm.get(k)||0)>0 || (hh.get(k)||0)>0);
+    return {mm: keys.length?sum(keys,k=>mm.get(k)||0)/keys.length:0, h: keys.length?sum(keys,k=>hh.get(k)||0)/keys.length:0,
+            days:new Set(keys.map(k=>k.split("|")[1])).size, pos:new Set(keys.map(k=>k.split("|")[0])).size, n:keys.length}; };
+  const lMMJ = g0([...MMJ_CODES]), lIdle = g0(["R","S"]), lMC = g0(["MC"]);
+  const posMm = groupBy(R, x=>x.p, x=>x.mm), posH = groupBy(R, x=>x.p, x=>x.h);
+  const RA = rainAvg(R);
+  const nPos = RA.pos || 1, mmTot = sum(R,x=>x.mm), hTot = sum(R,x=>x.h), rainDays = RA.days;
+  const wettest = [...posMm.entries()].sort((x,y)=>y[1]-x[1])[0];
+
+  /* kartu ringkas: hanya muncul bila salah satu route (H0/H1/ISP/H2) diklik */
+  const mEl = $("minis");
+  if(!st.kp){ mEl.hidden = true; mEl.innerHTML = ""; }
+  else {
+    const isH0 = st.kp==="H0", r = st.kp;
+    const arr = isH0 ? null : byRoute[r];
+    const tot = isH0 ? H0 : rTot[r];
+    const mmj = isH0 ? lMMJ : sum(arr.filter(s=>MMJ_CODES.has(s.c)), s=>s.h);
+    const idle = isH0 ? lIdle : sum(arr.filter(s=>s.c==="R"||s.c==="S"), s=>s.h);
+    const ra = rainAvg(isH0 ? R : R.filter(x=>posIn(x.p, r)));
+    const col = isH0 ? "var(--k1)" : RCOL[r];
+    mEl.hidden = false; mEl.style.gridTemplateColumns = "repeat(3,minmax(0,1fr))";
+    mEl.innerHTML = `<div class="mhd"><i style="background:${col}"></i>Rincian ${isH0?"H0 (total tanpa overlap)":"route "+r}<button type="button" id="kpClose">Tutup ✕</button></div>` + [
+      ['<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4Z"/></svg>',"Loss Time MMJ (T + Traffic + Dust & Social)", fh(mmj), `jam · ${pct(mmj,tot)}% ${st.kp}`],
+      ['<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 15a5 5 0 1 1 .9-9.9A6 6 0 0 1 19 9a4 4 0 0 1-1 7.9"/><path d="M12 13v8"/></svg>',"Loss Time Bukan MMJ (Idle + NH + FM + RG + MC)", fh(tot-mmj), `jam · ${pct(tot-mmj,tot)}% ${st.kp} · Idle ${fh(idle)} j`],
+      [ICON.drop,`Curah hujan rata-rata per hari hujan (${ra.pos} pos)`, fmm(ra.mm), `mm/hari · ${fh(ra.h)} jam hujan/hari · ${ra.days} hari hujan`],
+    ].map(m=>`<div class="mini"><div class="dot" style="color:${col}">${m[0]}</div><div style="min-width:0"><div class="l">${m[1]}</div><div class="v">${m[2]}<small>${m[3]}</small></div></div></div>`).join("");
+    $("kpClose").onclick = ()=>{ st.kp=""; render(); };
+  }
+
+  /* C1: H0 per tipe */
+  const typesH0 = TYPES.filter(t=>tf(t.c) && (h0Type[t.c]||0)>0);
+  const series = typesH0.map(t=>({n:t.n, c:TCOL[t.c], vals:h0B([t.c])}));
+  $("lg1").innerHTML = series.map(s=>`<span><i style="background:${s.c}"></i>${s.n}</span>`).join("");
+  $("t1").textContent = `Total loss time (H0) ${B.daily?"harian":"bulanan"}`;
+  const t1 = cols($("c1"), {cats:B.keys, labels:B.keys.map(B.label), series, tipTitle:i=>B.title(B.keys[i]), onClick:B.daily?null:(m=>setMonth(m))});
+  if(showTable.c1) $("c1").innerHTML = tableHTML(t1);
+  const peak = [...H0m.entries()].map(([d,o])=>[d,h0DayVal(o)]).sort((x,y)=>y[1]-x[1])[0];
+  $("big1").innerHTML = `<b>${fh(H0)} jam</b><span class="vs">${hm(H0)} · jumlah route ${fh(sumR)} − tumpang tindih ${fh(ovl)} = H0 · ${ltDays} hari ada stop hauling${peak&&peak[1]>0?` · tertinggi ${dLabel(peak[0])} (${fh(peak[1])} jam)`:""}${B.daily?"":" · klik batang untuk lihat harian"}</span>`;
+
+  /* grafik per route (satu grafik per route, skala sama) */
+  const rSeries = {}; let rMax = 0;
+  ROUTES.forEach(r=>{ const used=TYPES.filter(t=>byRoute[r].some(s=>s.c===t.c && s.h>0));
+    rSeries[r] = used.map(t=>{ const m=groupBy(byRoute[r].filter(s=>s.c===t.c), s=>B.key(s.d), s=>s.h); return {n:t.n, c:TCOL[t.c], vals:B.keys.map(k=>m.get(k)||0)}; });
+    B.keys.forEach((_,i)=>{ rMax=Math.max(rMax, sum(rSeries[r],s=>s.vals[i])); }); });
+  const usedR = TYPES.filter(t=>ROUTES.some(r=>st.routes.has(r) && byRoute[r].some(s=>s.c===t.c && s.h>0)));
+  $("lgR").innerHTML = usedR.map(t=>`<span><i style="background:${TCOL[t.c]}"></i>${t.n}</span>`).join("") + '<span style="color:var(--muted)">· skala sumbu Y sama untuk ketiga route</span>';
+  ROUTES.forEach(r=>{
+    const el=$("cR_"+r);
+    $("tR_"+r).textContent = `${r} ${B.daily?"harian":"bulanan"}`;
+    if(!st.routes.has(r)){ el.innerHTML='<div class="empty">Route tidak dipilih di filter</div>'; $("bR_"+r).innerHTML=""; return; }
+    $("bR_"+r).innerHTML = `${fh(rTot[r])}<small>jam · ${byRoute[r].filter(s=>s.h>0).length} kejadian · ${pct(rTot[r],sumR)}% jumlah route</small>`;
+    const t = cols(el, {cats:B.keys, labels:B.keys.map(B.label), series:rSeries[r], h:220, ymax:rMax, tipTitle:i=>`${r} · ${B.title(B.keys[i])}`, onClick:B.daily?null:(m=>setMonth(m))});
+    if(showTable["cR_"+r]) el.innerHTML = tableHTML(t);
+  });
+
+  /* insight */
+  const tt = topType([...Object.entries(h0Type)].filter(([c])=>tf(c)).map(([c,h])=>({c,h})));
+  const rainyPosDays = new Set(R.filter(x=>x.mm>0).flatMap(x=>posRoutes(x.p).filter(r=>st.routes.has(r)).map(r=>x.d+"|"+r)));
+  const rsDays = new Set(S.filter(s=>(s.c==="R"||s.c==="S") && s.h>0).map(s=>s.d+"|"+s.r));
+  const both = [...rainyPosDays].filter(k=>rsDays.has(k)).length;
+  $("insight").innerHTML = !tt ? `<div><div class="k">Insight</div><h3>Tidak ada loss time pada filter ini</h3><p>Coba ubah periode, route, atau tipe.</p></div>` :
+    `<svg class="icn" width="70" height="70" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="ig" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a5b4fc"/><stop offset="1" stop-color="#4f46e5"/></linearGradient></defs><ellipse cx="32" cy="58" rx="18" ry="4" fill="rgba(79,70,229,.3)"/><path d="M18 34a10 10 0 1 1 2.2-19.7A13 13 0 0 1 44 18a8.5 8.5 0 0 1-1 17Z" fill="url(#ig)"/><path d="M22 41l-3 6M32 40l-3 8M42 41l-3 6" stroke="#2a78d6" stroke-width="3.5" stroke-linecap="round"/></svg>
+    <div><div class="k">Insight</div><h3>${TN[tt[0]]} penyebab terbesar · ${pct(tt[1],H0)}% dari H0</h3>
+    <p>${fh(tt[1])} dari ${fh(H0)} jam H0. Loss Time MMJ ${fh(lMMJ)} jam (${pct(lMMJ,H0)}%), bukan MMJ ${fh(H0-lMMJ)} jam (${pct(H0-lMMJ,H0)}%). ${ovl>0.005?`Ada ${fh(ovl)} jam yang terjadi bersamaan di lebih dari satu route dan hanya dihitung sekali di H0.`:""}${rainyPosDays.size?` Dari ${rainyPosDays.size} kombinasi hari-route yang tercatat hujan di pos, ${both} berujung stop hauling karena hujan/licin.`:""}</p></div>
+    <button type="button" onclick="document.getElementById('sop').scrollIntoView({behavior:'smooth'})">Kelompok loss time</button>`;
+
+  /* donut H0 + route vs H0 */
+  donut($("cMix"), TYPES.map(t=>({n:t.n, c:TCOL[t.c], code:t.c, v:tf(t.c)?(h0Type[t.c]||0):0})), "jam H0", {can:p=>p.code==="MC", go:openMc});
+  $("cSplit").innerHTML = !sumR ? '<div class="empty">Tidak ada data</div>' :
+    `<div class="split">${ROUTES.filter(r=>rTot[r]>0).map(r=>`<div style="flex:${rTot[r]};background:${RCOL[r]}" title="${r}"></div>`).join("")}</div>
+     <div class="dl-list" style="max-height:none">${ROUTES.map(r=>`<div><span><i style="background:${RCOL[r]}"></i>${r}<small style="color:var(--muted);font-size:11px">${DATA.areas[r].filter(x=>AREA_SOP.has(x)).map(s=>s.replace("Area ","")).join(", ")}</small></span><b>${fh(rTot[r])} j<small>${pct(rTot[r],sumR)}%</small></b></div>`).join("")}</div>
+     <div class="h0box"><div><span>Jumlah 3 route</span><b>${fh(sumR)}</b></div><div><span>Tumpang tindih</span><b style="color:var(--bad)">− ${fh(ovl)}</b></div><div style="background:var(--accent-soft)"><span>H0</span><b style="color:var(--accent)">${fh(H0)}</b></div></div>`;
+
+  /* kelompok SOP (Tabel 6) — abaikan filter tipe */
+  const grpRow = (getC) => { const g=GROUPS.map(([n,cs])=>sum(cs,c=>getC(c))); const mmj=g[0]+g[1]+g[2], non=g.slice(3).reduce((x,y)=>x+y,0); return {g, mmj, non, tot:mmj+non}; };
+  const cellR = (r,c) => sum(SA.filter(s=>s.r===r && s.c===c), s=>s.h);
+  const grpRows = [...routesSel.map(r=>({lab:r, c:RCOL[r], ...grpRow(c=>cellR(r,c))})), {lab:"H0", h0:true, ...grpRow(c=>h0Type[c]||0)}];
+  const gv = v => v>0.004 ? fh(v) : '<span style="color:var(--muted)">–</span>';
+  $("cGrp").innerHTML = `<table><thead><tr><th>Route</th>${GROUPS.slice(0,3).map(g=>`<th class="r">${g[0]}</th>`).join("")}<th class="r" style="color:var(--accent)">Loss Time MMJ</th>${GROUPS.slice(3).map(g=>`<th class="r${g[0]==="Idle"?" sep":""}">${g[0]}</th>`).join("")}<th class="r">Bukan MMJ</th><th class="r sep">Total</th><th class="r">% MMJ</th></tr></thead><tbody>`
+    + grpRows.map(o=>`<tr class="${o.h0?"h0":""}"><td>${o.h0?'<b>H0</b> <small style="color:var(--muted)">tanpa overlap</small>':`<span class="tag"><i style="background:${o.c}"></i>${o.lab}</span>`}</td>${o.g.slice(0,3).map(v=>`<td class="v">${gv(v)}</td>`).join("")}<td class="v" style="font-weight:700;color:var(--accent)">${gv(o.mmj)}</td>${o.g.slice(3).map((v,i)=>`<td class="v${i===0?" sep":""}"${i===4&&v>0?' style="cursor:pointer;text-decoration:underline dotted" data-mc="1" title="Detail Mitra Company"':""}>${gv(v)}</td>`).join("")}<td class="v" style="font-weight:700">${gv(o.non)}</td><td class="v sep" style="font-weight:700">${gv(o.tot)}</td><td class="v">${o.tot?pct(o.mmj,o.tot)+"%":""}</td></tr>`).join("")
+    + `</tbody></table><div class="sopnote">Technical = T · Traffic = Accident + Evacuation + Mobilisation · Dust &amp; Social = Community Party + Dust + Social Issue · Idle = Rain + Slippery. Baris H0 = total setelah jam yang bersamaan antar route dihitung sekali.</div>`;
+  $("cGrp").querySelectorAll("[data-mc]").forEach(td=>td.onclick=openMc);
+
+  /* matrix route x tipe */
+  const mxVals = TYPES.map(t=>routesSel.map(r=>cellR(r,t.c)));
+  const mxMax = Math.max(...mxVals.flat(), 1e-9);
+  const shade = v => v>0 ? `background:color-mix(in srgb,var(--accent) ${Math.round(8+v/mxMax*52)}%,transparent);${v/mxMax>.55?"color:#fff;":""}` : "";
+  const colTot = routesSel.map((r,j)=>sum(mxVals,row=>row[j])), grand = sum(colTot,x=>x);
+  const h0All = sum(TYPES, t=>h0Type[t.c]||0);
+  $("cMx").innerHTML = `<table class="mx"><thead><tr><th>Kode</th><th>Tipe</th>${routesSel.map(r=>`<th class="rt"><span class="tag"><i style="background:${RCOL[r]}"></i>${r}</span></th>`).join("")}<th class="r">Jumlah route</th><th class="r" style="color:var(--accent)">H0</th><th class="r">Porsi H0</th></tr></thead><tbody>`
+    + TYPES.map((t,i)=>{ const rt=sum(mxVals[i],x=>x), h=h0Type[t.c]||0; return `<tr data-c="${t.c}" class="${st.type===t.c?"sel":""}" style="cursor:pointer" title="${t.c==="MC"?"Klik untuk detail Mitra Company":"Klik untuk filter tipe"}"><td><span class="badge" style="background:${TCOL[t.c]}">${t.c}</span></td><td>${t.n}${t.c==="MC"?' <small style="color:var(--accent);font-weight:600">detail ›</small>':""}</td>${mxVals[i].map(v=>`<td class="v${v?"":" z"}" style="${shade(v)}">${v?fh(v):"–"}</td>`).join("")}<td class="r">${rt?fh(rt):"–"}</td><td class="r" style="font-weight:700">${h>0.004?fh(h):"–"}</td><td class="r">${h>0.004?pct(h,h0All)+"%":""}</td></tr>`; }).join("")
+    + `<tr class="tot"><td></td><td>Total</td>${colTot.map(v=>`<td class="r">${fh(v)}</td>`).join("")}<td class="r">${fh(grand)}</td><td class="r">${fh(h0All)}</td><td class="r">100%</td></tr></tbody></table>`;
+  $("cMx").querySelectorAll("tr[data-c]").forEach(tr=>tr.onclick=()=>{ if(tr.dataset.c==="MC"){ openMc(); return; } st.type = st.type===tr.dataset.c ? "" : tr.dataset.c; render(); });
+
+  /* area */
+  const typesUsed = TYPES.filter(t=>S.some(s=>s.c===t.c && s.h>0));
+  $("lgA").innerHTML = typesUsed.map(t=>`<span><i style="background:${TCOL[t.c]}"></i>${t.n}</span>`).join("");
+  const aItems = [];
+  routesSel.forEach(r=>{
+    const arr=byRoute[r]; const rows = DATA.areas[r].map(ar=>{ const x=arr.filter(s=>s.area===ar);
+      return {label:ar, total:sum(x,s=>s.h), segs:typesUsed.map(t=>({n:t.n,c:TCOL[t.c],v:sum(x.filter(s=>s.c===t.c),s=>s.h)})), more:[{n:"Kejadian",v:x.filter(s=>s.h>0).length}]}; })
+      .filter(it=>it.total>0 || AREA_SOP.has(it.label));
+    aItems.push({header:true, label:r, c:RCOL[r], total:sum(arr,s=>s.h)}, ...rows);
+  });
+  const tA = hbars($("cArea"), aItems, {extra:it=>`${it.more[0].v}×`});
+  if(showTable.cArea) $("cArea").innerHTML = tableHTML(tA);
+
+  /* Mitra Company — tampil hanya saat diklik */
+  $("mitraSec").hidden = !st.mc;
+  $("mcSub").hidden = !st.mc; $("navMc").setAttribute("aria-expanded", st.mc);
+  $("mcSub").querySelectorAll("[data-mcv]").forEach(a=>a.classList.toggle("on", st.mc && a.dataset.mcv===st.mcv));
+  $("segMc").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.v===st.mcv));
+  document.querySelectorAll("[data-mcp]").forEach(el=>el.hidden = el.dataset.mcp!==st.mcv);
+  const MCr = SA.filter(s=>s.c==="MC");
+  const t2s = [...groupBy(MCr, s=>s.t2, s=>s.h).entries()].sort((x,y)=>y[1]-x[1]).map(x=>x[0]);
+  const t2c = Object.fromEntries(t2s.map((t,i)=>[t, MCPAL[i%MCPAL.length]]));
+  const mcTot = sum(MCr,s=>s.h);
+  let descRows = [];
+  if(st.mc){
+    $("pMc").textContent = `${fh(mcTot)} jam (jumlah route) · H0 ${fh(h0Type.MC||0)} jam · ${MCr.filter(s=>s.h>0).length} kejadian · warna = route`;
+    $("lgMc").innerHTML = routesSel.map(r=>`<span><i style="background:${RCOL[r]}"></i>${r}</span>`).join("");
+    hbars($("cMc"), t2s.map(t=>{ const x=MCr.filter(s=>s.t2===t); return {label:t, total:sum(x,s=>s.h), segs:routesSel.map(r=>({n:r,c:RCOL[r],v:sum(x.filter(s=>s.r===r),s=>s.h)})), more:[{n:"Kejadian",v:x.filter(s=>s.h>0).length}]}; }),
+      {extra:it=>`${it.more[0].v}×`});
+    $("tMc2").textContent = B.daily ? "Mitra Company harian" : "Mitra Company bulanan";
+    const mcSeries = t2s.map(t=>{ const m=groupBy(MCr.filter(s=>s.t2===t), s=>B.key(s.d), s=>s.h); return {n:t, c:t2c[t], vals:B.keys.map(k=>m.get(k)||0)}; });
+    $("lgMc2").innerHTML = mcSeries.map(s=>`<span><i style="background:${s.c}"></i>${esc(s.n)}</span>`).join("");
+    const tM2 = cols($("cMc2"), {cats:B.keys, labels:B.keys.map(B.label), series:mcSeries, h:240, tipTitle:i=>B.title(B.keys[i])});
+    if(showTable.cMc2) $("cMc2").innerHTML = tableHTML(tM2);
+  }
+  const byDesc = new Map(); MCr.forEach(s=>{ const k=s.r+"|"+s.t2+"|"+s.desc; const o=byDesc.get(k)||{r:s.r,t2:s.t2,desc:s.desc,h:0,n:0,days:new Set(),area:s.area}; o.h+=s.h; if(s.h>0) o.n++; o.days.add(s.d); byDesc.set(k,o); });
+  descRows = [...byDesc.values()].sort((x,y)=>y.h-x.h);
+  if(st.mc) $("tMc").innerHTML = `<table><thead><tr><th>Route</th><th>Desc Type2</th><th>Keterangan</th><th>Area</th><th class="r">Hari</th><th class="r">Kejadian</th><th class="r">Jam</th><th class="r">Porsi MC</th></tr></thead><tbody>`
+    + (descRows.length ? descRows.slice(0,300).map(o=>`<tr><td><span class="tag"><i style="background:${RCOL[o.r]}"></i>${o.r}</span></td><td><span class="tag"><i style="background:${t2c[o.t2]}"></i>${esc(o.t2)}</span></td><td class="wrap">${esc(o.desc)}</td><td>${esc(o.area)}</td><td class="r">${o.days.size}</td><td class="r">${o.n}</td><td class="r">${fh(o.h)}</td><td class="r">${pct(o.h,mcTot)}%</td></tr>`).join("")
+      : `<tr><td colspan="8" class="empty">Tidak ada loss time Mitra Company</td></tr>`) + `</tbody></table>`;
+
+  /* heatmap curah hujan */
+  const isMm = st.hm==="mm";
+  const hv = new Map(); R.forEach(x=>{ const k=x.p+"|"+B.key(x.d); const o=hv.get(k)||{mm:0,h:0,ev:[]}; o.mm+=x.mm; o.h+=x.h; o.ev.push(x); hv.set(k,o); });
+  const hmMax = Math.max(...[...hv.values()].map(o=>isMm?o.mm:o.h), 1e-9);
+  $("tHm").textContent = `${isMm?"Curah hujan":"Durasi hujan"} ${B.daily?"harian":"bulanan"} per pos`;
+  $("pHm").textContent = `${isMm?"Rainfall (mm)":"Rain hours / Duration Convert (jam)"} akumulasi per ${B.daily?"hari":"bulan"} per pos dari Input TCH · KM 124–KM 75 = H1 · ISP68 = ISP · KM 47–KM 12 & SBL Port = H2`;
+  let hmH = `<table><thead><tr><th></th>${B.keys.map(k=>`<th>${B.label(k)}</th>`).join("")}<th style="text-align:right;padding-left:10px">Total</th></tr></thead><tbody>`;
+  routesSel.forEach(r=>{
+    hmH += `<tr><td class="g" colspan="${B.keys.length+2}"><span class="tag"><i style="background:${RCOL[r]};border-radius:50%"></i>${r}</span></td></tr>`;
+    POS.filter(p=>p.r===r).forEach(p=>{
+      let rowT=0;
+      hmH += `<tr><td class="p">${p.n.replace("MMJ ","")}</td>` + B.keys.map(k=>{ const o=hv.get(p.n+"|"+k); const v=o?(isMm?o.mm:o.h):0; rowT+=v;
+        const f=v/hmMax; const bg = o ? `background:color-mix(in srgb,var(--rain) ${Math.round(12+f*80)}%,var(--surface-2))` : "";
+        return `<td class="cell${v>0?"":" z"}${f>.5?" dk":""}" data-k="${esc(p.n)}|${k}" style="${bg}">${v>0?(isMm?(v>=100?nf0.format(v):nf1.format(v).replace(",0","")):nf1.format(v)):(o?"0":"")}</td>`; }).join("")
+        + `<td class="tt">${isMm?fmm(rowT)+" mm":fh(rowT)+" j"}</td></tr>`;
+    });
+  });
+  $("cHm").innerHTML = hmH + `</tbody></table>`;
+  $("cHm").querySelectorAll("td.cell").forEach(td=>{ const [p,k]=td.dataset.k.split("|"); const o=hv.get(p+"|"+k);
+    td.onmousemove=e=>tip(e, `${p} · ${B.title(k)}`, o?[{n:"Rainfall",c:"var(--rain)",v:fmm(o.mm)+" mm"},{n:"Durasi hujan",v:fh(o.h)+" jam ("+hm(o.h)+")"},{n:"Catatan",v:o.ev.length+"×"}]:[{n:"Tidak ada catatan hujan",v:""}], null,
+      o&&B.daily?o.ev.map(x=>`${x.f}–${x.t}${x.mm?` · ${fmm(x.mm)} mm`:""}`).join("<br>"):"");
+    td.onmouseleave=hide; });
+  $("scHm").innerHTML = `<span>0</span><b style="background:linear-gradient(90deg,color-mix(in srgb,var(--rain) 12%,var(--surface-2)),var(--rain))"></b><span>${isMm?fmm(hmMax)+" mm":fh(hmMax)+" jam"}</span><span style="margin-left:8px">· sel kosong = tidak ada catatan hujan · nilai 0 = hujan tercatat tanpa angka rainfall</span>`;
+
+  /* rata-rata pos per route per bucket */
+  const posN = r => POS.filter(p=>posIn(p.n,r) && DATA.rain.some(x=>x.p===p.n)).length || 1;
+  const avgPos = (r, f) => { const m=groupBy(R.filter(x=>posIn(x.p,r)), x=>B.key(x.d), f); return B.keys.map(k=>(m.get(k)||0)/posN(r)); };
+
+  /* kartu ringkas Rainfall: rata-rata per hari hujan (semua pos & per route) */
+  const allPosN = POS.filter(p=>posRoutes(p.n).some(r=>st.routes.has(r)) && DATA.rain.some(x=>x.p===p.n)).length || 1;
+  const allSpark = (()=>{ const m=groupBy(R, x=>B.key(x.d), x=>x.mm); return B.keys.map(k=>(m.get(k)||0)/allPosN); })();
+  const RK = [{c:"var(--k1)", ic:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3s6 6.4 6 11a6 6 0 0 1-12 0c0-4.6 6-11 6-11Z"/></svg>', l:`Semua pos (${RA.pos})`, ra:RA, s:allSpark, off:false,
+               n:wettest?`Pos terbasah ${wettest[0].replace("MMJ ","")} · ${fmm(wettest[1])} mm akumulasi`:"Tidak ada hujan tercatat"}];
+  ROUTES.forEach((r,i)=>{ const rows=R.filter(x=>posIn(x.p,r)), ra=rainAvg(rows);
+    const pm=groupBy(rows,x=>x.p,x=>x.mm), top=[...pm.entries()].sort((a,b)=>b[1]-a[1])[0];
+    RK.push({c:["var(--k2)","var(--k3)","var(--k4)"][i], ic:`<b>${r}</b>`, l:`Rainfall ${r} (${ra.pos} pos)`, ra, s:avgPos(r,x=>x.mm), off:!st.routes.has(r),
+      n:!st.routes.has(r)?"Route tidak dipilih di filter":top?`Terbasah ${top[0].replace("MMJ ","")} · ${fmm(top[1])} mm akumulasi`:"Tidak ada hujan tercatat"}); });
+  $("rfKpi").innerHTML = RK.map(k=>`<div class="kpi${k.off?" off":""}" style="--c:${k.c}"><div class="hd"><div class="ic">${k.ic}</div><div style="min-width:0"><div class="l">${k.l}</div><div class="v">${k.off?"–":fmm(k.ra.mm)}<small>mm/hari hujan</small></div></div></div><div class="n">${k.off?"":`${fh(k.ra.h)} jam hujan/hari · ${k.ra.days} hari hujan`}</div><div class="n" title="${esc(k.n)}">${k.n}</div>${spark(k.s)}</div>`).join("");
+
+  /* rainfall vs rain hours */
+  const rhRoutes = st.rh==="all" ? routesSel : [st.rh].filter(r=>st.routes.has(r));
+  const rhBars = rhRoutes.map(r=>({n:`Rainfall ${r}`, c:RCOL[r], vals:avgPos(r, x=>x.mm)}));
+  const rhPos = new Set(POS.filter(p=>posRoutes(p.n).some(r=>rhRoutes.includes(r)) && DATA.rain.some(x=>x.p===p.n)).map(p=>p.n));
+  const rhN = rhPos.size || 1;
+  const rhM = groupBy(R.filter(x=>rhPos.has(x.p)), x=>B.key(x.d), x=>x.h);
+  const rhLine = {n:`Rain hours ${st.rh==="all"?"":st.rh}`.trim(), c:"var(--accent)", u:"jam", vals:B.keys.map(k=>(rhM.get(k)||0)/rhN)};
+  $("lgRh").innerHTML = rhBars.map(s=>`<span><i style="background:${s.c}"></i>${s.n} (rata-rata pos)</span>`).join("") + `<span><i class="ln" style="background:var(--accent)"></i>${rhLine.n} (rata-rata ${rhN} pos)</span>`;
+  const tRh = rhRoutes.length ? combo($("cRh"), {cats:B.keys, labels:B.keys.map(B.label), bars:rhBars, line:rhLine, tipTitle:i=>B.title(B.keys[i])}) : ($("cRh").innerHTML='<div class="empty">Route tidak dipilih</div>', {h:[],r:[]});
+  if(showTable.cRh) $("cRh").innerHTML = tableHTML(tRh);
+
+  /* curah hujan vs loss time hujan */
+  const cbRoutes = st.cb==="all" ? routesSel : [st.cb].filter(r=>st.routes.has(r));
+  const cbBars = cbRoutes.map(r=>({n:`Rainfall ${r}`, c:RCOL[r], vals:avgPos(r, x=>x.mm)}));
+  let lineVals;
+  if(st.cb==="all"){ const m=new Map(); H0m.forEach((o,d)=>{ const k=B.key(d); m.set(k,(m.get(k)||0)+(o.c.R||0)+(o.c.S||0)); }); lineVals=B.keys.map(k=>m.get(k)||0); }
+  else { const m=groupBy(SA.filter(s=>(s.c==="R"||s.c==="S") && s.r===st.cb), s=>B.key(s.d), s=>s.h); lineVals=B.keys.map(k=>m.get(k)||0); }
+  const cbLine = {n:`Idle (R+S) ${st.cb==="all"?"H0":st.cb}`, vals:lineVals};
+  $("lgCb").innerHTML = cbBars.map(s=>`<span><i style="background:${s.c}"></i>${s.n} (rata-rata pos)</span>`).join("") + `<span><i class="ln" style="background:var(--line)"></i>Loss time ${cbLine.n}</span>`;
+  const tCb = cbRoutes.length ? combo($("cCb"), {cats:B.keys, labels:B.keys.map(B.label), bars:cbBars, line:cbLine, tipTitle:i=>B.title(B.keys[i])}) : ($("cCb").innerHTML='<div class="empty">Route tidak dipilih</div>', {h:[],r:[]});
+  if(showTable.cCb) $("cCb").innerHTML = tableHTML(tCb);
+
+  /* per pos */
+  const posItems = [];
+  routesSel.forEach(r=>{ const ps=POS.filter(p=>p.r===r);
+    posItems.push({header:true, label:r, c:RCOL[r], total:sum(ps,p=>posMm.get(p.n)||0)});
+    ps.forEach(p=>{ const x=R.filter(y=>y.p===p.n); posItems.push({label:p.n.replace("MMJ ",""), total:posMm.get(p.n)||0, h:posH.get(p.n)||0, days:new Set(x.filter(y=>y.mm>0||y.h>0).map(y=>y.d)).size,
+      segs:[{n:"Rainfall",c:RCOL[r],v:posMm.get(p.n)||0}], more:[{n:"Durasi hujan",v:fh(posH.get(p.n)||0)+" jam"},{n:"Hari hujan",v:new Set(x.map(y=>y.d)).size+" hari"}]}); }); });
+  hbars($("cPos"), posItems, {unit:"mm", vf:fmm, extra:it=>`${fh(it.h)} j · ${it.days} hr`});
+  if(showTable.cPos) $("cPos").innerHTML = tableHTML({h:["Pos","Rainfall (mm)","Durasi hujan (jam)","Hari hujan"], r:posItems.filter(i=>!i.header).map(i=>[i.label,fmm(i.total),fh(i.h),i.days])});
+  if(!DATA.rain.some(x=>x.p==="SBL Port") && st.routes.has("H2")) $("cPos").insertAdjacentHTML("beforeend", `<div style="font-size:11px;color:var(--muted);margin-top:6px">SBL Port belum ada catatan di Input TCH.</div>`);
+
+  /* rekap harian (hanya untuk Export Excel) */
+  const h0K = new Map(); H0m.forEach((o,d)=>{ const k=B.key(d); const x=h0K.get(k)||{t:0,rs:0,mc:0}; x.t+=h0DayVal(o); x.rs+=tf("R")?(o.c.R||0):0; x.rs+=tf("S")?(o.c.S||0):0; x.mc+=tf("MC")?(o.c.MC||0):0; h0K.set(k,x); });
+  const dayRows = B.keys.map(k=>{ const o={k}; ROUTES.forEach(r=>{ o[r]=sum(byRoute[r].filter(s=>B.key(s.d)===k),s=>s.h); }); o.sum=sum(routesSel,r=>o[r]);
+    const x=h0K.get(k)||{t:0,rs:0,mc:0}; o.h0=x.t; o.ovl=Math.max(0,o.sum-o.h0); o.rs=x.rs; o.mc=x.mc;
+    ROUTES.forEach(r=>{ o["mm"+r]=sum(R.filter(y=>posIn(y.p,r) && B.key(y.d)===k),y=>y.mm)/posN(r); }); return o; });
+
+  /* tipcard */
+  $("tipcard").innerHTML = wettest ? `<span class="pill">Pos terbasah</span><b>${wettest[0]} · ${fmm(wettest[1])} mm</b><p>${fh(posH.get(wettest[0])||0)} jam hujan pada periode ini · rute ${POSR[wettest[0]]}</p><svg width="110" height="110" viewBox="0 0 24 24" fill="#fff"><path d="M12 3s6 6.4 6 11a6 6 0 0 1-12 0c0-4.6 6-11 6-11Z"/></svg>` : `<span class="pill">Curah hujan</span><b>Tidak ada hujan tercatat</b><p>pada periode &amp; route terpilih</p>`;
+
+  $("pinfo").textContent = `Periode: ${rangeText()} · Route: ${routesSel.join(", ")} · Tipe: ${st.type?TN[st.type]:"semua"} · Dicetak ${new Date().toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"})}`;
+  const X = renderExtra({B, SA, R, H0m, h0Type, routesSel, H0, lMMJ, grpRows});
+  document.querySelectorAll("[data-av]").forEach(el=>el.hidden = el.dataset.av!==st.av);
+  $("pArea").textContent = st.av==="tbl" ? X.t5note : "Jam, dikelompokkan per route · warna = tipe · kejadian dalam kurung";
+
+  /* detail penyebab (jam per tipe) untuk H0 & tiap route, sesuai periode terfilter */
+  const dtHTML = (rows, total, label) => { const mx=Math.max(...rows.map(x=>x.h),1e-9);
+    return `<div style="font-size:11.5px;color:var(--ink-2);margin-bottom:6px">Periode ${rangeText()}</div><div style="overflow-x:auto"><table><thead><tr><th>Penyebab ${label}</th><th class="r">Jam</th><th class="r">%</th><th class="r">Kej.</th></tr></thead><tbody>`
+      + (rows.length ? rows.map(x=>`<tr><td style="white-space:normal"><span class="tag"><i style="background:${TCOL[x.c]}"></i>${TN[x.c]}</span><span class="bar" style="width:${x.h/mx*100}%;background:${TCOL[x.c]}"></span></td><td class="r"><b>${fh(x.h)}</b><br><small style="color:var(--muted)">${hm(x.h)}</small></td><td class="r">${pct(x.h,total)}%</td><td class="r">${x.n??"–"}</td></tr>`).join("")
+        : `<tr><td colspan="4" class="empty">Tidak ada loss time</td></tr>`)
+      + `<tr class="tot"><td>Total</td><td class="r">${fh(total)}<br><small style="color:var(--muted);font-weight:500">${hm(total)}</small></td><td class="r">100%</td><td class="r">${sum(rows,x=>x.n||0)||"–"}</td></tr></tbody></table></div>`; };
+  ["H0",...ROUTES].forEach(k=>{
+    const el=$("dt_"+k), open=st.dt.has(k) && (k==="H0" || st.routes.has(k));
+    document.querySelectorAll(`.dtb[data-dt="${k}"]`).forEach(b=>{ b.classList.toggle("on",open); b.setAttribute("aria-expanded",open); });
+    el.hidden = !open; if(!open){ el.innerHTML=""; return; }
+    let rows;
+    if(k==="H0") rows = TYPES.filter(t=>tf(t.c) && (h0Type[t.c]||0)>0.004).map(t=>({c:t.c, h:h0Type[t.c], n:S.filter(s=>s.c===t.c && s.h>0).length}));
+    else rows = TYPES.map(t=>{ const x=byRoute[k].filter(s=>s.c===t.c && s.h>0); return {c:t.c, h:sum(x,s=>s.h), n:x.length}; }).filter(x=>x.h>0.004);
+    rows.sort((a,b)=>b.h-a.h);
+    el.innerHTML = dtHTML(rows, sum(rows,x=>x.h), k);
+  });
+  EXP = {S, SA, R, B, H0, sumR, ovl, h0Type, grpRows, lMMJ, lIdle, lMC, evN, ltDays, routesSel, dayRows, descRows, MCr, t2s, mmTot, hTot, nPos, rainDays, RA, ...X};
+  renderEvents();
+}
+
+/* ---------- saran SOP: MMJ vs bukan MMJ, Tabel 5, kontrol Slippery, kelengkapan data ---------- */
+const GCOL = {"Technical":"#f2b632","Traffic":"#e0842a","Dust & Social":"#a47148","Idle":"#2a78d6","National Holiday":"#94a3b8","Force Majeure":"#64748b","Regulation":"#7fb13a","Mitra Company":"#5b4bd6"};
+const C_MMJ = "#e0842a", C_NON = "#5b7cf5";
+function renderExtra({B, SA, R, H0m, h0Type, routesSel, H0, lMMJ, grpRows}){
+  const out = {};
+  /* 1+4. tren kelompok (H0, abaikan filter tipe) */
+  const gB = codes => { const m=new Map(); H0m.forEach((o,d)=>{ const k=B.key(d); m.set(k,(m.get(k)||0)+sum(codes,c=>o.c[c]||0)); }); return B.keys.map(k=>m.get(k)||0); };
+  const mmjCodes=[...MMJ_CODES], nonCodes=TYPES.map(t=>t.c).filter(c=>!MMJ_CODES.has(c));
+  const series = st.gv==="mmj"
+    ? [{n:"Loss Time MMJ", c:C_MMJ, vals:gB(mmjCodes)}, {n:"Bukan MMJ", c:C_NON, vals:gB(nonCodes)}]
+    : GROUPS.map(([n,cs])=>({n, c:GCOL[n], vals:gB(cs)})).filter(s=>s.vals.some(v=>v>0));
+  $("tGt").textContent = `Tren ${st.gv==="mmj"?"Loss Time MMJ vs Bukan MMJ":"kelompok loss time"} (H0) ${B.daily?"harian":"bulanan"}`;
+  $("lgGt").innerHTML = series.map(s=>`<span><i style="background:${s.c}"></i>${s.n}</span>`).join("");
+  const h0All = sum(TYPES,t=>h0Type[t.c]||0), mmjAll = sum(mmjCodes,c=>h0Type[c]||0);
+  $("bGt").innerHTML = `<b style="color:${C_MMJ}">${fh(mmjAll)} j</b><span style="font-size:13px;font-weight:600;color:var(--ink-2)">MMJ (${pct(mmjAll,h0All)}%) · bukan MMJ ${fh(h0All-mmjAll)} j (${pct(h0All-mmjAll,h0All)}%)</span>`;
+  const tG = cols($("cGt"), {cats:B.keys, labels:B.keys.map(B.label), series, h:250, tipTitle:i=>B.title(B.keys[i]), onClick:B.daily?null:(m=>setMonth(m))});
+  if(showTable.cGt) $("cGt").innerHTML = tableHTML(tG);
+  out.gt = tG;
+  $("cMmj").innerHTML = grpRows.map(o=>{ const t=o.tot||0; return `<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px"><span class="tag">${o.h0?"<b>H0</b>":`<i style="background:${o.c};border-radius:50%"></i><b>${o.lab}</b>`}</span><span style="color:var(--ink-2)">${fh(t)} j</span></div>
+      <div class="split" style="margin:0 0 4px;height:14px">${o.mmj>0?`<div style="flex:${o.mmj};background:${C_MMJ}"></div>`:""}${o.non>0?`<div style="flex:${o.non};background:${C_NON}"></div>`:""}</div>
+      <div style="display:flex;justify-content:space-between;font-size:11.5px"><span style="color:${C_MMJ};font-weight:600">MMJ ${pct(o.mmj,t)}% · ${fh(o.mmj)} j</span><span style="color:${C_NON};font-weight:600">Bukan MMJ ${pct(o.non,t)}% · ${fh(o.non)} j</span></div></div>`; }).join("")
+    + `<div class="sopnote">MMJ = Technical + Traffic + Dust &amp; Social. Bukan MMJ = Idle + National Holiday + Force Majeure + Regulation + Mitra Company.</div>`;
+
+  /* 3. Tabel 5 */
+  const codes = TYPES.map(t=>t.c);
+  const gv = v => v>0.004 ? fh(v) : '<span style="color:var(--muted)">–</span>';
+  let t5 = `<table><thead><tr><th>Route</th><th>Area kerja</th>${codes.map(c=>`<th class="r">${c}</th>`).join("")}<th class="r sep">Total</th><th class="r">Grand Total</th><th class="r">Cek</th></tr></thead><tbody>`;
+  const t5rows = []; let nFalse = 0;
+  routesSel.forEach(r=>{
+    const arr = SA.filter(s=>s.r===r), rt = sum(arr,s=>s.h);
+    const areas = DATA.areas[r].filter(a=>AREA_SOP.has(a) || arr.some(s=>s.area===a && s.h>0));
+    const noArea = arr.filter(s=>!DATA.areas[r].includes(s.area));
+    const rowsA = areas.map(a=>{ const x=arr.filter(s=>s.area===a); return {a, sop:AREA_SOP.has(a), v:codes.map(c=>sum(x.filter(s=>s.c===c),s=>s.h)), t:sum(x,s=>s.h)}; });
+    if(noArea.length) rowsA.push({a:"(area kosong)", sop:false, v:codes.map(c=>sum(noArea.filter(s=>s.c===c),s=>s.h)), t:sum(noArea,s=>s.h)});
+    const sopSum = sum(rowsA.filter(x=>x.sop), x=>x.t), ok = Math.abs(sopSum-rt) < 0.01; if(!ok) nFalse++;
+    rowsA.forEach((x,i)=>{ t5rows.push([i?"":r, x.a, ...x.v, x.t, i?"":rt, i?"":(ok?"TRUE":"FALSE")]);
+      t5 += `<tr><td>${i?"":`<span class="tag"><i style="background:${RCOL[r]}"></i><b>${r}</b></span>`}</td><td>${esc(x.a)}${x.sop?"":' <small style="color:var(--bad)">nama area lama</small>'}</td>${x.v.map(v=>`<td class="v">${gv(v)}</td>`).join("")}<td class="v sep" style="font-weight:600">${gv(x.t)}</td><td class="v" style="font-weight:700">${i?"":fh(rt)}</td><td class="r" style="font-weight:700;color:${ok?"var(--good)":"var(--bad)"}">${i?"":(ok?"TRUE":"FALSE")}</td></tr>`; });
+    const tv = codes.map(c=>sum(arr.filter(s=>s.c===c),s=>s.h));
+    t5rows.push(["", `Total ${r}`, ...tv, rt, "", ""]);
+    t5 += `<tr class="tot"><td></td><td>Total ${r}</td>${tv.map(v=>`<td class="r">${gv(v)}</td>`).join("")}<td class="r sep">${fh(rt)}</td><td></td><td></td></tr>`;
+  });
+  $("cT5").innerHTML = t5 + `</tbody></table>`;
+  out.t5note = `Jam per tipe · Cek = TRUE bila jumlah area kerja sama dengan total route${nFalse?` · ${nFalse} route FALSE karena ada nama area lama (Area Tapatmekar / Bintitapat)`:""}`;
+  out.t5rows = t5rows;
+
+  return out;
+}
+
+function renderEvents(){
+  if(!EXP) return;
+  const q = st.q;
+  const list = EXP.S.filter(s=>s.h>0).filter(s=>!q || [s.desc,s.area,s.blok,s.t2,TN[s.c],s.r,String(s.km??"")].join(" ").toLowerCase().includes(q))
+    .sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:(a.f<b.f?-1:1));
+  $("pEvt").textContent = `${list.length} kejadian · ${fh(sum(list,s=>s.h))} jam${q?` · cari “${st.q}”`:""}${st.open.evt?" · baris durasi 0 tidak ditampilkan":" · klik Tampilkan untuk melihat daftar"}`;
+  if(!st.open.evt){ $("tEvt").innerHTML=""; return; }
+  $("tEvt").innerHTML = `<table><thead><tr><th>No</th><th>Tanggal</th><th>Jam</th><th class="r">Durasi (jam)</th><th>Route</th><th>Area / Blok</th><th class="r">KM</th><th>Tipe</th><th>Desc Type2</th><th>Keterangan</th></tr></thead><tbody>`
+    + (list.length ? list.map(s=>`<tr><td>${s.no??""}</td><td>${dLabel(s.d)}</td><td>${s.f}–${s.t}</td><td class="r">${fh(s.h)}</td><td><span class="tag"><i style="background:${RCOL[s.r]}"></i>${s.r}</span></td><td>${esc(s.blok||s.area)}</td><td class="r">${s.km??""}</td><td><span class="badge" style="background:${TCOL[s.c]}">${s.c}</span> ${TN[s.c]}</td><td>${esc(s.t2)}</td><td class="wrap">${esc(s.desc)}</td></tr>`).join("")
+      : `<tr><td colspan="10" class="empty">Tidak ada kejadian</td></tr>`) + `</tbody></table>`;
+}
+
+/* ---------- PDF ---------- */
+function presentPDF(){
+  const wasDark = document.documentElement.getAttribute("data-theme")==="dark";
+  const oldTitle = document.title;
+  if(wasDark) document.documentElement.removeAttribute("data-theme");
+  document.title = `Loss Time & Curah Hujan MMJ - ${rangeText()}`;
+  RP.open=false; render();
+  const done = () => { document.title=oldTitle; if(wasDark){ document.documentElement.setAttribute("data-theme","dark"); render(); } removeEventListener("afterprint", done); };
+  addEventListener("afterprint", done);
+  setTimeout(()=>window.print(), 120);
+}
+
+/* ---------- Export Excel (.xlsx tanpa internet) ---------- */
+const CRC = (()=>{ const t=new Uint32Array(256); for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c = c&1 ? 0xEDB88320^(c>>>1) : c>>>1; t[n]=c>>>0; } return t; })();
+const crc32 = b => { let c=0xFFFFFFFF; for(let i=0;i<b.length;i++) c=CRC[(c^b[i])&255]^(c>>>8); return (c^0xFFFFFFFF)>>>0; };
+async function deflate(d){
+  if(typeof CompressionStream==="undefined") return null;
+  try{ const s=new Blob([d]).stream().pipeThrough(new CompressionStream("deflate-raw")); return new Uint8Array(await new Response(s).arrayBuffer()); }
+  catch(e){ return null; }
+}
+async function zipFiles(files){
+  const enc=new TextEncoder(), parts=[], central=[]; let off=0;
+  for(const f of files){
+    const nm=enc.encode(f.name), raw=f.data, crc=crc32(raw);
+    const z=await deflate(raw), method=z?8:0, d=z||raw;
+    const h=new DataView(new ArrayBuffer(30));
+    h.setUint32(0,0x04034b50,true); h.setUint16(4,20,true); h.setUint16(6,0x0800,true); h.setUint16(8,method,true); h.setUint16(12,0x21,true);
+    h.setUint32(14,crc,true); h.setUint32(18,d.length,true); h.setUint32(22,raw.length,true); h.setUint16(26,nm.length,true);
+    parts.push(new Uint8Array(h.buffer), nm, d);
+    const c=new DataView(new ArrayBuffer(46));
+    c.setUint32(0,0x02014b50,true); c.setUint16(4,20,true); c.setUint16(6,20,true); c.setUint16(8,0x0800,true); c.setUint16(10,method,true); c.setUint16(14,0x21,true);
+    c.setUint32(16,crc,true); c.setUint32(20,d.length,true); c.setUint32(24,raw.length,true); c.setUint16(28,nm.length,true); c.setUint32(42,off,true);
+    central.push(new Uint8Array(c.buffer), nm);
+    off += 30+nm.length+d.length;
+  }
+  const csz=central.reduce((a,x)=>a+x.length,0), e=new DataView(new ArrayBuffer(22));
+  e.setUint32(0,0x06054b50,true); e.setUint16(8,files.length,true); e.setUint16(10,files.length,true); e.setUint32(12,csz,true); e.setUint32(16,off,true);
+  return new Blob([...parts,...central,new Uint8Array(e.buffer)],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+}
+const xesc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g,"");
+const colL = i => { let s=""; i++; while(i>0){ const m=(i-1)%26; s=String.fromCharCode(65+m)+s; i=Math.floor((i-1)/26); } return s; };
+function sheetXML(s){
+  let x='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">';
+  if(s.freeze) x+=`<sheetViews><sheetView workbookViewId="0"><pane ySplit="${s.freeze}" topLeftCell="A${s.freeze+1}" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>`;
+  if(s.widths) x+="<cols>"+s.widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join("")+"</cols>";
+  x+="<sheetData>";
+  s.rows.forEach((r,ri)=>{ x+=`<row r="${ri+1}">`;
+    (r||[]).forEach((c,ci)=>{ let v=c, st_=null; if(c && typeof c==="object"){ v=c.v; st_=c.s; } if(v==null || v==="") return;
+      const ref=colL(ci)+(ri+1);
+      if(typeof v==="number" && isFinite(v)) x+=`<c r="${ref}" s="${st_!=null?st_:(Number.isInteger(v)?4:2)}"><v>${v}</v></c>`;
+      else x+=`<c r="${ref}" t="inlineStr" s="${st_||0}"><is><t xml:space="preserve">${xesc(v)}</t></is></c>`; });
+    x+="</row>"; });
+  x+="</sheetData>";
+  if(s.filter) x+=`<autoFilter ref="${s.filter}"/>`;
+  return x+"</worksheet>";
+}
+function makeXlsx(sheets){
+  const enc=new TextEncoder(), X='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>', N=sheets.length;
+  const styles = X+'<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="2"><numFmt numFmtId="164" formatCode="#,##0.00"/><numFmt numFmtId="165" formatCode="#,##0"/></numFmts>'
+    +'<fonts count="4"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="15"/><color rgb="FF3730A3"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts>'
+    +'<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF4F46E5"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE8E8FF"/><bgColor indexed="64"/></patternFill></fill></fills>'
+    +'<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
+    +'<cellXfs count="8"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="165" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="164" fontId="3" fillId="3" borderId="0" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="3" fillId="3" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="14" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/></cellXfs></styleSheet>';
+  const files=[
+    {name:"[Content_Types].xml", data:enc.encode(X+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'+sheets.map((_,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join("")+"</Types>")},
+    {name:"_rels/.rels", data:enc.encode(X+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>')},
+    {name:"xl/workbook.xml", data:enc.encode(X+'<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'+sheets.map((s,i)=>`<sheet name="${xesc(s.name)}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join("")+"</sheets></workbook>")},
+    {name:"xl/_rels/workbook.xml.rels", data:enc.encode(X+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+sheets.map((_,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join("")+`<Relationship Id="rId${N+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`)},
+    {name:"xl/styles.xml", data:enc.encode(styles)},
+    ...sheets.map((s,i)=>({name:`xl/worksheets/sheet${i+1}.xml`, data:enc.encode(sheetXML(s))})),
+  ];
+  return zipFiles(files);
+}
+const HD = a => a.map(v=>({v, s:1}));
+const xdate = d => ({v:(Date.UTC(+d.slice(0,4),+d.slice(5,7)-1,+d.slice(8))-Date.UTC(1899,11,30))/864e5, s:7});
+function buildSheets(){
+  const E = EXP, r2 = v => Math.round((v||0)*100)/100, RS = E.routesSel;
+  const title = t => [[{v:t,s:3}],["PT. Musi Mitra Jaya · Periode: "+rangeText()],[`Route: ${RS.join(", ")} · Tipe: ${st.type?TN[st.type]:"semua"}`],[]];
+  const ring = [...title("Ringkasan Loss Time & Curah Hujan"), HD(["Indikator","Nilai","Satuan"]),
+    ["Total Loss Time (H0) - tanpa jam ganda antar route", r2(E.H0), "jam"],
+    ["Jumlah loss time 3 route (H1 + ISP + H2)", r2(E.sumR), "jam"], ["Jam tumpang tindih antar route", r2(E.ovl), "jam"],
+    ...ROUTES.map(r=>[`  · Loss time ${r}`, r2(sum(E.S.filter(s=>s.r===r),s=>s.h)), "jam"]),
+    ["Loss Time MMJ (Technical + Traffic + Dust & Social) - H0", r2(E.lMMJ), "jam"], ["Loss Time bukan MMJ - H0", r2(E.H0-E.lMMJ), "jam"],
+    ["Idle (Rain + Slippery) - H0", r2(E.lIdle), "jam"], ["Mitra Company - H0", r2(E.lMC), "jam"],
+    ["Jumlah kejadian (durasi > 0)", E.evN, "kejadian"], ["Hari ada stop hauling", E.ltDays, "hari"],
+    [`Curah hujan rata-rata per hari hujan (${E.RA.pos} pos)`, r2(E.RA.mm), "mm/hari"], ["Durasi hujan rata-rata per hari hujan", r2(E.RA.h), "jam/hari"], ["Hari hujan", E.rainDays, "hari"],
+    [], ["H0 = gabungan 3 route; pada jam yang sama di lebih dari satu route hanya dihitung satu route (prioritas: Rain > Slippery > Technical > Social Issue > Dust > lainnya)."],
+    ["Sumber: "+(DATA.meta.source||"-")+" · Loss time = Convert Duration (Input Stop Hauling) · Curah hujan = Input TCH · diperbarui "+(DATA.meta.generated||"-")]];
+  const grp = [...title("Kelompok Loss Time - jam"), HD(["Route",...GROUPS.slice(0,3).map(g=>g[0]),"Loss Time MMJ",...GROUPS.slice(3).map(g=>g[0]),"Loss Time Bukan MMJ","Total Loss Time"])];
+  E.grpRows.forEach(o=>grp.push([o.h0?"H0 (tanpa overlap)":o.lab, ...o.g.slice(0,3).map(r2), {v:r2(o.mmj),s:5}, ...o.g.slice(3).map(r2), {v:r2(o.non),s:5}, {v:r2(o.tot),s:5}]));
+  const mx = [...title("Rekap Loss Time Route x Tipe (jam)"), HD(["Kode","Tipe",...RS,"Jumlah route","H0"])];
+  const ct = RS.map(()=>0); let h0t=0;
+  TYPES.forEach(t=>{ const v=RS.map(r=>sum(E.SA.filter(s=>s.r===r&&s.c===t.c),s=>s.h)); v.forEach((x,i)=>ct[i]+=x); const h=E.h0Type[t.c]||0; h0t+=h; mx.push([t.c,t.n,...v.map(r2),r2(sum(v,x=>x)),r2(h)]); });
+  mx.push([{v:"",s:6},{v:"Total",s:6},...ct.map(v=>({v:r2(v),s:5})),{v:r2(sum(ct,x=>x)),s:5},{v:r2(h0t),s:5}]);
+  const harian = [...title("Rekap Harian Loss Time & Curah Hujan"), HD([E.B.daily?"Tanggal":"Bulan",...RS.map(r=>`LT ${r} (jam)`),"Jumlah route (jam)","Overlap (jam)","H0 (jam)","Idle R+S H0 (jam)","Mitra H0 (jam)",...RS.map(r=>`RF ${r} rata-rata pos (mm)`)])];
+  E.dayRows.forEach(o=>harian.push([E.B.daily?xdate(o.k):E.B.title(o.k),...RS.map(r=>r2(o[r])),r2(o.sum),r2(o.ovl),r2(o.h0),r2(o.rs),r2(o.mc),...RS.map(r=>r2(o["mm"+r]))]));
+  const area = [...title("Loss Time per Area (jam)"), HD(["Route","Area",...TYPES.map(t=>t.c),"Total","Kejadian"])];
+  RS.forEach(r=>DATA.areas[r].forEach(ar=>{ const x=E.S.filter(s=>s.r===r&&s.area===ar); if(!x.length && !AREA_SOP.has(ar)) return; area.push([r,ar,...TYPES.map(t=>r2(sum(x.filter(s=>s.c===t.c),s=>s.h))),r2(sum(x,s=>s.h)),x.filter(s=>s.h>0).length]); }));
+  const mcs = [...title("Mitra Company per Desc Type2 (jam)"), HD(["Desc Type2",...RS,"Total","Kejadian"])];
+  E.t2s.forEach(t=>{ const x=E.MCr.filter(s=>s.t2===t); mcs.push([t,...RS.map(r=>r2(sum(x.filter(s=>s.r===r),s=>s.h))),r2(sum(x,s=>s.h)),x.filter(s=>s.h>0).length]); });
+  mcs.push([], HD(["Route","Desc Type2","Keterangan","Area","Hari","Kejadian","Jam"]));
+  E.descRows.forEach(o=>mcs.push([o.r,o.t2,o.desc,o.area,o.days.size,o.n,r2(o.h)]));
+  const posList = POS.filter(p=>RS.includes(p.r));
+  const ch = [...title("Curah Hujan Harian per Pos (akumulasi Input TCH)"), HD(["Tanggal",...posList.flatMap(p=>[`${p.n} RF (mm)`,`${p.n} Rain hours (jam)`])])];
+  const days=[...new Set(E.R.map(x=>x.d))].sort();
+  days.forEach(d=>ch.push([xdate(d),...posList.flatMap(p=>{ const x=E.R.filter(y=>y.d===d&&y.p===p.n); return [r2(sum(x,y=>y.mm)),r2(sum(x,y=>y.h))]; })]));
+  ch.push([{v:"Total",s:6},...posList.flatMap(p=>{ const x=E.R.filter(y=>y.p===p.n); return [{v:r2(sum(x,y=>y.mm)),s:5},{v:r2(sum(x,y=>y.h)),s:5}]; })]);
+  const evH = ["No","Tanggal","Dari","Sampai","Durasi (jam)","Route","Area","Blok","KM","Kode","Tipe","Desc Type2","Keterangan"];
+  const ev = [HD(evH)];
+  [...E.S].sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0).forEach(s=>ev.push([s.no??"",xdate(s.d),s.f,s.t,{v:s.h,s:2},s.r,s.area,s.blok,s.km??"",s.c,TN[s.c],s.t2,s.desc]));
+  const tch = [HD(["No","Tanggal","Pos","Route","Dari","Sampai","Rainfall (mm)","Durasi (jam)"])];
+  E.R.forEach(x=>tch.push([x.no??"",xdate(x.d),x.p,POSR[x.p],x.f,x.t,{v:x.mm,s:2},{v:x.h,s:2}]));
+  const ck = [HD(["Sumber","No","Tanggal","Masalah","Status"])];
+  (DATA.cek||[]).forEach(c=>ck.push([c.src,c.no??"",c.d,c.msg,c.hapus?"Tidak dihitung":"Tetap dihitung"]));
+  const t5 = [...title("Loss Time per Route, Area Kerja & Tipe - jam"), HD(["Route","Area Kerja",...TYPES.map(t=>t.c),"Total","Grand Total","Cek"])];
+  (E.t5rows||[]).forEach(r=>t5.push(r.map(v=>typeof v==="number"?r2(v):v)));
+  return [
+    {name:"Ringkasan", rows:ring, widths:[52,14,10]},
+    {name:"Kelompok Loss Time", rows:grp, widths:[18,...Array(13).fill(13)]},
+    {name:"Area x Tipe", rows:t5, widths:[8,20,...TYPES.map(()=>7),10,12,8]},
+    {name:"Route x Tipe", rows:mx, widths:[8,20,...RS.map(()=>12),14,12]},
+    {name:"Rekap Harian", rows:harian, widths:[13,...Array(RS.length*2+5).fill(14)], freeze:5},
+    {name:"Per Area", rows:area, widths:[8,18,...TYPES.map(()=>7),10,10], freeze:5},
+    {name:"Mitra Company", rows:mcs, widths:[20,12,60,16,8,10,10]},
+    {name:"Curah Hujan", rows:ch, widths:[12,...Array(posList.length*2).fill(13)], freeze:5},
+    {name:"Detail Stop Hauling", rows:ev, widths:[6,11,7,7,11,7,16,18,7,6,16,18,70], freeze:1, filter:`A1:${colL(evH.length-1)}${ev.length}`},
+    {name:"Detail TCH", rows:tch, widths:[6,11,14,7,7,7,13,12], freeze:1, filter:`A1:H${tch.length}`},
+    {name:"Cek Data", rows:ck, widths:[18,6,12,70,16], freeze:1},
+  ];
+}
+async function exportExcel(btn){
+  try{
+    btn && (btn.disabled=true);
+    const blob = await makeXlsx(buildSheets());
+    const name = `Loss Time & Curah Hujan MMJ - ${rangeText().replace(/[\\/:*?"<>|]/g,"-")}.xlsx`;
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+  } catch(err){ alert("Export Excel gagal: "+err.message); }
+  finally{ btn && setTimeout(()=>btn.disabled=false, 600); }
+}
+document.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>{ if(b.dataset.act==="pdf") presentPDF(); else exportExcel(b); });
+
+/* cek data (statis) */
+{
+  const ck = DATA.cek || [];
+  $("pCek").textContent = `${ck.filter(c=>c.hapus).length} baris tidak dihitung · ${ck.filter(c=>!c.hapus).length} baris ditandai tapi tetap dihitung · cari di Excel pakai kolom No`;
+  $("tCek").innerHTML = `<table><thead><tr><th>Sumber</th><th>No</th><th>Tanggal</th><th>Masalah</th></tr></thead><tbody>`
+    + (ck.length ? ck.map(c=>`<tr><td>${c.src}</td><td>${c.no??""}</td><td>${dLabel(c.d)}</td><td style="${c.hapus?"color:var(--crit);font-weight:600":""}">${esc(c.msg)}</td></tr>`).join("")
+      : `<tr><td colspan="4" class="empty">Tidak ada data bermasalah</td></tr>`) + `</tbody></table>`;
+}
+$("note").innerHTML = `<span aria-hidden="true">⚠</span><span><b>Catatan data:</b> dibuat pada ${DATA.meta.generated} dari ${(DATA.meta.files||[]).length} file bulanan: <i>${esc((DATA.meta.files||[]).map(f=>f.file.replace(" Info stop Hauling","")).join(", "))}</i> (prioritas R_Adjust, lalu revisi R_nn tertinggi). Loss time = kolom <b>Convert Duration</b> sheet Input Stop Hauling (sudah direkonsil &amp; duplikat dihapus; file Jan–Mei kolom ini tanpa judul) — ${DATA.stop.length} baris, termasuk ${DATA.stop.filter(s=>!s.h).length} baris berdurasi 0. Pembagian H1/ISP/H2 dari kolom Route; Area ISP selalu dihitung ISP (file Jan–Jun belum punya route ISP). Jan–Jun belum memakai kode Mitra Company &amp; Desc Type2. Curah hujan = sheet Input TCH (${DATA.rain.length} catatan) diakumulasi per hari per pos; rata-rata route dihitung dari pos yang punya catatan.</span>`;
+
+render();
+let rz; addEventListener("resize",()=>{clearTimeout(rz); rz=setTimeout(render,150);});
+</script>
+</body>
+</html>
