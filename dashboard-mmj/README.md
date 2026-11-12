@@ -1,4 +1,4 @@
-# Dashboard MMJ 2026
+﻿# Dashboard MMJ 2026
 
 Dashboard HTML PT. Musi Mitra Jaya: Dashboard Eksekutif, Heavy Equipment (Timesheet HE/WT),
 Coal Hauling, Batu Split, Loss Time & Rainfall.
@@ -100,21 +100,47 @@ melewati intro.
 
 ## Login (pintu masuk sisi browser)
 
-`assets/js/auth.js` → `window.MMJ_AUTH` (daftar user, `login()`, `logout()`,
-`current()`, `isLoggedIn()`, `can()`). Sesi disimpan di `localStorage`
-(bila "Ingat saya" dicentang) atau `sessionStorage`; **kata sandi tidak ikut
-disimpan** di sesi.
+**Seluruh dashboard terbuka untuk semua orang** — Monitoring, Heavy Equipment,
+Coal Hauling, Batu Split, Loss Time, dan Rainfall bisa dilihat tanpa login.
 
-Loader (`assets/js/shell.js`) memeriksa sesi **sebelum** dashboard dipasang;
-belum login → diarahkan ke `login.html`. Menu user (avatar, nama, role, tombol
-Keluar) disuntik ke sidebar tiap tab dan diam di dasar sidebar.
+Login dipakai untuk **menu tambahan** (mis. **Cost Control**) yang ditandai
+`data-mmj-auth="<izin>"`. Elemen bertanda itu disembunyikan untuk pengguna yang
+belum login atau belum punya izin; loader (`assets/js/shell.js`) menampilkannya
+saat `MMJ_AUTH.can("<izin>")` benar.
 
-> Situsnya statis dan data dashboard berupa file JS publik, jadi ini **pembatas
-> akses, bukan pengaman**. Pengaman sungguhan butuh layanan/server di luar repo.
-> Daftar user & role ada di `tools/gabungan/auth.js` (bagian `users`); hak akses
-> per role disiapkan di `MMJ_AUTH.can("...")` dan `CAPS`.
+| Isi | Keterangan |
+|---|---|
+| `assets/js/auth.js` | `window.MMJ_AUTH`: daftar user, `login()`, `logout()`, `current()`, `isLoggedIn()`, `can()`, `lastError`, `lastRemember` |
+| `login.html` | Halaman login (dipakai saat klik tombol **Masuk**) |
+| `assets/css/login.css` | Gaya halaman login |
+| `assets/css/shell.css` | Gaya menu user di sidebar |
+| Tombol **Masuk** | Di sidebar, hanya untuk yang belum login → ke `login.html` |
+| Tombol **Keluar** | Menghapus sesi → langsung kembali ke halaman utama (`index.html`) |
 
-Periksa hasil build: `python tools/gabungan/check_login.py`.
+Sesi disimpan di `localStorage` (bila "Ingat saya" dicentang) atau
+`sessionStorage`; **kata sandi tidak ikut disimpan** di sesi.
+
+> Situsnya statis dan data dashboard berupa file JS publik, jadi login ini
+> **pembatas akses menu, bukan pengaman**. Pengaman sungguhan butuh
+> layanan/server di luar repo. Daftar user & role ada di
+> `tools/gabungan/auth.js` (bagian `users`); hak akses per role disiapkan di
+> `MMJ_AUTH.can("...")` dan `CAPS`.
+
+Pemeriksaan otomatis:
+
+```bash
+cd tools/gabungan
+python build_gabungan_he.py
+python check_login.py            # cek hasil build
+python check_login_browser.py    # uji perilaku di Chrome headless
+```
+
+## Logo di semua halaman
+
+Semua dashboard memakai **gambar logo yang sama** (`assets/logo-mmj.png`,
+174×110) dan ukuran render yang sama (tinggi 80px → 127×80) di desktop maupun
+mobile, sama seperti tab Heavy Equipment. Di template, logo ditulis sebagai
+placeholder `__LOGO_MMJ__` yang diisi `build_gabungan_he.py` saat build.
 
 ## Running text (ticker) tab Heavy Equipment
 

@@ -48,12 +48,14 @@
     if (first) { try { first.setItem(sessionKey, json); ok = true; } catch (e) { } }
     /* jangan biarkan sesi lama tertinggal di storage lain */
     if (second) { try { second.removeItem(sessionKey); } catch (e) { } }
+    /* "ingat saya" dianggap berhasil HANYA kalau localStorage yang dipakai */
+    var remembered = remember && ok;
     if (!ok) {
       var third = ss() || ls();
       if (third) { try { third.setItem(sessionKey, json); ok = true; } catch (e) { } }
     }
     if (remember) { var l = ls(); if (l) { try { l.setItem(rememberKey, "1"); } catch (e) { } } }
-    return ok;
+    return { ok: ok, remembered: remembered };
   }
 
   function findUser(username) {
@@ -74,13 +76,22 @@
     sessionKey: sessionKey,
     rememberKey: rememberKey,
 
+    /* alasan kegagalan terakhir: "user" | "pass" | "storage" ("" = sukses) */
+    lastError: "",
+    /* true bila "ingat saya" benar-benar dipakai (localStorage) */
+    lastRemember: false,
+
     /* login(username, pass, remember) -> user|null */
     login: function (username, pass, remember) {
+      MMJ_AUTH.lastError = "";
+      MMJ_AUTH.lastRemember = false;
       var u = findUser(username);
-      if (!u) return null;
-      if (String(u.pass) !== String(pass == null ? "" : pass)) return null;
+      if (!u) { MMJ_AUTH.lastError = "user"; return null; }
+      if (String(u.pass) !== String(pass == null ? "" : pass)) { MMJ_AUTH.lastError = "pass"; return null; }
       var sess = { id: u.id, name: u.name, role: u.role, ts: Date.now() };
-      if (!writeSession(sess, !!remember)) return null;   /* storage diblokir -> gagal, bukan crash */
+      var res = writeSession(sess, !!remember);
+      if (!res.ok) { MMJ_AUTH.lastError = "storage"; return null; }   /* storage diblokir */
+      MMJ_AUTH.lastRemember = res.remembered;
       return publicUser(u);
     },
 
@@ -93,13 +104,16 @@
     },
 
     /* user yang sedang login, atau null. Sesi milik user yang sudah dihapus
-       dari daftar -> dianggap belum login. */
+       dari daftar -> dianggap belum login (dan sesinya dibuang). */
     current: function () {
       var s = readSession();
       if (!s || !s.id) return null;
       for (var i = 0; i < users.length; i++) {
         if (users[i].id === s.id) return publicUser(users[i]);
       }
+      /* user sudah tidak ada -> buang sesinya supaya tidak aktif lagi nanti */
+      try { window.localStorage.removeItem(sessionKey); } catch (e) { }
+      try { window.sessionStorage.removeItem(sessionKey); } catch (e) { }
       return null;
     },
 

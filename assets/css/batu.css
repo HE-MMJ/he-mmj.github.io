@@ -52,8 +52,7 @@ a{color:inherit}
 /* ---------- sidebar ---------- */
 .side{position:sticky;top:20px;height:calc(100vh - 40px);background:var(--side);border:1px solid var(--border);border-radius:24px;padding:20px 14px;display:flex;flex-direction:column;gap:4px;box-shadow:var(--shadow)}
 .logo{display:flex;flex-direction:column;align-items:center;gap:8px;padding:0 4px 18px;text-align:center}
-.logo .badge{display:grid;place-items:center;width:100%}
-.logo img{display:block;height:80px;width:auto}
+.logo img{display:block;height:80px;width:auto;flex:none}
 .logo .nm{font-size:10.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
 .nav a{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;text-decoration:none;color:var(--ink-2);font-weight:500;font-size:13.5px;transition:background .15s,color .15s}
 .nav a:hover{background:var(--accent-soft);color:var(--ink)}
@@ -262,8 +261,6 @@ tbody tr:hover td{background:var(--surface-2)}
   .app{grid-template-columns:minmax(0,1fr);padding:12px}
   .side{min-width:0;position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:12px;border-radius:16px}
   .logo{flex-direction:row;padding:0;gap:10px;text-align:left}
-  .logo .badge{width:auto;padding:6px 12px;border-radius:12px}
-  .logo img{height:46px}
   .nav{display:flex;gap:4px;overflow-x:auto;flex:1 1 100%;min-width:0;order:3}
   .nav a{padding:8px 12px;white-space:nowrap}
   .side .lbl,.tipcard,.qbtn{display:none}

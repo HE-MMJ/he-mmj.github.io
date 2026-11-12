@@ -22,6 +22,11 @@
      Login dipakai untuk menu TAMBAHAN (mis. Cost Control) yang berlabel
      data-mmj-auth="<izin>" dan hanya ditunjukkan bila user punya izin. */
 
+  /* kotak "Dashboard belum tampil?" itu untuk pengguna TANPA JavaScript.
+     Begitu JS jalan, sembunyikan supaya tidak sempat berkedip. */
+  var nojsBox = document.getElementById("mmjNojs");
+  if (nojsBox) nojsBox.hidden = true;
+
   var KEYS = ["exec", "haul", "batu", "lt", "he"];
 
   var asFrag = function (t) {
@@ -60,7 +65,10 @@
 
   if (!KEYS.some(function (k) { return T[k]; })) {
     var nb = document.getElementById("mmjNojs");
-    if (nb) nb.innerHTML = "<b>Dashboard belum berhasil dibuat.</b>Jalankan ulang Update Dashboard Gabungan.bat.";
+    if (nb) {
+      nb.hidden = false;
+      nb.innerHTML = "<b>Dashboard belum berhasil dibuat.</b>Jalankan ulang Update Dashboard Gabungan.bat.";
+    }
     return;
   }
 
@@ -138,7 +146,8 @@
     box.querySelector(".mmj-user-tx span").textContent = u.role || "";
     box.querySelector(".mmj-user-out").addEventListener("click", function () {
       try { window.MMJ_AUTH.logout(); } catch (e) { }
-      location.replace("login.html");
+      /* keluar -> langsung ke halaman utama (dashboardnya publik) */
+      location.replace("index.html");
     });
     side.appendChild(box);
   }
@@ -214,8 +223,22 @@
       try { L[i][0].removeEventListener(L[i][1], L[i][2], L[i][3]); } catch (e) { }
     }
     L = [];
+    /* CSS tab lama TIDAK langsung dibuang: CSS tab baru dimuat async. Kalau CSS
+       lama dibuang dulu, halaman sempat tanpa style -> logo meloncat (muncul
+       besar) lalu mengecil saat CSS baru masuk. CSS lama ditahan sampai CSS baru
+       siap. */
+    var oldStyles = [];
     var own = document.querySelectorAll("[data-mmj-own], #mmjBootCss");
-    for (var k = 0; k < own.length; k++) own[k].parentNode.removeChild(own[k]);
+    for (var k = 0; k < own.length; k++) {
+      if (own[k].tagName === "LINK" && own[k].rel === "stylesheet") oldStyles.push(own[k]);
+      else own[k].parentNode.removeChild(own[k]);
+    }
+    var dropOldStyles = function () {
+      for (var s = 0; s < oldStyles.length; s++) {
+        if (oldStyles[s].parentNode) oldStyles[s].parentNode.removeChild(oldStyles[s]);
+      }
+      oldStyles = [];
+    };
     while (document.body.firstChild) document.body.removeChild(document.body.firstChild);
     while (document.body.attributes.length) document.body.removeAttribute(document.body.attributes[0].name);
     document.documentElement.removeAttribute("data-theme");
@@ -226,6 +249,7 @@
 
     /* <title> / <link> / <style> bertanda data-mmj-head dipindah ke <head> */
     var heads = frag.querySelectorAll("[data-mmj-head]");
+    var newStyle = null;
     for (var h = 0; h < heads.length; h++) {
       var el = heads[h];
       el.removeAttribute("data-mmj-head");
@@ -235,6 +259,22 @@
       } else {
         el.setAttribute("data-mmj-own", "");
         document.head.appendChild(el);
+        if (el.tagName === "LINK" && el.rel === "stylesheet") newStyle = el;
+      }
+    }
+
+    /* CSS tab lama dibuang begitu CSS tab baru siap (biar tidak ada halaman
+       tanpa style -> logo meloncat) */
+    if (oldStyles.length) {
+      if (newStyle) {
+        if (newStyle.sheet) setTimeout(dropOldStyles, 0);
+        else {
+          newStyle.addEventListener("load", dropOldStyles);
+          newStyle.addEventListener("error", dropOldStyles);
+        }
+        setTimeout(dropOldStyles, 5000);   /* jaring pengaman */
+      } else {
+        dropOldStyles();
       }
     }
 

@@ -10,6 +10,10 @@ Keluaran (di root repo, siap dipublikasikan GitHub Pages):
     assets/css/<tab>.css      CSS tiap dashboard (hanya dimuat saat tab dibuka)
     assets/data/<tab>.js      data mentah  -> window.MMJ_DATA[<tab>]
     assets/js/shell.js        loader halaman (dari shell_loader.js)
+    assets/js/auth.js         daftar user + sesi + cek role (dari tools/gabungan/auth.js)
+    assets/css/login.css      gaya halaman login (dari tools/gabungan/login.css)
+    assets/css/shell.css      gaya menu user di sidebar (dari tools/gabungan/shell.css)
+    login.html                halaman login (dari tools/gabungan/login.html)
     assets/js/intro.js        animasi pembuka (dari tools/gabungan/intro.js)
     assets/js/tab-nav.js      menu dashboard di sidebar (dipakai semua tab)
     assets/js/tab/<tab>.js    logika tiap dashboard (dibungkus IIFE)
@@ -198,7 +202,7 @@ def emit(html, root, version=None):
         with open(os.path.join(root, fav_href), "wb") as f:
             f.write(base64.b64decode(fav.group(2)))
 
-    nojs = re.search(r'(<div class="mmjbox" id="mmjNojs">.*?</div>)', html, re.S)
+    nojs = re.search(r'(<div class="mmjbox" id="mmjNojs"[^>]*>.*?</div>)', html, re.S)
     nojs = nojs.group(1) if nojs else ""
 
     # bersihkan aset hasil build sebelumnya (folder ini sepenuhnya generated)
@@ -322,7 +326,7 @@ def emit(html, root, version=None):
 
     # ---- loader
     here = os.path.dirname(os.path.abspath(__file__))
-    loader = open(os.path.join(here, "shell_loader.js"), encoding="utf-8").read()
+    loader = open(os.path.join(here, "shell_loader.js"), encoding="utf-8-sig").read()
     _write(os.path.join(root, "assets/js/shell.js"),
            "/* assets/js/shell.js - dibuat dari tools/gabungan/shell_loader.js */\n" + loader)
 
@@ -343,7 +347,7 @@ def emit(html, root, version=None):
     # ---- halaman login (dari tools/gabungan/login.html)
     with open(os.path.join(here, "login.html"), encoding="utf-8-sig") as f:
         login_html = f.read()
-    login_html = login_html.replace("__V__", q)
+    login_html = login_html.replace("__V__", "v=" + version)
     _write(os.path.join(root, "login.html"), login_html)
 
     # ---- boot css

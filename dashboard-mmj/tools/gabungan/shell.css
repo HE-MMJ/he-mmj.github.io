@@ -51,3 +51,9 @@ html[data-theme="dark"] .mmj-user-in:hover{color:#a5b4fc;border-color:#6366f1;ba
   }
   .mmj-user-out,.mmj-user-in{width:auto;padding:6px 12px}
 }
+
+/* ruang di bawah sidebar (desktop) supaya item menu terakhir tidak tertutup
+   menu user yang menempel di dasar sidebar */
+@media (min-width:901px){
+  body .side{padding-bottom:64px}
+}

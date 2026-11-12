@@ -53,6 +53,7 @@ body::before{
 }
 .lg-btn:disabled{opacity:.7;cursor:default}
 .lg-err{margin:2px 0 0;color:#fca5a5;font-size:13px;text-align:center}
+.lg-note{margin:2px 0 0;color:#cbd5e1;font-size:12px;text-align:center}
 .lg-shake{animation:lg-shake .32s ease-in-out}
 @keyframes lg-shake{
   0%,100%{transform:translateX(0)}

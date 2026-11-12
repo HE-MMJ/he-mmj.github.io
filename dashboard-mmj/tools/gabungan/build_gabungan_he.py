@@ -318,6 +318,13 @@ def main():
     summary = build_summary()
     body, css, js_all, summary_json, js_parts = build_he_template(summary)
 
+    # logo seragam untuk semua template (gambar yang sama seperti tab Heavy
+    # Equipment: assets/logo-mmj.png)
+    logo_mmj = ""
+    if os.path.exists(LOGO):
+        logo_mmj = "data:image/png;base64," + base64.b64encode(open(LOGO, "rb").read()).decode()
+    shell = shell.replace("__LOGO_MMJ__", logo_mmj)
+
     # 1) patch shell JS (daftar template + tab)
     shell = patch_shell_js(shell)
 
