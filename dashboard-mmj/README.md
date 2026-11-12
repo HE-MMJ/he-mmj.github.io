@@ -142,6 +142,51 @@ Semua dashboard memakai **gambar logo yang sama** (`assets/logo-mmj.png`,
 mobile, sama seperti tab Heavy Equipment. Di template, logo ditulis sebagai
 placeholder `__LOGO_MMJ__` yang diisi `build_gabungan_he.py` saat build.
 
+## Design system (`assets/css/theme.css`)
+
+Satu file CSS dipakai bersama oleh kelima dashboard, dimuat **sekali** di
+`index.html` **sebelum** CSS tab (`assets/css/<tab>.css`):
+
+```html
+<link rel="stylesheet" href="assets/css/theme.css?v=...">
+```
+
+Isinya:
+1. **Komponen inti** — menu pemilih dashboard (`.mmjnav`), tombol tema.
+2. **Token bersama** — palet gelap + skala jarak/radius (`--sp-1..--sp-6`,
+   `--r-sm/--r-lg`).
+3. **Base & aksesibilitas** — fokus keyboard, seleksi, angka tabel
+   `tabular-nums`, aturan cetak, perapian mobile (target sentuh ≥ 40 px,
+   tabel bisa digeser).
+
+**Aturan penting:** karena `theme.css` dimuat lebih dulu, CSS tab **tetap bisa
+menimpanya** (spesifisitas sama, urutan lebih akhir menang). Jadi:
+
+- Komponen khusus dashboard (kartu, grafik, filter) → **tetap di CSS tab**.
+- Mau mengubah komponen inti → ubah `tools/gabungan/theme.css`, lalu build.
+- **Jangan** menambah `:root` token baru di 5 file sekaligus; cukup di
+  `theme.css` bila nilainya sama untuk semua tab.
+
+Tema terang/gelap: satu modul di `assets/js/shell.js` (`mountTheme()`),
+penyimpanan di `localStorage` key **`mmjTheme`** (lama `dashTheme3`/`heTheme`
+masih dibaca). Tombol "Tema" otomatis dipasang di tab yang belum punya.
+
+### Pemeriksaan otomatis
+
+```bash
+cd tools/gabungan
+python build_gabungan_he.py        # build
+python check_login.py               # kelengkapan hasil build
+python check_login_browser.py       # 16 uji perilaku di Chrome headless
+python check_visual.py              # penjaga regresi tampilan (pixel-diff)
+python check_visual.py --make-baseline   # buat ulang baseline
+```
+
+`check_visual.py` membandingkan 10 screenshot (5 tab × 2 lebar) dengan baseline
+di `.visual-baseline/`; **ambang 0,5%** → kalau tema terang berubah karena
+refactor, build dianggap gagal. Halaman yang isinya bergerak (ticker
+"INFO PENTING") dinormalkan dulu (waktu dibekukan + animasi dimatikan).
+
 ## Running text (ticker) tab Heavy Equipment
 
 Isi ticker hanya unit yang bermasalah (kelas `rt-alert` / `rt-warn`), geser 40 px/detik,
