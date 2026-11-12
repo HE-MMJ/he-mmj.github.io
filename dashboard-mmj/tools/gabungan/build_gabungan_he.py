@@ -352,7 +352,6 @@ def main():
     spec = importlib.util.spec_from_file_location("mmj_gen", os.path.join(TOOLS, "build_gabungan.py"))
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
-    nav_css = mod.BAR_CSS
     bar_html = mod.BAR_HTML.replace("__GEN__", summary["meta"]["generated"])
     bar_html = re.sub(r'\s*<a href="\.\./index\.html">.*?</a>', "", bar_html)
     # label "Menu halaman" tetap dipakai (tab HE punya menu halaman sendiri)
@@ -360,7 +359,7 @@ def main():
                                 '<div class="mlbl">Monitoring</div>' + nav_item)
     bar_js = mod.BAR_JS
 
-    he_tpl = ('<template id="mmjT_he">\n' + he_head + "\n" + nav_css + "\n" + bar_html + "\n"
+    he_tpl = ('<template id="mmjT_he">\n' + he_head + "\n" + "\n" + bar_html + "\n"
               + body + "\n"
               + '<script data-mmj-out="assets/data/standar-he.js" data-mmj-mode="std">\n'
               + js_parts["std"] + "\n</script>\n"

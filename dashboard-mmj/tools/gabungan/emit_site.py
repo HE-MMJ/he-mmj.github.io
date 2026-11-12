@@ -350,6 +350,10 @@ def emit(html, root, version=None):
     login_html = login_html.replace("__V__", "v=" + version)
     _write(os.path.join(root, "login.html"), login_html)
 
+    # ---- design system (token dasar + komponen inti), dimuat sekali
+    theme_css = open(os.path.join(here, "theme.css"), encoding="utf-8-sig").read()
+    _write(os.path.join(root, "assets/css/theme.css"), HDR % "assets/css/theme.css" + theme_css)
+
     # ---- boot css
     _write(os.path.join(root, "assets/css/boot.css"), HDR % "assets/css/boot.css" + boot + "\n")
 
@@ -366,6 +370,7 @@ def emit(html, root, version=None):
 <meta name="description" content="Dashboard MMJ 2026: Eksekutif, Heavy Equipment (Timesheet HE/WT), Coal Hauling, Batu Split, Loss Time &amp; Rainfall.">
 <link rel="stylesheet" id="mmjBootCss" href="assets/css/boot.css%(q)s">
 <link rel="stylesheet" href="assets/css/intro.css%(q)s">
+<link rel="stylesheet" href="assets/css/theme.css%(q)s">
 <link rel="stylesheet" href="assets/css/shell.css%(q)s">
 %(preloads)s</head>
 <body>

@@ -45,25 +45,7 @@ EXTRA = {"exec": {"name": "Dashboard Eksekutif", "file": os.path.join(TOOLS, "ex
 ORDER = ["exec", "haul", "batu", "lt"]
 
 # menu pilihan dashboard: dipindah ke sidebar tiap dashboard (OVERVIEW / MONITORING), tanpa iframe
-BAR_CSS = """<style>
-.side{overflow-y:auto;scrollbar-width:thin}
-.mmjnav{display:flex;flex-direction:column;gap:2px;margin:0 0 6px}
-.mmjnav .mlbl{font-size:10.5px;letter-spacing:.16em;color:var(--muted);margin:6px 10px 4px;text-transform:uppercase;font-weight:600}
-.mmjnav a{display:flex;align-items:center;gap:12px;padding:9px 14px;border-radius:12px;text-decoration:none;color:var(--ink-2);font-weight:500;font-size:13.5px;transition:background .15s,color .15s;white-space:nowrap}
-.mmjnav a:hover{background:var(--accent-soft);color:var(--ink)}
-.mmjnav a svg{width:18px;height:18px;flex:none}
-.mmjnav a[aria-current="page"]{background:var(--accent);color:#fff;font-weight:600;box-shadow:0 6px 14px color-mix(in srgb,var(--accent) 30%,transparent)}
-.mmjnav .mmjg{font-size:10.5px;color:var(--muted);margin:4px 10px 0}
-.mmjnav .mhere{margin-top:10px}
-.mmjtop{max-width:1500px;margin:0 auto;padding:12px 20px 0}
-@media (max-width:1000px){
-  .mmjnav{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;flex:1 1 100%;order:2;margin:6px 0 2px;gap:4px;scrollbar-width:none}
-  .mmjnav .mlbl,.mmjnav .mmjg{display:none}
-  .mmjnav a{padding:7px 11px;font-size:12.5px;gap:7px;background:var(--surface-2)}
-  .mmjnav a svg{width:15px;height:15px}
-}
-@media print{.mmjnav,.mmjtop{display:none!important}}
-</style>"""
+BAR_CSS = ""   # menu dashboard kini ada di theme.css (assets/css/theme.css)
 _IC = {
     "exec": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z"/></svg>',
     "haul": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 16V7h11v9M13 10h4l4 4v2h-8"/><circle cx="6.5" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/></svg>',

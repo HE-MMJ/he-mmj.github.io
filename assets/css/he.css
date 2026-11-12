@@ -1037,20 +1037,3 @@ table.grid tbody tr:hover { background: var(--accent-soft); }
   .app-header { padding: 16px 16px 18px; }
   .app-header h1 { font-size: 24px; }
 }
-.side{overflow-y:auto;scrollbar-width:thin}
-.mmjnav{display:flex;flex-direction:column;gap:2px;margin:0 0 6px}
-.mmjnav .mlbl{font-size:10.5px;letter-spacing:.16em;color:var(--muted);margin:6px 10px 4px;text-transform:uppercase;font-weight:600}
-.mmjnav a{display:flex;align-items:center;gap:12px;padding:9px 14px;border-radius:12px;text-decoration:none;color:var(--ink-2);font-weight:500;font-size:13.5px;transition:background .15s,color .15s;white-space:nowrap}
-.mmjnav a:hover{background:var(--accent-soft);color:var(--ink)}
-.mmjnav a svg{width:18px;height:18px;flex:none}
-.mmjnav a[aria-current="page"]{background:var(--accent);color:#fff;font-weight:600;box-shadow:0 6px 14px color-mix(in srgb,var(--accent) 30%,transparent)}
-.mmjnav .mmjg{font-size:10.5px;color:var(--muted);margin:4px 10px 0}
-.mmjnav .mhere{margin-top:10px}
-.mmjtop{max-width:1500px;margin:0 auto;padding:12px 20px 0}
-@media (max-width:1000px){
-  .mmjnav{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;flex:1 1 100%;order:2;margin:6px 0 2px;gap:4px;scrollbar-width:none}
-  .mmjnav .mlbl,.mmjnav .mmjg{display:none}
-  .mmjnav a{padding:7px 11px;font-size:12.5px;gap:7px;background:var(--surface-2)}
-  .mmjnav a svg{width:15px;height:15px}
-}
-@media print{.mmjnav,.mmjtop{display:none!important}}
