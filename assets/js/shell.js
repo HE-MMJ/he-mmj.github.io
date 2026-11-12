@@ -18,6 +18,14 @@
 (function () {
   "use strict";
 
+  /* ---------------------------------------------------------------- login --
+     Gerbang masuk: belum login -> ke halaman login. Dicek SEBELUM dashboard
+     dipasang, supaya dashboard tidak pernah berkedip di layar. */
+  if (!(window.MMJ_AUTH && window.MMJ_AUTH.isLoggedIn())) {
+    try { location.replace("login.html"); } catch (e) { location.href = "login.html"; }
+    return;
+  }
+
   var KEYS = ["exec", "haul", "batu", "lt", "he"];
 
   var asFrag = function (t) {
