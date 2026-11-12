@@ -50,7 +50,6 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
 .nav a:hover{background:var(--accent-soft);color:var(--ink)}
 .nav a.on{background:var(--accent-soft);color:var(--accent);font-weight:600;box-shadow:inset 3px 0 0 var(--accent)}
 .nav svg{width:18px;height:18px;flex:none}
-.qbtn{display:flex;align-items:center;gap:10px;width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--hair);background:var(--surface);color:var(--ink);font-weight:600;font-size:13px;cursor:pointer;margin-top:10px}
 .qbtn:hover{background:var(--accent-soft);color:var(--accent)}
 .theme{margin-top:auto;border:1px solid var(--hair);background:transparent;color:var(--ink-2);border-radius:10px;padding:7px 10px;cursor:pointer;font-size:12px}
 .top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px;align-items:flex-start;padding:4px 4px 16px}
@@ -133,7 +132,6 @@ svg text{fill:var(--muted);font-size:10.5px;font-variant-numeric:tabular-nums}
   .logo{flex-direction:row;padding:0;gap:10px;text-align:left}
   .nav{display:flex;gap:4px;overflow-x:auto;flex:1 1 100%;min-width:0;order:3}
   .nav a{padding:8px 12px;white-space:nowrap}
-  .qbtn{display:none}
   .theme{margin:0 0 0 auto}
   .c8,.c6,.c4{grid-column:span 12}
   h1{font-size:30px}

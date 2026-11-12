@@ -15,7 +15,6 @@ let st={p:"mtd"}; try{ st.p=localStorage.getItem("execPer")||"mtd"; }catch(e){}
 ePer.onclick=e=>{ const b=e.target.closest("button"); if(!b) return; st.p=b.dataset.v; try{ localStorage.setItem("execPer",st.p); }catch(x){} render(); };
 function applyTheme(t){ if(t==="dark") document.documentElement.setAttribute("data-theme","dark"); else document.documentElement.removeAttribute("data-theme"); eTheme.textContent="Tema: "+(t==="dark"?"gelap":"terang"); }
 /* tema dipegang loader (assets/js/shell.js) */
-ePdf.onclick=()=>{ const dk=document.documentElement.getAttribute("data-theme")==="dark"; if(dk) applyTheme("light"); const done=()=>{ if(dk) applyTheme("dark"); removeEventListener("afterprint",done); }; addEventListener("afterprint",done); setTimeout(()=>print(),100); };
 const tipEl=document.getElementById("etip");
 const tip=(e,h)=>{ tipEl.innerHTML=h; tipEl.style.display="block"; const w=tipEl.offsetWidth,hh=tipEl.offsetHeight; let x=e.clientX+14,y=e.clientY+14; if(x+w>innerWidth-8) x=e.clientX-w-14; if(y+hh>innerHeight-8) y=e.clientY-hh-14; tipEl.style.left=x+"px"; tipEl.style.top=y+"px"; };
 const hide=()=>tipEl.style.display="none";

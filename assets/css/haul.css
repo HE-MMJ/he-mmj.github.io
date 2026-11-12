@@ -54,7 +54,6 @@ button:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(
 .nav a.on{background:var(--accent-soft);color:var(--accent);font-weight:600;box-shadow:inset 3px 0 0 var(--accent)}
 .nav svg{width:18px;height:18px;flex:none}
 .side .lbl{font-size:10.5px;letter-spacing:.16em;color:var(--muted);margin:18px 10px 6px;text-transform:uppercase;font-weight:600}
-.qbtn{display:flex;align-items:center;gap:10px;width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--hair);background:var(--surface);color:var(--ink);font-weight:600;font-size:13px;cursor:pointer}
 .qbtn:hover{background:var(--accent-soft);color:var(--accent)}
 .tipcard{margin-top:auto;border-radius:18px;padding:16px;background:var(--tip-bg);color:#fff;position:relative;overflow:hidden;box-shadow:0 12px 26px rgba(67,56,202,.28)}
 .tipcard:empty{display:none}
@@ -327,8 +326,7 @@ td .z{color:var(--muted)}
   .logo{flex-direction:row;padding:0;gap:10px;text-align:left}
   .nav{display:flex;gap:4px;overflow-x:auto;flex:1 1 100%;min-width:0;order:3}
   .nav a{padding:8px 12px;white-space:nowrap}
-  .side .lbl,.tipcard,.qbtn{display:none}
-  .theme{margin:0 0 0 auto}
+  .side .lbl,.tipcard,  .theme{margin:0 0 0 auto}
   .c8,.c7,.c6,.c5,.c4{grid-column:span 12}
   .ach{grid-template-columns:1fr}
   h1{font-size:30px}

@@ -114,6 +114,19 @@
   }
   window.mmjMarkNav = markNav;
 
+  /* ------------------------------------------------- kaki sidebar --------- */
+  /* Menu user (Masuk/Keluar) + tombol Tema dikumpulkan di satu wadah sticky
+     di dasar sidebar, jadi keduanya selalu terlihat & tidak tertutup. */
+  function sideFoot(side) {
+    var foot = side.querySelector(".side-foot");
+    if (!foot) {
+      foot = document.createElement("div");
+      foot.className = "side-foot";
+      side.appendChild(foot);
+    }
+    return foot;
+  }
+
   /* ------------------------------------------------- menu user di sidebar --- */
   /* Disuntik tiap tab. Belum login -> tombol "Masuk"; sudah login -> avatar,
      nama, role, dan tombol "Keluar". */
@@ -133,23 +146,21 @@
       box.querySelector(".mmj-user-in").addEventListener("click", function () {
         location.replace("login.html");
       });
-      side.appendChild(box);
-      return;
+    } else {
+      box.innerHTML =
+        '<span class="mmj-user-av"></span>' +
+        '<span class="mmj-user-tx"><b></b><span></span></span>' +
+        '<button type="button" class="mmj-user-out">Keluar</button>';
+      box.querySelector(".mmj-user-av").textContent = String(u.name || "?").trim().charAt(0).toUpperCase();
+      box.querySelector(".mmj-user-tx b").textContent = u.name || "";
+      box.querySelector(".mmj-user-tx span").textContent = u.role || "";
+      box.querySelector(".mmj-user-out").addEventListener("click", function () {
+        try { window.MMJ_AUTH.logout(); } catch (e) { }
+        /* keluar -> langsung ke halaman utama (dashboardnya publik) */
+        location.replace("index.html");
+      });
     }
-
-    box.innerHTML =
-      '<span class="mmj-user-av"></span>' +
-      '<span class="mmj-user-tx"><b></b><span></span></span>' +
-      '<button type="button" class="mmj-user-out">Keluar</button>';
-    box.querySelector(".mmj-user-av").textContent = String(u.name || "?").trim().charAt(0).toUpperCase();
-    box.querySelector(".mmj-user-tx b").textContent = u.name || "";
-    box.querySelector(".mmj-user-tx span").textContent = u.role || "";
-    box.querySelector(".mmj-user-out").addEventListener("click", function () {
-      try { window.MMJ_AUTH.logout(); } catch (e) { }
-      /* keluar -> langsung ke halaman utama (dashboardnya publik) */
-      location.replace("index.html");
-    });
-    side.appendChild(box);
+    sideFoot(side).appendChild(box);
   }
 
   /* --------------------------------- menu tambahan berlabel (per izin/role) --- */
@@ -214,14 +225,17 @@
       b = document.createElement("button");
       b.className = "theme";
       b.type = "button";
-      side.appendChild(b);
     }
+    /* tema diletakkan di kaki sidebar, DI BAWAH menu user (Masuk/Keluar) */
+    sideFoot(side).appendChild(b);
     if (b.__mmjBound) return;
     b.__mmjBound = true;
     b.addEventListener("click", function () {
       var next = currentTheme() === "dark" ? "light" : "dark";
       try { localStorage.setItem(THEME_KEY, next); } catch (e) { }
       applyTheme(next);
+      /* grafik perlu digambar ulang supaya warna tema ikut */
+      try { if (typeof window.setView === "function") window.setView(window.__MMJ_TAB); } catch (e) { }
     });
   }
 

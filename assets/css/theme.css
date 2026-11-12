@@ -45,9 +45,16 @@
 /* angka di tabel sejajar (easy dibaca) */
 table td,table th{font-variant-numeric:tabular-nums}
 
+/* ---------- kaki sidebar: menu user + tombol tema (menempel di bawah) ------ */
+.side-foot{
+  position:sticky;bottom:0;z-index:2;margin-top:auto;
+  display:flex;flex-direction:column;gap:6px;padding-top:8px;
+  background:var(--surface-solid,#fff);border-top:1px solid var(--hair);
+}
+
 /* ---------- tombol tema (dipakai semua tab) -------------------------------- */
 .side .theme{
-  margin-top:auto;border:1px solid var(--hair);background:transparent;color:var(--ink-2);
+  border:1px solid var(--hair);background:transparent;color:inherit;
   border-radius:10px;padding:7px 10px;cursor:pointer;font-size:12px;white-space:nowrap;
 }
 .side .theme:hover{background:var(--accent-soft);color:var(--accent)}
