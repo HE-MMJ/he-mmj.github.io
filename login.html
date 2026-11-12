@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Masuk · Dashboard MMJ 2026</title>
+<link rel="icon" href="assets/img/favicon.png??v=202611121347">
+<link rel="stylesheet" href="assets/css/login.css??v=202611121347">
+</head>
+<body>
+<main class="lg-wrap">
+  <form class="lg-card" id="fLogin" autocomplete="on" novalidate>
+    <img class="lg-logo" src="assets/logo-mmj.png" alt="Musi Mitra Jaya">
+    <h1 class="lg-title">Dashboard MMJ 2026</h1>
+    <p class="lg-sub">Masuk untuk membuka dashboard</p>
+
+    <label class="lg-field">
+      <span>Nama pengguna</span>
+      <input id="uUser" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+    </label>
+
+    <label class="lg-field">
+      <span>Kata sandi</span>
+      <span class="lg-pw">
+        <input id="uPass" name="password" type="password" autocomplete="current-password" required>
+        <button id="btnSee" type="button" class="lg-see" aria-label="Lihat kata sandi">&#9673;</button>
+      </span>
+    </label>
+
+    <label class="lg-remember">
+      <input id="uRemember" type="checkbox">
+      <span>Ingat saya di perangkat ini</span>
+    </label>
+
+    <button id="btnLogin" type="submit" class="lg-btn">Masuk</button>
+
+    <p id="errMsg" class="lg-err" hidden>Nama pengguna atau kata sandi salah.</p>
+  </form>
+</main>
+
+<script src="assets/js/auth.js??v=202611121347"></script>
+<script>
+(function () {
+  "use strict";
+  var f = document.getElementById("fLogin"),
+      u = document.getElementById("uUser"),
+      p = document.getElementById("uPass"),
+      r = document.getElementById("uRemember"),
+      b = document.getElementById("btnLogin"),
+      e = document.getElementById("errMsg"),
+      see = document.getElementById("btnSee");
+
+  see.addEventListener("click", function () {
+    var show = p.type === "password";
+    p.type = show ? "text" : "password";
+    see.setAttribute("aria-label", show ? "Sembunyikan kata sandi" : "Lihat kata sandi");
+  });
+
+  f.addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    e.hidden = true;
+    var user = window.MMJ_AUTH.login(u.value, p.value, r.checked);
+    if (!user) {
+      e.hidden = false;
+      f.classList.remove("lg-shake");
+      void f.offsetWidth;
+      f.classList.add("lg-shake");
+      return;
+    }
+    b.disabled = true;
+    b.textContent = "Memproses…";
+    location.replace("index.html");
+  });
+})();
+</script>
+</body>
+</html>

@@ -332,6 +332,20 @@ def emit(html, root, version=None):
     intro_js = open(os.path.join(here, "intro.js"), encoding="utf-8-sig").read()
     _write(os.path.join(root, "assets/js/intro.js"), HDR % "assets/js/intro.js" + intro_js)
 
+    # ---- auth (login) + css login + css shell
+    auth_js = open(os.path.join(here, "auth.js"), encoding="utf-8-sig").read()
+    _write(os.path.join(root, "assets/js/auth.js"), HDR % "assets/js/auth.js" + auth_js)
+    login_css = open(os.path.join(here, "login.css"), encoding="utf-8-sig").read()
+    _write(os.path.join(root, "assets/css/login.css"), HDR % "assets/css/login.css" + login_css)
+    shell_css = open(os.path.join(here, "shell.css"), encoding="utf-8-sig").read()
+    _write(os.path.join(root, "assets/css/shell.css"), HDR % "assets/css/shell.css" + shell_css)
+
+    # ---- halaman login (dari tools/gabungan/login.html)
+    with open(os.path.join(here, "login.html"), encoding="utf-8-sig") as f:
+        login_html = f.read()
+    login_html = login_html.replace("__V__", q)
+    _write(os.path.join(root, "login.html"), login_html)
+
     # ---- boot css
     _write(os.path.join(root, "assets/css/boot.css"), HDR % "assets/css/boot.css" + boot + "\n")
 
@@ -348,6 +362,7 @@ def emit(html, root, version=None):
 <meta name="description" content="Dashboard MMJ 2026: Eksekutif, Heavy Equipment (Timesheet HE/WT), Coal Hauling, Batu Split, Loss Time &amp; Rainfall.">
 <link rel="stylesheet" id="mmjBootCss" href="assets/css/boot.css%(q)s">
 <link rel="stylesheet" href="assets/css/intro.css%(q)s">
+<link rel="stylesheet" href="assets/css/shell.css%(q)s">
 %(preloads)s</head>
 <body>
 <!-- terlihat hanya bila JavaScript tidak berjalan -->
@@ -355,6 +370,7 @@ def emit(html, root, version=None):
 
 %(templates)s
 
+<script src="assets/js/auth.js%(q)s"></script>
 <script src="assets/js/shell.js%(q)s"></script>
 <script src="assets/js/intro.js%(q)s"></script>
 </body>
