@@ -45,6 +45,7 @@ if (-not (Test-Path "$REPO\.git")) {
     if ($LASTEXITCODE -ne 0) { Gagal "clone repo." }
 }
 Set-Location $REPO
+git checkout -q -- .                       # buang sisa upload yang batal (salinan repo ini hanya cermin)
 git pull --rebase --autostash -q origin main
 if ($LASTEXITCODE -ne 0) { Gagal "git pull. Cek koneksi internet / login GitHub (gh auth login)." }
 
@@ -65,6 +66,12 @@ Copy-Item "$CH\Dashboard Tools\logos\*.png" "$D\tools\coal-hauling\logos" -Force
 Copy-Item "$BS\Update Dashboard.bat", "$BS\Dashboard Tools\update_dashboard.py", "$BS\Dashboard Tools\dashboard_template.html", "$BS\Dashboard Tools\logo_mmj.png" "$D\tools\batu-split" -Force
 Copy-Item "$LT\Update Dashboard Loss Time.bat", "$LT\Dashboard Tools\update_dashboard_losstime.py", "$LT\Dashboard Tools\losstime_template.html", "$LT\Dashboard Tools\logo_mmj.png" "$D\tools\loss-time" -Force
 
+# ---------- 3b. Selaraskan dengan editan collaborator (3-way merge, editan mereka tidak tertimpa) ----------
+Langkah "Menyelaraskan dengan editan collaborator di repo..."
+& python "$GAB\Tools\selaraskan_repo.py" "$REPO"
+if ($LASTEXITCODE -eq 2) { Gagal "bentrok dengan editan collaborator (lihat daftar file di atas). Upload dibatalkan, repo tidak diubah." }
+if ($LASTEXITCODE -ne 0) { Gagal "penyelarasan dengan repo. Upload dibatalkan." }
+
 # ---------- 4. Bangun ulang halaman utama (index.html root: tab MMJ + Heavy Equipment) ----------
 $HEB = Join-Path $D "tools\gabungan\build_gabungan_he.py"
 if (Test-Path $HEB) {
@@ -74,8 +81,9 @@ if (Test-Path $HEB) {
 }
 
 # ---------- 5. Commit & push ----------
-git add -- dashboard-mmj index.html
-git diff --cached --quiet -- dashboard-mmj index.html
+$OUTS = @("dashboard-mmj", "index.html", "login.html", "assets")   # hasil build halaman utama modular
+git add -A -- $OUTS
+git diff --cached --quiet -- $OUTS
 if ($LASTEXITCODE -eq 0) {
     Write-Host ""
     Write-Host "Tidak ada perubahan - dashboard online sudah sama dengan versi terbaru." -ForegroundColor Yellow
@@ -83,10 +91,11 @@ if ($LASTEXITCODE -eq 0) {
 }
 Langkah "Upload ke GitHub..."
 $tgl = Get-Date -Format "yyyy-MM-dd HH:mm"
-git commit -q -m "Update Dashboard MMJ $tgl" -- dashboard-mmj index.html
+git commit -q -m "Update Dashboard MMJ $tgl"
 if ($LASTEXITCODE -ne 0) { Gagal "git commit." }
 git push -q origin main
 if ($LASTEXITCODE -ne 0) { Gagal "git push. Cek koneksi internet / login GitHub (gh auth login)." }
+& python "$GAB\Tools\selaraskan_repo.py" "$REPO" --commit      # simpan versi lokal ini sebagai acuan upload berikutnya
 
 Write-Host ""
 Write-Host "BERHASIL diupload ($tgl)." -ForegroundColor Green
