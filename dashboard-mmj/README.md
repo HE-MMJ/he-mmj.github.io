@@ -12,11 +12,14 @@ yang dibuka. Tetap bisa dibuka offline (double-click `index.html` di Chrome/Edge
 ```
 index.html                     markup + <template id="mmjT_*"> tiap dashboard (~150 KB)
 assets/css/boot.css            tampilan awal sebelum tab aktif
+assets/css/intro.css           CSS animasi pembuka (dari tools/gabungan/intro.css)
 assets/css/<tab>.css           CSS tiap dashboard (exec · haul · batu · lt · he)
 assets/data/<tab>.js           data mentah -> window.MMJ_DATA[<tab>]
 assets/data/he.js              data unit HE (DATA · DAILY · BELUM) -> window.MMJ_HE
 assets/data/wt.js              data Water Truck -> window.MMJ_WT
+assets/data/standar-he.js      data kontrol SOP (Fuel Ratio Tabel 1 & kategori MA) -> window.MMJ_STD
 assets/js/shell.js             loader: pasang tab, muat CSS/data/logika, pindah tab
+assets/js/intro.js             animasi pembuka (dari tools/gabungan/intro.js)
 assets/js/tab-nav.js           menu dashboard di sidebar (dipakai semua tab)
 assets/js/tab/<tab>.js         logika tiap dashboard (dibungkus IIFE, aman dijalankan ulang)
 assets/img/favicon.png         ikon halaman
@@ -31,6 +34,14 @@ Cara kerja singkat (`assets/js/shell.js`):
    `<script type="text/x-mmj-data" src="...">` lalu `<script type="text/x-mmj-app" src="...">`.
 4. `window.mmjData("<tab>")` membaca `window.MMJ_DATA[<tab>]` (dipakai Dashboard Eksekutif untuk
    meringkas dashboard lain).
+
+Menu dashboard ("Overview / Monitoring") dipindah ke sidebar **langsung oleh
+loader** (`assets/js/shell.js`), sinkron begitu tab dipasang. Kalau dipindah
+menunggu `assets/js/tab-nav.js` termuat, selama jeda itu menu terlihat melayang
+di paling atas halaman → terlihat "dobel" lalu hilang. Loader juga membuang menu
+lain yang nyangkut (cegah dobel) dan menandai item aktif.
+`assets/js/tab-nav.js` kini hanya menangani tab Loss Time & Rainfall yang
+berbagi satu dashboard (ganti view tanpa memuat ulang).
 
 ## Halaman lain di folder ini (versi terpisah, masih 1 file per dashboard)
 
@@ -54,6 +65,51 @@ Cara kerja singkat (`assets/js/shell.js`):
 
 Generator membaca file Excel Daily Report terbaru di server lokal (Python + openpyxl), lalu menanam
 datanya ke template sebagai `const DATA = {...}`. File Excel tidak ikut diunggah.
+
+## Animasi pembuka (intro)
+
+Tiap kali halaman dibuka, muncul intro singkat (~2,7 detik):
+
+1. mark logo MMJ muncul di tengah (blur + scale)
+2. "MUSI MITRA JAYA" tersingkap dari sisi logo ke kanan (tepi reveal berupa
+   gradient/mask lembut, bukan potongan keras)
+3. lockup bernafas, nama memudar
+4. mark **terbang ke logo di sidebar/header** lalu memudar → menyisakan logo asli
+5. tirai terangkat, dashboard terlihat
+
+Sumbernya `tools/gabungan/intro.css` + `tools/gabungan/intro.js` → hasil build
+`assets/css/intro.css` dan `assets/js/intro.js` (disisipkan `emit_site.py`).
+Warna teks mengikuti wordmark logo asli: "MUSI" abu-abu, "MITRA JAYA" biru.
+
+Yang perlu dijaga kalau nanti diubah:
+
+| Aturan | Kenapa |
+|---|---|
+| Satu elemen = satu animasi per properti | Chrome memakai animasi yang dibuat **lebih dulu** (jika `fill:both`), jadi animasi berikutnya tak terlihat. Karena itu `mark` (muncul), `fly` (terbang), `glow`/`glow > i` dipisah — lihat `intro.css` |
+| Posisi logo target diukur **tepat saat** logo akan terbang, setelah `load` | Kalau diukur lebih awal, layout masih berubah (data dimuat, scrollbar muncul) → logo mendarat jauh dari logo navigasi |
+| Teks nama pakai `--mmj-rv` (custom property terdaftar) | Kalau tidak terdaftar, nilainya lompat dan reveal terasa kasar |
+| Overlay dipasang di luar `<body>` | Loader mengosongkan isi `<body>` tiap pindah tab; overlay di dalam body akan ikut hilang |
+
+Bantuan cek: `?nointro=1` (lewati intro) dan `?introAt=950` (bekukan intro pada
+detik ke-0,95 untuk memeriksa satu frame). `prefers-reduced-motion` otomatis
+melewati intro.
+
+## Running text (ticker) tab Heavy Equipment
+
+Isi ticker hanya unit yang bermasalah (kelas `rt-alert` / `rt-warn`), geser 40 px/detik,
+berhenti saat kursor di atasnya. Aturannya ada di `RUN_RULES` pada `js/app.js`:
+
+| Aturan | Kondisi | Warna | Sumber |
+|---|---|---|---|
+| `hm-gt-ma` | HM (jam) > angka MA | merah | — (aturan lama) |
+| `fr-gt-std` | Fuel Ratio aktual > standar Tabel 1 untuk Type/Class unit | oranye | SOP butir 9, Tabel 1 (hal. 11) |
+| `ma-rendah` | MA < 85% (kategori Rendah/Low) | merah | SOP butir 8.4 (hal. 10) |
+
+Ambang batasnya **tidak ditulis di `app.js`**, melainkan di `js/standar-he.js`
+(`window.MMJ_STD`) → hasil build `assets/data/standar-he.js`. Kalau SOP revisi,
+cukup ubah angka di file itu lalu build ulang. Butir 9 juga menyebut penyimpangan
+**3 liter atau lebih di bawah standar** wajib dilaporkan; aturan itu belum
+diaktifkan di ticker (bisa ditambah sebagai `rt-warn` bila diperlukan).
 
 ## Cara update
 

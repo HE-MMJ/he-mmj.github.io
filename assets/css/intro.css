@@ -1,0 +1,151 @@
+/* assets/css/intro.css - dibuat otomatis oleh emit_site.py, jangan diedit manual. */
+/* ==========================================================================
+   Intro animasi pembuka Dashboard MMJ
+   Dibuat dari tools/gabungan/intro.css  ->  assets/css/intro.css
+   --------------------------------------------------------------------------
+   Catatan penting (Chrome):
+   Satu elemen hanya boleh punya SATU animasi untuk tiap properti; kalau dua
+   animasi memakai properti yang sama, Chrome memakai yang dibuat lebih dulu
+   (dengan fill:both) sehingga animasi berikutnya tidak terlihat. Karena itu
+   tiap tahap animasi memakai elemennya sendiri:
+     .mmj-intro-mark  -> logo muncul (scale + blur + opacity)
+     .mmj-intro-fly   -> logo terbang + memudar (translate/scale + opacity)
+     .mmj-intro-glow  -> glow meredup (opacity)
+     .mmj-intro-glow i-> glow menyala (scale + opacity)
+   Warna teks mengikuti wordmark logo asli:
+     "musi"  -> rgb(128,129,132)   "mitrajaya" -> rgb(15,116,188)
+   ========================================================================== */
+
+.mmj-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: #f4f7ff;
+  /* latar gelap ADA di tirai (bukan di sini) -> dashboard terlihat saat tirai terangkat */
+  background: transparent;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* grid halus di belakang */
+.mmj-intro-veil::before {
+  content: "";
+  position: absolute;
+  inset: -12%;
+  background-image:
+    linear-gradient(rgba(120, 160, 255, .055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 160, 255, .055) 1px, transparent 1px);
+  background-size: 64px 64px;
+  -webkit-mask-image: radial-gradient(circle at 50% 46%, #000 8%, transparent 70%);
+  mask-image: radial-gradient(circle at 50% 46%, #000 8%, transparent 70%);
+}
+
+/* glow di belakang lockup (eluar = meredup, dalam = menyala) */
+.mmj-intro-glow {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 520px;
+  height: 520px;
+  margin: -260px 0 0 -260px;
+  border-radius: 50%;
+  opacity: 0;
+  will-change: opacity;
+}
+.mmj-intro-glow > i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  opacity: 0;
+  background: radial-gradient(circle, rgba(99, 102, 241, .55), rgba(139, 92, 246, .20) 42%, transparent 68%);
+  filter: blur(26px);
+  will-change: transform, opacity;
+}
+
+/* tirai gelap di atas semua (diangkat di akhir) */
+.mmj-intro-veil {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(900px 520px at 50% 46%, rgba(99, 102, 241, .30), transparent 62%),
+    radial-gradient(620px 420px at 50% 46%, rgba(34, 211, 238, .14), transparent 66%),
+    #050a14;
+  opacity: 1;
+  overflow: hidden;
+  will-change: opacity;
+}
+
+/* logo + nama */
+.mmj-intro-lockup {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  will-change: transform;
+}
+
+/* mark logo = potongan 80x80 kiri-atas dari assets/logo-mmj.png (174x110) */
+.mmj-intro-mark {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  width: 104px;
+  height: 104px;
+  opacity: 0;
+  filter: drop-shadow(0 10px 34px rgba(120, 160, 255, .40));
+  will-change: transform, opacity, filter;
+}
+/* anak mark: dipakai untuk animasi terbang (pisah dari animasi "muncul") */
+.mmj-intro-fly {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;          /* potong ke mark saja (buang wordmark) */
+  will-change: transform, opacity;
+}
+.mmj-intro-mark img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  width: 226.2px;   /* 174 * 1.3 */
+  height: 143px;    /* 110 * 1.3 */
+  max-width: none;
+}
+
+/* nama: tepi reveal berupa gradient (bukan potongan keras) -> mulus */
+.mmj-intro-name {
+  position: relative;
+  z-index: 1;
+  white-space: nowrap;
+  font-size: clamp(22px, 3.2vw, 34px);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: #f4f7ff;
+  padding: 30px 0;
+  margin: -30px 0;
+  text-shadow: 0 2px 10px rgba(8, 30, 58, .60), 0 0 26px rgba(90, 165, 255, .22);
+  -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 var(--mmj-rv, 100%), transparent calc(var(--mmj-rv, 100%) + 14%));
+  mask-image: linear-gradient(90deg, #000 0%, #000 var(--mmj-rv, 100%), transparent calc(var(--mmj-rv, 100%) + 14%));
+  will-change: mask-image;
+}
+.mmj-intro-name .wm { color: #b3b9c0; }   /* abu terang  */
+.mmj-intro-name .wj { color: #38a6e8; }   /* biru terang  */
+
+/* layar kecil: lockup ditumpuk */
+@media (max-width: 640px) {
+  .mmj-intro-lockup { flex-direction: column; gap: 16px; }
+  .mmj-intro-mark { width: 84px; height: 84px; }
+  .mmj-intro-mark img { width: 182.7px; height: 115.5px; }
+  .mmj-intro-name { font-size: clamp(17px, 5.4vw, 26px); letter-spacing: .1em; }
+}
+
+/* pengguna minta animasi minimal: intro dilewati sama sekali */
+@media (prefers-reduced-motion: reduce) {
+  .mmj-intro { display: none !important; }
+}

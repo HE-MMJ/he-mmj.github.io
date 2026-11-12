@@ -6,9 +6,11 @@ Keluaran (di root repo, siap dipublikasikan GitHub Pages):
 
     index.html                markup + <template> tiap dashboard, tanpa CSS/JS inline
     assets/css/boot.css       CSS tampilan awal sebelum tab aktif
+    assets/css/intro.css      CSS animasi pembuka (dari tools/gabungan/intro.css)
     assets/css/<tab>.css      CSS tiap dashboard (hanya dimuat saat tab dibuka)
     assets/data/<tab>.js      data mentah  -> window.MMJ_DATA[<tab>]
     assets/js/shell.js        loader halaman (dari shell_loader.js)
+    assets/js/intro.js        animasi pembuka (dari tools/gabungan/intro.js)
     assets/js/tab-nav.js      menu dashboard di sidebar (dipakai semua tab)
     assets/js/tab/<tab>.js    logika tiap dashboard (dibungkus IIFE)
     assets/img/favicon.png    ikon halaman (dari data URI di <head>)
@@ -20,6 +22,7 @@ Aturan pemecahan script di dalam <template>:
   * script lain                                      -> assets/js/tab/<tab>.js
 
 Mode eksplisit:
+  std      : window.MMJ_STD (data kontrol SOP)  -> disalin apa adanya
   he-rows  : const DATA / DAILY / BELUM   -> window.MMJ_HE.*
   wt       : const WT_PERIODE / WT_DATA   -> window.MMJ_WT.*
   summary  : const DATA (objek)           -> window.MMJ_DATA.he
@@ -280,7 +283,11 @@ def emit(html, root, version=None):
                 continue
 
             rel = out or unique("assets/js/tab/%s-%d.js" % (tab, idx + 1))
-            if mode == "he-rows":
+            if mode == "std":
+                # data kontrol SOP: file sudah berbentuk window.MMJ_STD -> salin apa adanya
+                _write(os.path.join(root, rel), HDR % rel + code.strip() + "\n")
+                tags.append(("data", rel))
+            elif mode == "he-rows":
                 _write(os.path.join(root, rel), _he_rows_file(rel, code))
                 tags.append(("data", rel))
             elif mode == "wt":
@@ -319,6 +326,12 @@ def emit(html, root, version=None):
     _write(os.path.join(root, "assets/js/shell.js"),
            "/* assets/js/shell.js - dibuat dari tools/gabungan/shell_loader.js */\n" + loader)
 
+    # ---- intro (animasi pembuka)
+    intro_css = open(os.path.join(here, "intro.css"), encoding="utf-8-sig").read()
+    _write(os.path.join(root, "assets/css/intro.css"), HDR % "assets/css/intro.css" + intro_css)
+    intro_js = open(os.path.join(here, "intro.js"), encoding="utf-8-sig").read()
+    _write(os.path.join(root, "assets/js/intro.js"), HDR % "assets/js/intro.js" + intro_js)
+
     # ---- boot css
     _write(os.path.join(root, "assets/css/boot.css"), HDR % "assets/css/boot.css" + boot + "\n")
 
@@ -334,6 +347,7 @@ def emit(html, root, version=None):
 <meta name="theme-color" content="#6366f1">
 <meta name="description" content="Dashboard MMJ 2026: Eksekutif, Heavy Equipment (Timesheet HE/WT), Coal Hauling, Batu Split, Loss Time &amp; Rainfall.">
 <link rel="stylesheet" id="mmjBootCss" href="assets/css/boot.css%(q)s">
+<link rel="stylesheet" href="assets/css/intro.css%(q)s">
 %(preloads)s</head>
 <body>
 <!-- terlihat hanya bila JavaScript tidak berjalan -->
@@ -342,6 +356,7 @@ def emit(html, root, version=None):
 %(templates)s
 
 <script src="assets/js/shell.js%(q)s"></script>
+<script src="assets/js/intro.js%(q)s"></script>
 </body>
 </html>
 """ % {"ver": version, "title": title, "fav": fav_href, "q": q,

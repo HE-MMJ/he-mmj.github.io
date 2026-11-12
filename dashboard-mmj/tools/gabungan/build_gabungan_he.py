@@ -28,6 +28,7 @@ JS_DATA = os.path.join(ROOT, "js", "data.js")
 JS_WT = os.path.join(ROOT, "js", "wt-data.js")
 JS_APP = os.path.join(ROOT, "js", "app.js")
 JS_WTJS = os.path.join(ROOT, "js", "wt.js")
+JS_STD = os.path.join(ROOT, "js", "standar-he.js")   # data kontrol SOP (Fuel Ratio & MA)
 LOGO = os.path.join(ROOT, "assets", "logo-mmj.png")
 BELUM = os.path.join(ROOT, "data", "belum.json")
 THEME_CSS = os.path.join(TOOLS, "he_mmj_theme.css")
@@ -158,6 +159,7 @@ def build_he_template(summary):
     # tiap bagian dikirim terpisah supaya bisa jadi file JS sendiri (assets/)
     js_parts = {
         "he": read(JS_DATA),
+        "std": read(JS_STD),
         "wt": read(JS_WT),
         "app": "\n".join([read(JS_APP), read(JS_WTJS),
                           "if(document.readyState!=='loading'){try{document.dispatchEvent(new Event('DOMContentLoaded'));}catch(e){}}"]),
@@ -353,6 +355,8 @@ def main():
 
     he_tpl = ('<template id="mmjT_he">\n' + he_head + "\n" + nav_css + "\n" + bar_html + "\n"
               + body + "\n"
+              + '<script data-mmj-out="assets/data/standar-he.js" data-mmj-mode="std">\n'
+              + js_parts["std"] + "\n</script>\n"
               + '<script data-mmj-out="assets/data/he.js" data-mmj-mode="he-rows">\n'
               + js_parts["he"] + "\n</script>\n"
               + '<script data-mmj-out="assets/data/wt.js" data-mmj-mode="wt">\n'

@@ -68,6 +68,58 @@
     return orig.call(this, type, fn, opt);
   };
 
+  /* ------------------------------------------- menu dashboard di sidebar --- */
+  /* Menu "Overview / Monitoring" (id=mmjNav) ada di dalam <template> tiap
+     dashboard. Menu itu harus dipindah ke sidebar. Kalau ditunda (menunggu
+     tab-nav.js termuat), selama jeda itu menu terlihat melayang di paling atas
+     halaman -> terlihat "dobel" lalu hilang. Karena itu dipindah LANGSUNG di
+     sini, sinkron begitu tab dipasang. */
+  var LT_TABS = { lt: 1, rf: 1 };
+
+  function placeNav() {
+    var nav = document.getElementById("mmjNav");
+    if (!nav) return null;
+    var side = document.querySelector(".side");
+    if (side) {
+      /* buang menu dashboard lain yang masih nyangkut (cegah menu dobel) */
+      var dup = document.querySelectorAll(".mmjnav");
+      for (var d = dup.length - 1; d >= 0; d--) {
+        if (dup[d] !== nav && dup[d].parentNode) dup[d].parentNode.removeChild(dup[d]);
+      }
+      var logo = side.querySelector(".logo");
+      if (logo && logo.nextSibling) side.insertBefore(nav, logo.nextSibling);
+      else side.insertBefore(nav, side.firstChild);
+    }
+    return nav;
+  }
+
+  function markNav() {
+    document.querySelectorAll("[data-mmjtab]").forEach(function (a) {
+      if (a.dataset.mmjtab === window.__MMJ_TAB) a.setAttribute("aria-current", "page");
+      else a.removeAttribute("aria-current");
+    });
+  }
+  window.mmjMarkNav = markNav;
+
+  function bindNav() {
+    var nav = document.getElementById("mmjNav");
+    if (!nav || nav.__mmjBound) return;
+    nav.__mmjBound = true;
+    nav.querySelectorAll("[data-mmjtab]").forEach(function (a) {
+      a.addEventListener("click", function (e) {
+        e.preventDefault();
+        var t = a.dataset.mmjtab;
+        if (t === window.__MMJ_TAB) return;
+        try { localStorage.setItem("mmjTab", t); } catch (x) { }
+        /* Loss Time & Rainfall satu dashboard: ganti view, jangan muat ulang */
+        if (LT_TABS[t] && LT_TABS[window.__MMJ_TAB] && typeof window.setView === "function") {
+          window.__MMJ_TAB = t; window.setView(t); markNav(); return;
+        }
+        window.mmjSwitch(t);
+      });
+    });
+  }
+
   var seq = 0;
 
   function runQueue(queue, tab, token, i) {
@@ -144,6 +196,11 @@
     document.body.appendChild(frag);
     window.__MMJ_TAB = tab;
     window.scrollTo(0, 0);
+
+    /* menu dashboard langsung ditaruh ke sidebar (bukan menunggu tab-nav.js) */
+    placeNav();
+    bindNav();
+    markNav();
 
     runQueue(queue, tab, token, 0);
   }

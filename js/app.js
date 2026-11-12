@@ -189,11 +189,51 @@ function niceMax(v) {
 let SORT = { col: null, dir: 1 }; // col: 'HMTotal' | 'MA' | 'Fuel' | 'FuelRatio'
 
 // ---------- running text (ticker) ----------
+// Data kontrol SOP (js/standar-he.js): Tabel 1 Fuel Ratio standar per Type &
+// Class (butir 9) dan Kategori Penilaian Indikator MA (butir 8.4).
+const STD = (typeof window !== 'undefined' && window.MMJ_STD) ? window.MMJ_STD : {};
+
+// standar Fuel Ratio unit ini (null bila Type tidak ada di Tabel 1 SOP)
+function stdFuel(d) {
+  if (!d || typeof STD.cariFuelRatio !== 'function') return null;
+  return STD.cariFuelRatio(d.Jenis, d.Capacity);
+}
+
+// batas nilai indikator dari SOP (MA default 85%)
+function stdBatas(kode) {
+  const b = (typeof STD.batas === 'function') ? STD.batas(kode) : 0;
+  return b > 0 ? b : 85;
+}
+
+// MA di bawah batas SOP (butir 8.4) = Rendah (Low). MA 0 = belum ada data.
+function maRendah(d) {
+  const v = num(d.MA);
+  return v > 0 && v < stdBatas('MA');
+}
+
+// Fuel Ratio aktual melebihi standar Tabel 1 (butir 9)
+function frMelebihi(d) {
+  const s = stdFuel(d);
+  const v = num(d.FuelRatio);
+  return !!s && v > 0 && v > s.ratio;
+}
+
 // Aturan warna tiap unit. Tambah aturan baru di sini:
-//   { id, test(d) -> true bila kondisi terpenuhi, cls (kelas CSS) }
+//   { id, test(d) -> true bila kondisi terpenuhi, cls (kelas CSS), note(d) -> teks tambahan }
 // cls "rt-alert" = merah (kritis), "rt-warn" = oranye, "rt-ok" = hijau.
 const RUN_RULES = [
-  { id: 'hm-gt-ma', test: d => num(d.HMTotal) > num(d.MA), cls: 'rt-alert' }
+  { id: 'hm-gt-ma', test: d => num(d.HMTotal) > num(d.MA), cls: 'rt-alert' },
+  {
+    id: 'fr-gt-std', test: frMelebihi, cls: 'rt-warn',
+    note: d => {
+      const s = stdFuel(d);
+      return 'FR ' + fmt(num(d.FuelRatio), 2) + ' ' + (s.satuan === 'Liter/Hari' ? 'L/hari' : 'L/jam');
+    }
+  },
+  {
+    id: 'ma-rendah', test: maRendah, cls: 'rt-alert',
+    note: d => 'MA Rendah'
+  }
 ];
 
 // kecepatan geser running text (px per detik) -越小 = lebih lambat
@@ -224,7 +264,12 @@ function wtRunRows() {
     let hm = 0, p = 0;
     const D = d.Days || {};
     for (const k in D) { hm += num(D[k].HM); p += num(D[k].P); }
-    return { Unit: d.Unit, HMTotal: hm, MA: num(d.MA), P: p, Vendor: d.Vendor };
+    // Jenis/Capacity/FuelRatio ikut dibawa supaya kontrol Fuel Ratio SOP (Tabel 1:
+    // Water Truck 10 L/jam) juga berlaku untuk unit WT
+    return {
+      Unit: d.Unit, HMTotal: hm, MA: num(d.MA), P: p, Vendor: d.Vendor,
+      Jenis: 'Water Truck', Capacity: d.Capacity, FuelRatio: num(d.FuelRatio)
+    };
   });
 }
 
@@ -237,12 +282,16 @@ function renderRunText() {
 
   // bikin html 1 item + daftar kelas kondisinya
   const build = d => {
-    const cls = RUN_RULES.filter(r => { try { return r.test(d); } catch (e) { return false; } })
-      .map(r => r.cls).join(' ');
+    const hit = RUN_RULES.filter(r => { try { return r.test(d); } catch (e) { return false; } });
+    // kelas unik (beberapa aturan bisa memakai kelas yang sama, mis. dua aturan rt-alert)
+    const cls = hit.map(r => r.cls).filter((c, i, a) => c && a.indexOf(c) === i).join(' ');
     const hm = fmt(num(d.HMTotal), 1);
     const ma = fmt(num(d.MA), 1) + '%';
     const peny = (d.P !== undefined) ? ' \u00b7 Penyiraman ' + fmt0(d.P) + ' rit' : '';
-    const teks = escHtml(d.Unit || '-') + ' \u00b7 HM ' + hm + ' jam \u00b7 MA ' + ma + peny;
+    // alasan peringatan (Fuel Ratio > standar SOP / MA rendah) supaya jelas saat dibaca
+    const notes = hit.map(r => { try { return r.note ? r.note(d) : ''; } catch (e) { return ''; } })
+      .filter(Boolean).map(t => ' \u00b7 ' + escHtml(t)).join('');
+    const teks = escHtml(d.Unit || '-') + ' \u00b7 HM ' + hm + ' jam \u00b7 MA ' + ma + peny + notes;
     const tampil = cls.split(' ').some(c => RUN_TEXT_SHOW.indexOf(c) >= 0);
     return { cls: cls, tampil: tampil, html: '<span class="running-text-item' + (cls ? ' ' + cls : '') + '">' + teks + '</span>' };
   };

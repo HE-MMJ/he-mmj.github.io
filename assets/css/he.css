@@ -726,6 +726,8 @@ tr.wt-row td:first-child { border-left: 3px solid #0D9488; }
 .running-text-item.rt-alert { color: var(--danger); font-weight: 600; }
 .running-text-item.rt-warn { color: #B45309; font-weight: 600; }
 .running-text-item.rt-ok { color: var(--ok); font-weight: 600; }
+/* unit dengan dua kondisi (mis. MA rendah + Fuel Ratio di atas standar) tetap merah */
+.running-text-item.rt-alert.rt-warn { color: var(--danger); }
 @keyframes runtext-scroll {
   from { transform: translate3d(0, 0, 0); }
   to   { transform: translate3d(-50%, 0, 0); }

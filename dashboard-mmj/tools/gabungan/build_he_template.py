@@ -156,7 +156,7 @@ def main():
     body = body.replace('src="assets/logo-mmj.png"', 'src="__HE_LOGO__"')
 
     # --- semua script HE digabung jadi 1 script (biar const DATA terlihat antar file) ---
-    js_all = "\n".join([read(JS_DATA), read(JS_WT), app, wtjs,
+    js_all = "\n".join([read(JS_STD), read(JS_DATA), read(JS_WT), app, wtjs,
                         "/* panggil init DOMContentLoaded (di shell document sudah load) */\n"
                         "if(document.readyState!=='loading'){try{document.dispatchEvent(new Event('DOMContentLoaded'));}catch(e){}}"])
 
