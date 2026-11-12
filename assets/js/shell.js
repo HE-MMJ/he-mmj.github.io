@@ -110,6 +110,31 @@
   }
   window.mmjMarkNav = markNav;
 
+  /* ------------------------------------------------- menu user di sidebar --- */
+  /* Disuntik tiap tab: avatar + nama + role + tombol Keluar. */
+  function mountUserMenu() {
+    var side = document.querySelector(".side");
+    if (!side) return;
+    var u = window.MMJ_AUTH && window.MMJ_AUTH.current();
+    if (!u) return;
+    var old = side.querySelector(".mmj-user");
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    var box = document.createElement("div");
+    box.className = "mmj-user";
+    box.innerHTML =
+      '<span class="mmj-user-av"></span>' +
+      '<span class="mmj-user-tx"><b></b><span></span></span>' +
+      '<button type="button" class="mmj-user-out">Keluar</button>';
+    box.querySelector(".mmj-user-av").textContent = String(u.name || "?").trim().charAt(0).toUpperCase();
+    box.querySelector(".mmj-user-tx b").textContent = u.name || "";
+    box.querySelector(".mmj-user-tx span").textContent = u.role || "";
+    box.querySelector(".mmj-user-out").addEventListener("click", function () {
+      try { window.MMJ_AUTH.logout(); } catch (e) { }
+      location.replace("login.html");
+    });
+    side.appendChild(box);
+  }
+
   function bindNav() {
     var nav = document.getElementById("mmjNav");
     if (!nav || nav.__mmjBound) return;
@@ -210,6 +235,7 @@
     placeNav();
     bindNav();
     markNav();
+    mountUserMenu();
 
     runQueue(queue, tab, token, 0);
   }

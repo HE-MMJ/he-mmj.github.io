@@ -1,22 +1,29 @@
 /* assets/css/shell.css - dibuat otomatis oleh emit_site.py, jangan diedit manual. */
 /* Menu user Dashboard MMJ - dari tools/gabungan/shell.css -> assets/css/shell.css */
 .mmj-user{
-  display:flex;align-items:center;gap:10px;margin-top:auto;padding:12px 10px 2px;
+  /* diam di dasar sidebar (sidebar bisa di-scroll, menu user tidak boleh
+     tenggelam di bawah lipatan) */
+  position:sticky;bottom:0;z-index:2;
+  display:grid;grid-template-columns:34px 1fr;grid-template-areas:"av tx" "out out";
+  gap:6px 10px;margin-top:auto;padding:12px 10px 2px;
   border-top:1px solid var(--line,#e2e8f0);
+  background:var(--surface-solid,#fff);   /* solid: isi sidebar di belakang tidak tembus */
 }
 .mmj-user-av{
-  flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
+  grid-area:av;
+  width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
   font-size:14px;font-weight:700;color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6);
 }
-.mmj-user-tx{display:flex;flex-direction:column;min-width:0;flex:1}
+.mmj-user-tx{grid-area:tx;display:flex;flex-direction:column;min-width:0}
 .mmj-user-tx b{font-size:13px;font-weight:600;color:var(--ink,#121833);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mmj-user-tx span{font-size:11px;color:var(--muted,#64748b);text-transform:uppercase;letter-spacing:.08em}
 .mmj-user-out{
-  flex:none;border:1px solid var(--line,#e2e8f0);background:transparent;color:var(--muted,#64748b);
+  grid-area:out;width:100%;
+  border:1px solid var(--line,#e2e8f0);background:transparent;color:var(--muted,#64748b);
   border-radius:9px;padding:6px 9px;font-size:11.5px;cursor:pointer;
 }
 .mmj-user-out:hover{color:#e11d48;border-color:#fda4af;background:#fff1f2}
-html[data-theme="dark"] .mmj-user{border-top-color:rgba(255,255,255,.12)}
+html[data-theme="dark"] .mmj-user{border-top-color:rgba(255,255,255,.12);background:var(--surface-solid,#181b3c)}
 html[data-theme="dark"] .mmj-user-tx b{color:#e8ecf7}
 html[data-theme="dark"] .mmj-user-out{color:#9aa6c4;border-color:rgba(255,255,255,.16)}
 html[data-theme="dark"] .mmj-user-out:hover{color:#fda4af;border-color:#fda4af;background:rgba(253,164,175,.12)}
