@@ -1,4 +1,10 @@
 /* Menu user Dashboard MMJ - dari tools/gabungan/shell.css -> assets/css/shell.css */
+
+/* Elemen ber-label izin (mis. data-mmj-auth="costcontrol") tetap tersembunyi
+   sampai user yang punya izin membukanya. Atribut hidden saja tidak cukup
+   karena .nav a { display:flex } mengalahkan aturan UA. */
+[data-mmj-auth][hidden]{display:none!important}
+
 .mmj-user{
   /* diam di dasar sidebar (sidebar bisa di-scroll, menu user tidak boleh
      tenggelam di bawah lipatan) */
@@ -22,7 +28,26 @@
   border-radius:9px;padding:6px 9px;font-size:11.5px;cursor:pointer;
 }
 .mmj-user-out:hover{color:#e11d48;border-color:#fda4af;background:#fff1f2}
+/* tombol Masuk (untuk tamu yang belum login) */
+.mmj-user-in{
+  grid-area:out;width:100%;
+  border:1px solid var(--line,#e2e8f0);background:transparent;color:var(--ink,#121833);
+  border-radius:9px;padding:7px 9px;font-size:12px;font-weight:600;cursor:pointer;
+}
+.mmj-user-in:hover{border-color:#6366f1;color:#6366f1;background:rgba(99,102,241,.08)}
 html[data-theme="dark"] .mmj-user{border-top-color:rgba(255,255,255,.12);background:var(--surface-solid,#181b3c)}
 html[data-theme="dark"] .mmj-user-tx b{color:#e8ecf7}
 html[data-theme="dark"] .mmj-user-out{color:#9aa6c4;border-color:rgba(255,255,255,.16)}
 html[data-theme="dark"] .mmj-user-out:hover{color:#fda4af;border-color:#fda4af;background:rgba(253,164,175,.12)}
+html[data-theme="dark"] .mmj-user-in{color:#e8ecf7;border-color:rgba(255,255,255,.16)}
+html[data-theme="dark"] .mmj-user-in:hover{color:#a5b4fc;border-color:#6366f1;background:rgba(99,102,241,.16)}
+
+/* di layar kecil sidebar jadi bar mendatar: menu user tidak sticky dan
+   tidak perlu latar solid (biar tidak terlihat seperti kartu nyempil) */
+@media (max-width:900px){
+  .mmj-user{
+    position:static;background:transparent;border-top:0;margin:0;padding:6px 4px 2px;
+    width:100%;grid-template-columns:auto 1fr;
+  }
+  .mmj-user-out,.mmj-user-in{width:auto;padding:6px 12px}
+}

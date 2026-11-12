@@ -44,9 +44,6 @@
   var q = new URLSearchParams(location.search);
   if (q.get("nointro") === "1") return;
   if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  /* belum login -> loader sudah mengarahkan ke login.html; intro jangan jalan
-     (biar tidak sempat berkedip sebelum halaman berpindah) */
-  if (!(window.MMJ_AUTH && window.MMJ_AUTH.isLoggedIn())) return;
   var AT = q.has("introAt") ? Math.max(0, parseInt(q.get("introAt"), 10) || 0) : -1;
 
   var anims = [], t0 = performance.now();

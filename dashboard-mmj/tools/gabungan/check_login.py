@@ -41,12 +41,16 @@ if idx:
     if a < 0 or b < 0 or a > b:
         fails.append("index.html: auth.js harus dimuat sebelum shell.js")
 
-# --- loader: guard + menu user
-need("assets/js/shell.js", ("isLoggedIn", "mmj-user", "location.replace"))
+# --- loader: menu user + menu berlabel izin (dashboard sendiri publik, tanpa login)
+need("assets/js/shell.js", ("mmj-user", "mmj-user-in", "data-mmj-auth", "location.replace"))
+need("assets/css/shell.css", (".mmj-user", ".mmj-user-out", ".mmj-user-in", "[data-mmj-auth][hidden]"))
+
+# --- menu tambahan per izin: Cost Control di Monitoring
+need("index.html", ("data-mmj-auth=\"costcontrol\"", "ex-cost"))
 
 if fails:
     print("GAGAL:")
     for f in fails:
         print("  - " + f)
     sys.exit(1)
-print("OK: login.html, auth.js, login.css, shell.css, guard & menu user ada.")
+print("OK: login.html, auth.js, login.css, shell.css, menu user & menu per izin ada.")

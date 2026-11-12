@@ -18,13 +18,10 @@
 (function () {
   "use strict";
 
-  /* ---------------------------------------------------------------- login --
-     Gerbang masuk: belum login -> ke halaman login. Dicek SEBELUM dashboard
-     dipasang, supaya dashboard tidak pernah berkedip di layar. */
-  if (!(window.MMJ_AUTH && window.MMJ_AUTH.isLoggedIn())) {
-    try { location.replace("login.html"); } catch (e) { location.href = "login.html"; }
-    return;
-  }
+  /* CATATAN AKSES: seluruh dashboard (Monitoring, HE, Coal Hauling, Batu Split,
+     Loss Time, Rainfall) terbuka untuk semua orang - tanpa login.
+     Login dipakai untuk menu TAMBAHAN (mis. Cost Control) yang berlabel
+     data-mmj-auth="<izin>" dan hanya ditunjukkan bila user punya izin. */
 
   var KEYS = ["exec", "haul", "batu", "lt", "he"];
 
@@ -111,16 +108,28 @@
   window.mmjMarkNav = markNav;
 
   /* ------------------------------------------------- menu user di sidebar --- */
-  /* Disuntik tiap tab: avatar + nama + role + tombol Keluar. */
+  /* Disuntik tiap tab. Belum login -> tombol "Masuk"; sudah login -> avatar,
+     nama, role, dan tombol "Keluar". */
   function mountUserMenu() {
     var side = document.querySelector(".side");
     if (!side) return;
     var u = window.MMJ_AUTH && window.MMJ_AUTH.current();
-    if (!u) return;
     var old = side.querySelector(".mmj-user");
     if (old && old.parentNode) old.parentNode.removeChild(old);
+
     var box = document.createElement("div");
     box.className = "mmj-user";
+
+    if (!u) {
+      /* belum login -> hanya tombol Masuk */
+      box.innerHTML = '<button type="button" class="mmj-user-in">Masuk</button>';
+      box.querySelector(".mmj-user-in").addEventListener("click", function () {
+        location.replace("login.html");
+      });
+      side.appendChild(box);
+      return;
+    }
+
     box.innerHTML =
       '<span class="mmj-user-av"></span>' +
       '<span class="mmj-user-tx"><b></b><span></span></span>' +
@@ -133,6 +142,18 @@
       location.replace("login.html");
     });
     side.appendChild(box);
+  }
+
+  /* --------------------------------- menu tambahan berlabel (per izin/role) --- */
+  /* Elemen ber-atribut data-mmj-auth="<izin>" disembunyikan untuk yang tidak
+     punya izin; contoh: data-mmj-auth="costcontrol" -> menu Cost Control. */
+  function applyAuthMenus() {
+    var can = (window.MMJ_AUTH && window.MMJ_AUTH.can) ? window.MMJ_AUTH.can : function () { return false; };
+    document.querySelectorAll("[data-mmj-auth]").forEach(function (el) {
+      var ok = can(el.getAttribute("data-mmj-auth"));
+      if (ok) el.removeAttribute("hidden");
+      else el.setAttribute("hidden", "");
+    });
   }
 
   function bindNav() {
@@ -236,6 +257,7 @@
     bindNav();
     markNav();
     mountUserMenu();
+    applyAuthMenus();
 
     runQueue(queue, tab, token, 0);
   }
