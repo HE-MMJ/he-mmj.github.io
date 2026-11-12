@@ -1,0 +1,818 @@
+/* assets/js/tab/batu.js - dibuat otomatis oleh emit_site.py, jangan diedit manual. */
+(function(){
+var DATA = window.MMJ_DATA["batu"];
+
+const BLN = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+const BLNF = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+const HARI = ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
+const D = DATA.dims, F = DATA.fields.reduce((a,k,i)=>(a[k]=i,a),{});
+/* stok akhir bulan berjalan = angka Komposisi stok (tabel stockpile sheet Daily Summary), bukan Monthly Summary */
+const SP_RUN = (()=>{ const S=DATA.stockpile, m=DATA.meta.lastDate.slice(0,7);
+  if(!S || !S.items || !S.items.length || S.month!==m) return null;
+  const tot = it => Object.values(it.own||{}).reduce((a,o)=>a+Object.values(o).reduce((x,y)=>x+y,0),0);
+  const port = S.items.filter(it=>/port/i.test(it.name)).reduce((a,it)=>a+tot(it),0), all = S.items.reduce((a,it)=>a+tot(it),0);
+  const row = DATA.stock.find(x=>x.Bulan===m);
+  const v = {"Stok Port (t)":port, "Stok Mini Stockpile (t)":all-port, "Closing (t)":all, fromSP:true};
+  if(row) Object.assign(row, v); else DATA.stock.push({Bulan:m, ...v});
+  return m; })();
+const JEN = D.jenis;
+const JORDER = ["MMJ-Splite 10/20","MMJ-Splite 5/7","MMJ-Base Course"].map(n=>JEN.indexOf(n)).filter(i=>i>=0);
+const JCOL = {}; JORDER.forEach((j,k)=>JCOL[j]=["var(--s1)","var(--s2)","var(--s3)"][k]);
+const JGRAD = {}; JORDER.forEach((j,k)=>JGRAD[j]=["var(--g1)","var(--g4)","var(--g3)"][k]);
+const jName = j => JEN[j].replace("MMJ-","").replace("Splite","Split");
+const nf0 = new Intl.NumberFormat("id-ID",{maximumFractionDigits:0});
+const nf1 = new Intl.NumberFormat("id-ID",{maximumFractionDigits:1,minimumFractionDigits:1});
+const fmt = v => nf0.format(v);
+const short = v => v>=1e6 ? nf1.format(v/1e6)+" jt" : v>=1e4 ? nf1.format(v/1e3)+" rb" : fmt(v);
+const mLabel = m => BLN[+m.slice(5,7)-1]+" "+m.slice(2,4);
+const dLabel = d => `${+d.slice(8)} ${BLN[+d.slice(5,7)-1]} ${d.slice(0,4)}`;
+const months = [...new Set(DATA.rows.map(r=>r[0].slice(0,7)))].sort();
+
+/* urutan area sesuai format laporan (berdasarkan KM) */
+const KM_ORDER = [
+  ["Area Mendis",["Mendis Blok 1","Mendis Blok 2"]],
+  ["Area B 80",["B 80 Blok 1","B 80 Blok 2"]],
+  ["Area Pakerin",["Pakerin Blok 1","Pakerin Blok 2"]],
+  ["Area Selaro",["Selaro Blok 1","Selaro Blok 2"]],
+  ["Area ISP RMC",["ISP RMC"]],
+  ["Area Dayung",["Dayung Blok 1","Dayung Blok 2"]],
+  ["Area Bintialo",["Bintialo Blok 1","Bintialo Blok 2"]],
+  ["Area Ketapat",["Ketapat Blok 1","Ketapat Blok 2"]],
+  ["Area Mekar Sari",["Mekar Sari Blok 1","Mekar Sari Blok 2"]],
+  ["MMJ Facility",["MMJ Facility"]],
+  ["ISP Project",["ISP Project"]],
+  ["Mitra Company",["BKL","TRA","GPU","SBL","CSR"]],
+];
+const ALWAYS = new Set(["Mendis Blok 1","Mendis Blok 2","B 80 Blok 1","Pakerin Blok 1","Pakerin Blok 2","Selaro Blok 1","Selaro Blok 2","ISP RMC","Dayung Blok 1","Bintialo Blok 1","Bintialo Blok 2","Ketapat Blok 1","Ketapat Blok 2","Mekar Sari Blok 1","MMJ Facility","ISP Project","BKL","TRA","GPU","SBL","CSR"]);
+const BLOK_LABEL = {"SBL":"SBL Port","(kosong)":"Blok tidak diisi"};
+
+let savedSort="top"; try{savedSort=localStorage.getItem("areaSort")||"top"}catch(e){}
+/* kategori default = Distribusi ke Area (bila ada di data) */
+const KAT_DEF = (()=>{ const i=D.kategori.indexOf("Distribusi ke Area"); return i>=0 ? String(i) : ""; })();
+const st = {bulan:"", dari:"", sampai:"", jenis:new Set(JORDER), source:"", kat:KAT_DEF, area:"", kmArea:"", areaSort:savedSort};
+const FIRST = DATA.rows.reduce((a,r)=>r[0]<a?r[0]:a, "9999"), LAST = DATA.meta.lastDate;
+const addDays = (s,n) => { const d=new Date(s+"T00:00:00Z"); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); };
+const monthRange = m => [m+"-01", m+"-"+String(new Date(+m.slice(0,4), +m.slice(5), 0).getDate()).padStart(2,"0")];
+const inRange = d => (!st.dari || d>=st.dari) && (!st.sampai || d<=st.sampai);
+function setMonth(m){ if(!m){ st.bulan=""; st.dari=""; st.sampai=""; } else { st.bulan=m; [st.dari,st.sampai]=monthRange(m); } render(); }
+function setRange(a,b){
+  if(a && b && a>b) [a,b]=[b,a];
+  st.dari=a||""; st.sampai=b||"";
+  const m = a ? a.slice(0,7) : "";
+  st.bulan = (a && b && monthRange(m)[0]===a && monthRange(m)[1]===b) ? m : "";
+  render();
+}
+
+/* ---------- filters ---------- */
+function opts(sel, items, all){ sel.innerHTML = `<option value="">${all}</option>` + items.map(([v,t])=>`<option value="${v}">${t}</option>`).join(""); }
+opts(fBulan, months.map(m=>[m, BLNF[+m.slice(5)-1]+" "+m.slice(0,4)]), "Semua bulan");
+opts(fSource, D.source.map((s,i)=>[i,s]), "Semua source");
+opts(fKat, D.kategori.map((s,i)=>[i,s]), "Semua kategori");
+opts(fArea, D.area.map((s,i)=>[i,s]).filter(([i,s])=>s!=="(kosong)"), "Semua area");
+fJenis.innerHTML = JORDER.map(j=>`<button class="chip" type="button" data-j="${j}" aria-pressed="true"><i style="background:${JCOL[j]}"></i>${jName(j)}</button>`).join("");
+fJenis.onclick = e => { const b=e.target.closest(".chip"); if(!b) return; const j=+b.dataset.j;
+  if(st.jenis.has(j) && st.jenis.size>1) st.jenis.delete(j); else st.jenis.add(j); render(); };
+fBulan.onchange = ()=>setMonth(fBulan.value);
+/* ---------- range picker (kalender) ---------- */
+const RP = {open:false, a:null, hover:null, view:null};
+const addMonths = (m,n) => { let y=+m.slice(0,4), mo=+m.slice(5)-1+n; y+=Math.floor(mo/12); mo=((mo%12)+12)%12; return `${y}-${String(mo+1).padStart(2,"0")}`; };
+const rangeText = () => { if(!st.dari && !st.sampai) return "Semua tanggal"; const a=st.dari||FIRST, b=st.sampai||LAST; return a===b ? dLabel(a) : `${dLabel(a).replace(a.slice(0,4)===b.slice(0,4)?/ \d{4}$/:/$^/,"")} – ${dLabel(b)}`; };
+function rpPresets(){
+  const lm = LAST.slice(0,7);
+  return [["Semua tanggal","",""],["7 hari terakhir",addDays(LAST,-6),LAST],["30 hari terakhir",addDays(LAST,-29),LAST],
+          ["Bulan ini",lm+"-01",LAST],["Bulan lalu",...monthRange(addMonths(lm,-1))],["3 bulan terakhir",monthRange(addMonths(lm,-2))[0],LAST]]
+    .map(p=>[p[0], p[1]&&p[1]<FIRST?FIRST:p[1], p[2]]);
+}
+function monthGrid(m){
+  const [a,z]=monthRange(m), off=(new Date(a+"T00:00:00Z").getUTCDay()+6)%7, nd=+z.slice(8);
+  let h=`<div class="rpm"><div class="rpmh">${BLNF[+m.slice(5)-1]} ${m.slice(0,4)}</div><div class="rpg">`+["Sen","Sel","Rab","Kam","Jum","Sab","Min"].map(x=>`<span class="rpw">${x}</span>`).join("")+"<span></span>".repeat(off);
+  for(let d=1; d<=nd; d++){ const ds=`${m}-${String(d).padStart(2,"0")}`, dis=ds<FIRST||ds>LAST;
+    h+=`<button type="button" class="rpd${ds===LAST?" last":""}" data-d="${ds}"${dis?" disabled":""}>${d}</button>`; }
+  return h+"</div></div>";
+}
+function paintRP(){
+  let x = RP.a || st.dari, y = RP.a ? (RP.hover||RP.a) : st.sampai;
+  if(!RP.a && (st.dari||st.sampai)){ x=st.dari||FIRST; y=st.sampai||LAST; }
+  if(x && y && x>y) [x,y]=[y,x];
+  rpPop.querySelectorAll(".rpd").forEach(b=>{ const d=b.dataset.d;
+    b.classList.toggle("in", !!(x&&y&&d>x&&d<y)); b.classList.toggle("end", d===x||d===y); });
+}
+function drawRP(){
+  rpTxt.textContent = rangeText();
+  rp.classList.toggle("on", !!(st.dari||st.sampai));
+  rpPop.hidden = !RP.open; rpBtn.setAttribute("aria-expanded", RP.open);
+  if(!RP.open) return;
+  const two = innerWidth > 760, m2 = RP.view, m1 = two ? addMonths(m2,-1) : m2, P = rpPresets();
+  rpPop.innerHTML = `<div class="rpp">${P.map((p,i)=>`<button type="button" data-p="${i}" class="${st.dari===p[1]&&st.sampai===p[2]?"on":""}">${p[0]}</button>`).join("")}</div>
+    <div class="rpc"><div class="rpnav"><button type="button" data-nav="-1" aria-label="Bulan sebelumnya">‹</button><span>${RP.a?`Mulai ${dLabel(RP.a)} · pilih tanggal akhir`:"Klik tanggal awal, lalu tanggal akhir"}</span><button type="button" data-nav="1" aria-label="Bulan berikutnya">›</button></div>
+    <div class="rpms">${two?monthGrid(m1):""}${monthGrid(m2)}</div><div class="rpf">Data tersedia ${dLabel(FIRST)} – ${dLabel(LAST)} · titik = data terakhir</div></div>`;
+  paintRP();
+  rpPop.querySelectorAll("[data-p]").forEach(b=>b.onclick=e=>{ e.stopPropagation(); const p=P[+b.dataset.p]; RP.open=false; RP.a=null; setRange(p[1],p[2]); });
+  rpPop.querySelectorAll("[data-nav]").forEach(b=>b.onclick=e=>{ e.stopPropagation(); RP.view=addMonths(RP.view,+b.dataset.nav); drawRP(); });
+  rpPop.querySelectorAll(".rpd:not(:disabled)").forEach(b=>{
+    b.onclick=e=>{ e.stopPropagation(); const d=b.dataset.d;
+      if(!RP.a){ RP.a=d; RP.hover=d; drawRP(); }
+      else { let a=RP.a, z=d; if(z<a) [a,z]=[z,a]; RP.a=null; RP.open=false; setRange(a,z); } };
+    b.onmouseenter=()=>{ if(RP.a){ RP.hover=b.dataset.d; paintRP(); } };
+  });
+}
+rpBtn.onclick = e => { e.stopPropagation(); RP.open=!RP.open; RP.a=null; RP.view=(st.sampai||LAST).slice(0,7); drawRP(); };
+rpPop.onclick = e => e.stopPropagation();
+document.addEventListener("click", ()=>{ if(RP.open){ RP.open=false; RP.a=null; drawRP(); } });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape" && RP.open){ RP.open=false; RP.a=null; drawRP(); rpBtn.focus(); } });
+fSource.onchange = ()=>{st.source=fSource.value; render();};
+fKat.onchange = ()=>{st.kat=fKat.value; render();};
+fArea.onchange = ()=>{st.area=fArea.value; render();};
+reset.onclick = ()=>{Object.assign(st,{bulan:"",dari:"",sampai:"",source:"",kat:KAT_DEF,area:"",kmArea:"",jenis:new Set(JORDER)}); render();};
+areaSort.onclick = e => { const b=e.target.closest("button"); if(!b) return; st.areaSort=b.dataset.v; try{localStorage.setItem("areaSort",st.areaSort)}catch(e){} render(); };
+
+/* rentang KM tiap area (persentil 1–99 agar salah ketik KM tidak melebarkan sumbu) */
+const KM_RANGE = (()=>{ const by={}, di=D.kategori.indexOf("Distribusi ke Area");
+  DATA.rows.forEach(r=>{ if(r[F.km]==null || r[F.kategori]!==di) return; (by[r[F.area]]=by[r[F.area]]||[]).push(r[F.km]); });
+  const out={}; Object.entries(by).forEach(([a,v])=>{ if(v.length<5) return; v.sort((x,y)=>x-y);
+    out[a]={lo:v[Math.floor(.01*(v.length-1))], hi:v[Math.ceil(.99*(v.length-1))], n:v.length}; });
+  return out; })();
+{
+  const order = KM_ORDER.map(g=>g[0]);
+  const ids = Object.keys(KM_RANGE).map(Number).filter(a=>D.area[a] && D.area[a]!=="(kosong)")
+    .sort((a,b)=>{ const ia=order.indexOf(D.area[a]), ib=order.indexOf(D.area[b]); return (ia<0?99:ia)-(ib<0?99:ib) || D.area[a].localeCompare(D.area[b]); });
+  kmArea.innerHTML = `<option value="">Semua area</option>` + ids.map(a=>`<option value="${a}">${D.area[a]}</option>`).join("");
+  kmArea.onchange = ()=>{ st.kmArea = kmArea.value; render(); };
+}
+
+/* tema */
+function applyTheme(t){ if(t==="dark") document.documentElement.setAttribute("data-theme","dark"); else document.documentElement.removeAttribute("data-theme"); themeBtn.textContent="Tema: "+(t==="dark"?"gelap":"terang"); }
+let theme="light"; try{theme=localStorage.getItem("dashTheme3")||"light"}catch(e){} applyTheme(theme);
+themeBtn.onclick=()=>{theme=theme==="dark"?"light":"dark"; applyTheme(theme); try{localStorage.setItem("dashTheme3",theme)}catch(e){} render();};
+
+/* nav aktif saat scroll */
+const navLinks=[...document.querySelectorAll("#nav a")];
+const secs=navLinks.map(a=>document.querySelector(a.getAttribute("href")));
+addEventListener("scroll",()=>{ let k=0; secs.forEach((s,i)=>{ if(s && s.getBoundingClientRect().top<160) k=i; }); navLinks.forEach((a,i)=>a.classList.toggle("on",i===k)); },{passive:true});
+
+/* ---------- tooltip ---------- */
+const tipEl = document.getElementById("tip");
+function tip(e, title, rows, total){
+  tipEl.innerHTML = `<div class="t">${title}</div>` + rows.map(r=>`<div class="row"><span>${r.c?`<i style="background:${r.c}"></i>`:""}${r.n}</span><span>${r.v}</span></div>`).join("")
+    + (total!=null?`<div class="row tot"><span>Total</span><span>${total}</span></div>`:"");
+  tipEl.style.display="block";
+  const w=tipEl.offsetWidth,h=tipEl.offsetHeight; let x=e.clientX+14,y=e.clientY+14;
+  if(x+w>innerWidth-8) x=e.clientX-w-14; if(y+h>innerHeight-8) y=e.clientY-h-14;
+  tipEl.style.left=x+"px"; tipEl.style.top=y+"px";
+}
+const hide=()=>tipEl.style.display="none";
+
+/* ---------- table toggle ---------- */
+const showTable = {};
+document.querySelectorAll(".tbtn").forEach(b=>b.onclick=()=>{const k=b.dataset.t; showTable[k]=!showTable[k]; b.textContent=showTable[k]?"Grafik":"Tabel"; render();});
+function tableHTML(t){ return `<div class="tw"><table><thead><tr>${t.h.map((x,i)=>`<th class="${i?"r":""}">${x}</th>`).join("")}</tr></thead><tbody>${t.r.map(r=>`<tr>${r.map((x,i)=>`<td class="${i?"r":""}">${x}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`; }
+
+/* ---------- column chart ---------- */
+function niceStep(v){ if(v<=0) return 1; const p=Math.pow(10,Math.floor(Math.log10(v))); const n=v/p; return (n<=1?1:n<=2?2:n<=2.5?2.5:n<=5?5:10)*p; }
+/* ---------- label data grafik (angka di setiap batang) ---------- */
+const DLF = {
+  full: v => new Intl.NumberFormat("id-ID",{maximumFractionDigits:0}).format(v),
+  cmp: v => { const a=Math.abs(v), f=(x,d)=>new Intl.NumberFormat("id-ID",{maximumFractionDigits:d,minimumFractionDigits:d}).format(x);
+    return a>=1e6 ? f(v/1e6,2)+"jt" : a>=1e4 ? f(v/1e3,1)+"rb" : a>=1e3 ? f(v/1e3,2)+"rb" : f(v, a<10&&a%1?1:0); }
+};
+const dlW = s => String(s).length*6+10;
+const dlPick = (v, room) => { const f=DLF.full(v); return dlW(f)<=room ? f : DLF.cmp(v); };
+function dlChip(x, yTop, txt, col, dy=3){ const w=dlW(txt), h=16, y=yTop-h-dy;
+  return `<g pointer-events="none"><rect x="${(x-w/2).toFixed(1)}" y="${y.toFixed(1)}" width="${w}" height="${h}" rx="8" fill="var(--surface-solid)" stroke="${col}" stroke-width="1.3"/><text x="${x.toFixed(1)}" y="${(y+11.5).toFixed(1)}" text-anchor="middle" style="font-size:10px;font-weight:700;fill:${col}">${txt}</text></g>`; }
+function dlRot(x, yTop, txt, col){ const xx=(x+3.5).toFixed(1), yy=(yTop-5).toFixed(1); return `<text x="${xx}" y="${yy}" transform="rotate(-90 ${xx} ${yy})" pointer-events="none" style="font-size:9.5px;font-weight:700;fill:${col}">${txt}</text>`; }
+function dlIn(x, yMid, txt){ return `<text x="${x.toFixed(1)}" y="${(yMid+3.4).toFixed(1)}" text-anchor="middle" pointer-events="none" style="font-size:9px;font-weight:700;fill:#fff;paint-order:stroke;stroke:rgba(0,0,0,.28);stroke-width:2.2px">${txt}</text>`; }
+function dlPlan(vals, band){ const room=band-2, chip=vals.every(v=>!v || dlW(DLF.cmp(v))<=room), allFull=chip && vals.every(v=>!v || dlW(DLF.full(v))<=room);
+  const txt=vals.map(v=>v ? (allFull ? DLF.full(v) : DLF.cmp(v)) : "");
+  return {chip, txt, head: chip ? 22 : Math.max(0,...txt.map(t=>t.length*5.7))+10}; }
+function cols(el, {cats, labels, series, mode="stack", h=270, onClick, active, tipTitle}){
+  const W = Math.max(el.clientWidth, 260), m={l:46,r:6,t:10,b:26}, iw=W-m.l-m.r;
+  const tot = cats.map((_,i)=>series.reduce((a,s)=>a+(s.vals[i]||0),0));
+  const band0 = iw/cats.length, ns0 = mode==="group"?series.length:1, bw0 = Math.min(mode==="group"?16:30, band0*(mode==="group"?0.34:0.6));
+  const P = mode==="stack" ? dlPlan(tot, band0) : null;
+  const gHead = mode==="group" ? Math.max(0,...series.flatMap(s=>s.vals).map(v=>v?DLF.cmp(v).length*5.7:0))+12 : 0;
+  m.t += P ? P.head : gHead;
+  const H = h + (P ? P.head : gHead), ih=H-m.t-m.b;
+  const dcol = series.length===1 ? series[0].c : "var(--accent)";
+  const raw = mode==="stack" ? Math.max(...tot,0) : Math.max(...series.flatMap(s=>s.vals),0);
+  const step = niceStep(raw/4 || 1), nt = Math.max(1, Math.ceil(raw/step)), mx = step*nt;
+  const y = v => m.t + ih - v/mx*ih;
+  const band = iw/cats.length, ns = mode==="group"?series.length:1;
+  const bw = Math.min(mode==="group"?16:30, band*(mode==="group"?0.34:0.6));
+  let g = "";
+  for(let k=0;k<=nt;k++){ const v=step*k, yy=y(v);
+    g+=`<line x1="${m.l}" x2="${W-m.r}" y1="${yy}" y2="${yy}" stroke="${k?"var(--grid)":"var(--axis)"}" ${k?'stroke-dasharray="3 4"':""}/>`;
+    g+=`<text x="${m.l-8}" y="${yy+4}" text-anchor="end">${v>=1000?new Intl.NumberFormat("id-ID",{maximumFractionDigits:1}).format(v/1000)+" rb":fmt(v)}</text>`; }
+  const every = Math.ceil(cats.length / Math.max(1, Math.floor(iw/42)));
+  const top = (x,yy,w,hh,c,dim)=>{ const r=Math.min(4,hh,w/2); return `<path d="M${x},${yy+hh} V${yy+r} Q${x},${yy} ${x+r},${yy} H${x+w-r} Q${x+w},${yy} ${x+w},${yy+r} V${yy+hh} Z" fill="${c}"${dim}/>`; };
+  cats.forEach((c,i)=>{
+    const cx = m.l + band*i + band/2;
+    if(i%every===0) g+=`<text x="${cx}" y="${H-7}" text-anchor="middle">${labels[i]}</text>`;
+    const dim = active && active!==c ? ' opacity=".3"' : "";
+    if(mode==="stack"){
+      let acc=0; const vis = series.filter(s=>(s.vals[i]||0)>0);
+      vis.forEach((s,si)=>{ const v=s.vals[i]; const y0=y(acc), y1=y(acc+v); acc+=v;
+        const x=cx-bw/2, hh=Math.max(y0-y1-(si?2:0),0.5);
+        g += si===vis.length-1 && hh>3 ? top(x,y1,bw,hh,s.c,dim) : `<rect x="${x}" y="${y1}" width="${bw}" height="${hh}" fill="${s.c}"${dim}/>`;
+        if(!dim && vis.length>1 && hh>=14){ const t=dlPick(v,bw+4); if(t.length*5.3<=bw+3) g+=dlIn(cx,(y0+y1)/2,t); } });
+      if(!dim && P.txt[i]) g += P.chip ? dlChip(cx,y(tot[i]),P.txt[i],dcol) : dlRot(cx,y(tot[i]),P.txt[i],dcol);
+    } else {
+      series.forEach((s,si)=>{ const v=s.vals[i]||0; if(v<=0) return; const x=cx-(ns*bw+(ns-1)*3)/2+si*(bw+3), yy=y(v);
+        g+=top(x,yy,bw,y(0)-yy,s.c,dim); if(!dim) g+=dlRot(x+bw/2-1,yy,DLF.cmp(v),s.c); });
+    }
+    g+=`<rect class="hit" data-i="${i}" x="${m.l+band*i}" y="${m.t}" width="${band}" height="${ih}" fill="transparent" style="cursor:${onClick?"pointer":"default"}"/>`;
+  });
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;height:auto" role="img">${g}</svg>`;
+  el.querySelectorAll(".hit").forEach(r=>{
+    const i=+r.dataset.i;
+    r.onmousemove=e=>tip(e, tipTitle?tipTitle(i):labels[i], series.map(s=>({n:s.n,c:s.c,v:fmt(s.vals[i]||0)+" t"})), mode==="stack"&&series.length>1?fmt(tot[i])+" t":null);
+    r.onmouseleave=hide;
+    if(onClick) r.onclick=()=>{hide(); onClick(cats[i]);};
+  });
+  const withTot = mode==="stack"&&series.length>1;
+  return {h:["Periode",...series.map(s=>s.n+" (t)"),...(withTot?["Total (t)"]:[])],
+          r:cats.map((c,i)=>[labels[i],...series.map(s=>fmt(s.vals[i]||0)),...(withTot?[fmt(tot[i])]:[])])};
+}
+
+/* ---------- horizontal bars ---------- */
+/* label per segmen bar horizontal: angka penuh bila muat, ringkas bila sempit, disembunyikan bila tetap tidak muat */
+function fitSegs(el){ el.querySelectorAll(".tr b[data-f]").forEach(b=>{ const i=b.firstChild; if(!i) return;
+  i.textContent=b.dataset.f; i.style.display="";
+  if(i.scrollWidth>b.clientWidth){ i.textContent=b.dataset.c; if(i.scrollWidth>b.clientWidth) i.style.display="none"; } }); }
+function hbars(el, items, {onClick, extra}={}){
+  const bars = items.filter(it=>!it.header);
+  if(!bars.length){ el.innerHTML='<div class="empty">Tidak ada data untuk filter ini</div>'; return {h:[],r:[]}; }
+  const mx = Math.max(...bars.map(it=>it.total), 1);
+  el.innerHTML = items.map((it,k)=> it.header
+    ? `<div class="hgrp">${it.label}<span>${fmt(it.total)} t</span></div>`
+    : `<div class="hbr${it.total?"":" zero"}" data-k="${k}" style="${onClick?"cursor:pointer":""}"><span class="lb" title="${it.label}">${it.label}</span><span class="tr">${it.segs.filter(s=>s.v>0).map(s=>`<b style="width:${s.v/mx*100}%;background:${s.c}" data-f="${fmt(s.v)}" data-c="${DLF.cmp(s.v)}"><i>${fmt(s.v)}</i></b>`).join("")}</span><span class="vl">${it.total?fmt(it.total):"–"}${extra&&it.total?` <em>(${extra(it)})</em>`:""}</span></div>`).join("");
+  fitSegs(el);
+  el.querySelectorAll(".hbr").forEach(row=>{ const it=items[+row.dataset.k];
+    row.onmousemove=e=>tip(e,it.label,it.segs.map(s=>({n:s.n,c:s.c,v:fmt(s.v)+" t"})).concat(it.n!=null?[{n:"Ritase",v:fmt(it.n)}]:[]), it.segs.length>1?fmt(it.total)+" t":null);
+    row.onmouseleave=hide; if(onClick) row.onclick=()=>{hide(); onClick(it);}; });
+  return {h:["Nama",...bars[0].segs.map(s=>s.n+" (t)"),"Total (t)","Ritase"], r:bars.map(it=>[it.label,...it.segs.map(s=>fmt(s.v)),fmt(it.total),fmt(it.n||0)])};
+}
+function legend(el){ el.innerHTML = JORDER.filter(j=>st.jenis.has(j)).map(j=>`<span><i style="background:${JCOL[j]}"></i>${jName(j)}</span>`).join(""); }
+
+/* ---------- donut ---------- */
+function donut(el, parts, center, sub){
+  const total = parts.reduce((a,p)=>a+p.v,0);
+  if(!total){ el.innerHTML='<div class="empty">Tidak ada data</div>'; return; }
+  const R=68, C=2*Math.PI*R, gap=parts.filter(p=>p.v>0).length>1?3:0; let off=0, arcs="";
+  parts.forEach((p,i)=>{ if(!p.v) return; const len=p.v/total*C; const dl=Math.max(len-gap,0.5);
+    arcs+=`<circle class="arc" data-i="${i}" cx="85" cy="85" r="${R}" fill="none" stroke="${p.c}" stroke-width="22" stroke-dasharray="${dl} ${C-dl}" stroke-dashoffset="${-off}" transform="rotate(-90 85 85)" style="cursor:default"/>`;
+    const sh=p.v/total; if(sh>=0.05){ const a=(off+len/2)/C*2*Math.PI-Math.PI/2; arcs+=`<text x="${(85+R*Math.cos(a)).toFixed(1)}" y="${(85+R*Math.sin(a)+3.5).toFixed(1)}" text-anchor="middle" pointer-events="none" style="font-size:10px;font-weight:800;fill:#fff;paint-order:stroke;stroke:rgba(0,0,0,.3);stroke-width:2.4px">${Math.round(sh*100)}%</text>`; }
+    off+=len; });
+  el.innerHTML = `<svg width="170" height="170" viewBox="0 0 170 170" role="img"><circle cx="85" cy="85" r="${R}" fill="none" stroke="var(--surface-2)" stroke-width="22"/>${arcs}
+    <text x="85" y="82" text-anchor="middle" style="fill:var(--ink);font-size:22px;font-weight:800">${short(total)}</text><text x="85" y="102" text-anchor="middle" style="font-size:11px">${sub}</text></svg>
+    <div class="dl-list">${parts.map(p=>`<div><span><i style="background:${p.c}"></i>${p.n}</span><b>${Math.round(p.v/total*100)}%</b></div><small>${fmt(p.v)} t</small>`).join("").replace(/<\/b><\/div><small>/g,"</b></div><small>")}</div>`;
+  el.querySelectorAll(".arc").forEach(a=>{ const p=parts[+a.dataset.i]; a.onmousemove=e=>tip(e,p.n,[{n:"Tonase",c:p.c,v:fmt(p.v)+" t"},{n:"Porsi",v:Math.round(p.v/total*100)+"%"}]); a.onmouseleave=hide; });
+}
+
+/* ---------- sparkline ---------- */
+function spark(vals, activeIdx){
+  const W=260,H=46,p=5; const mx=Math.max(...vals,1), mn=Math.min(...vals,0);
+  const xs=vals.map((_,i)=>p+i*(W-2*p)/Math.max(vals.length-1,1)), ys=vals.map(v=>H-p-(v-mn)/(mx-mn||1)*(H-2*p));
+  let d=`M${xs[0]},${ys[0]}`; for(let i=1;i<xs.length;i++){ const cx=(xs[i-1]+xs[i])/2; d+=` C${cx},${ys[i-1]} ${cx},${ys[i]} ${xs[i]},${ys[i]}`; }
+  const area=d+` L${xs[xs.length-1]},${H} L${xs[0]},${H} Z`;
+  const gid="sg"+Math.random().toString(36).slice(2,8);
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--c);stop-opacity:.28"/><stop offset="1" style="stop-color:var(--c);stop-opacity:0"/></linearGradient></defs><path d="${area}" fill="url(#${gid})"/><path d="${d}" fill="none" style="stroke:var(--c)" stroke-width="2" vector-effect="non-scaling-stroke"/>${xs.map((x,i)=>i===activeIdx?`<circle cx="${x}" cy="${ys[i]}" r="4" style="fill:var(--surface-solid);stroke:var(--c)" stroke-width="2.5" vector-effect="non-scaling-stroke"/>`:"").join("")}</svg>`;
+}
+
+/* ---------- filling mini stockpile: tanggal = Date Unload, tujuan = Dumping Location ---------- */
+const MINI_K = D.kategori.indexOf("Filling Mini Stockpile");
+const DST = D.dst || [];
+const MINI_ROWS = (DATA.mini||[]).map(([i,du,ds])=>{ const r=DATA.rows[i].slice(); r[0]=du; r.dst=ds; return r; });
+const isMini = () => MINI_K>=0 && st.kat===String(MINI_K);
+/* ---------- aggregation ---------- */
+function filtered(ignoreMonth, areaOv){
+  const src=st.source===""?-1:+st.source, kat=st.kat===""?-1:+st.kat, area=areaOv!==undefined?areaOv:(st.area===""?-1:+st.area);
+  return (isMini() ? MINI_ROWS : DATA.rows).filter(r=> st.jenis.has(r[F.jenis]) && (ignoreMonth||inRange(r[0]))
+    && (src<0||r[F.source]===src) && (kat<0||r[F.kategori]===kat) && (area<0||r[F.area]===area));
+}
+function groupJ(rows, keyFn){ const m=new Map(); for(const r of rows){ const k=keyFn(r); if(k==null) continue; let o=m.get(k); if(!o){o={total:0,n:0,j:{}};m.set(k,o);} o.total+=r[F.ton]; o.n++; o.j[r[F.jenis]]=(o.j[r[F.jenis]]||0)+r[F.ton]; } return m; }
+const jSeries = (keys, m) => JORDER.filter(j=>st.jenis.has(j)).map(j=>({n:jName(j), c:JCOL[j], vals:keys.map(k=>(m.get(k)?.j[j])||0)}));
+const segs = o => JORDER.filter(j=>st.jenis.has(j)).map(j=>({n:jName(j),c:JCOL[j],v:(o&&o.j[j])||0}));
+const distIdx = D.kategori.indexOf("Distribusi ke Area");
+const delta = (cur, prev) => prev>0 ? (cur-prev)/prev*100 : null;
+const dchip = v => v==null ? "" : `<span class="d${v<0?" down":""}">${v>=0?"↑":"↓"} ${Math.abs(v).toFixed(1).replace(".",",")}%</span>`;
+const ICON = {
+  ton:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4-9 4-9-4Zm0 5 9 4 9-4M3 17l9 4 9-4"/></svg>',
+  rit:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 16V7h11v9M13 10h4l4 4v2h-8"/><circle cx="6.5" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/></svg>',
+  ship:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 15h18l-2 5H5l-2-5Zm3 0V9h12v6M12 9V4"/></svg>',
+  stock:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20 9 7l4 6 3-4 6 11Z"/></svg>',
+};
+
+/* ---------- render ---------- */
+/* ---------- running text info penting ---------- */
+const TK_IC = (()=>{ const s=p=>`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+  return { truck:s('<path d="M2 16V7h11v9M13 10h4l4 4v2h-8"/><circle cx="6.5" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/>'),
+    cal:s('<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>'),
+    goal:s('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>'),
+    trend:s('<path d="m3 17 6-6 4 4 8-8M15 7h6v6"/>'),
+    trophy:s('<path d="M8 4h8v5a4 4 0 0 1-8 0V4ZM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M10 15h4v4h-4zM8 21h8"/>'),
+    alert:s('<path d="M12 3 2 20h20L12 3Z"/><path d="M12 10v4M12 17v.5"/>'),
+    chart:s('<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'),
+    flag:s('<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>'),
+    pin:s('<path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/>'),
+    ship:s('<path d="M3 15h18l-2 5H5l-2-5Zm3 0V9h12v6M12 9V4"/>'),
+    box:s('<path d="M3 7l9-4 9 4-9 4-9-4Zm0 5 9 4 9-4M3 17l9 4 9-4"/>'),
+    route:s('<circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h8a3 3 0 0 0 0-6H8a3 3 0 0 1 0-6h8"/>'),
+    clock:s('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
+    tool:s('<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4Z"/>'),
+    rain:s('<path d="M7 15a5 5 0 1 1 .9-9.9A6 6 0 0 1 19 9a4 4 0 0 1-1 7.9M8 19l-1 2M12 18l-1 3M16 19l-1 2"/>'),
+    drop:s('<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11Z"/>'),
+    pause:s('<path d="M9 5v14M15 5v14"/>'), play:s('<path d="M7 5l12 7-12 7V5Z"/>') }; })();
+function tickerRender(el, items){
+  if(!el) return;
+  const li = items.filter(Boolean).map(it=>`<li class="tk-it ${it.tone||"info"}"><span class="tk-ic">${TK_IC[it.ic]||TK_IC.alert}</span>${it.tag?`<span class="tk-tag">${it.tag}</span>`:""}<span>${it.html}</span></li>`).join("");
+  if(!li){ el.innerHTML=""; return; }
+  const paused = el.classList.contains("paused");
+  el.innerHTML = `<div class="tk-lb"><i class="tk-dot" aria-hidden="true"></i><span>Info penting</span></div><div class="tk-vp"><div class="tk-tr"><ul class="tk-list">${li}</ul><ul class="tk-list" aria-hidden="true">${li}</ul></div></div><button class="tk-btn" type="button" aria-pressed="${paused}" aria-label="${paused?"Jalankan":"Jeda"} running text" title="${paused?"Jalankan":"Jeda"}">${paused?TK_IC.play:TK_IC.pause}</button>`;
+  const w = el.querySelector(".tk-list").scrollWidth;
+  el.querySelector(".tk-tr").style.setProperty("--tkd", Math.max(25, w/60).toFixed(1)+"s");
+  el.querySelector(".tk-btn").onclick = ()=>{ el.classList.toggle("paused"); tickerRender(el, items); };
+}
+/* kunci running text + filter: tombol Filter (HP), tinggi untuk kartu sticky, bayangan saat menempel */
+(function(){ const lb=document.getElementById("lockbar"), bt=document.getElementById("lkFt"); if(!lb) return;
+  if(bt) bt.onclick=()=>{ const o=!lb.classList.contains("open"); lb.classList.toggle("open",o); bt.setAttribute("aria-expanded",o); bt.querySelector("span").textContent=o?"Tutup filter":"Filter"; };
+  const setH=()=>{ if(lb.parentElement) lb.parentElement.style.setProperty("--lockH", lb.offsetHeight+"px"); };
+  setH(); if(window.ResizeObserver) new ResizeObserver(setH).observe(lb);
+  addEventListener("scroll",()=>lb.classList.toggle("stuck", lb.getBoundingClientRect().top<=10), {passive:true});
+})();
+function render(){
+  const mini = isMini();
+  document.querySelectorAll("[data-mini]").forEach(el=>{ el.hidden = (el.dataset.mini==="hide")===mini; });
+  fBulan.value=st.bulan;
+  const hasRange = !!(st.dari||st.sampai);
+  drawRP();
+  fSource.value=st.source; fKat.value=st.kat; fArea.value=st.area;
+  fJenis.querySelectorAll(".chip").forEach(b=>b.setAttribute("aria-pressed", st.jenis.has(+b.dataset.j)));
+  areaSort.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.v===st.areaSort));
+  const rows = filtered(false), rowsAllM = filtered(true);
+  const ld = DATA.meta.lastDate;
+  const mi = st.bulan ? months.indexOf(st.bulan) : -1;
+
+  /* header */
+  const dts = rows.map(r=>r[0]).sort();
+  periodTxt.textContent = dts.length ? `${dLabel(dts[0]).replace(/ \d{4}$/,"")} – ${dLabel(dts[dts.length-1])}` : "Tidak ada data";
+  eyebrow.textContent = st.bulan ? `Performa ${BLNF[+st.bulan.slice(5)-1]} ${st.bulan.slice(0,4)}` : hasRange ? `Performa periode terpilih` : `Performa tahun ${ld.slice(0,4)}`;
+  sub.textContent = `${fmt(rows.length)} ritase dump truck · data sampai ${dLabel(ld)}`;
+  stamp.innerHTML = `Diperbarui<br>${DATA.meta.generated||""}`;
+
+  /* monthly series for KPI sparklines */
+  const jSel = new Set([...st.jenis].map(j=>JEN[j]));
+  const mTon = months.map(m=>0), mRit = months.map(m=>0), mDist = months.map(()=>0);
+  rowsAllM.forEach(r=>{ const k=months.indexOf(r[0].slice(0,7)); mTon[k]+=r[F.ton]; mRit[k]++; if(r[F.kategori]===distIdx) mDist[k]+=r[F.ton]; });
+  const tongAll = DATA.tongkang.filter(t=>jSel.has(t.jenis));
+  const mRec = months.map(m=>tongAll.filter(t=>t.selesai.startsWith(m)).reduce((a,t)=>a+t.ton,0));
+  const stockM = months.map(m=>DATA.stock.find(s=>s.Bulan===m));
+  const mStk = stockM.map(s=>s?s["Closing (t)"]||0:0);
+
+  const tot = rows.reduce((a,r)=>a+r[F.ton],0), n=rows.length;
+  const dist = rows.filter(r=>r[F.kategori]===distIdx).reduce((a,r)=>a+r[F.ton],0);
+  const lost = rows.reduce((a,r)=>a+r[F.lost],0);
+  const tong = tongAll.filter(t=>inRange(t.selesai));
+  const recv = tong.reduce((a,t)=>a+t.ton,0);
+  const days = new Set(rows.map(r=>r[0])).size;
+  const endM = st.sampai ? st.sampai.slice(0,7) : "9999";
+  const si = mi>=0 ? mi : stockM.map((s,i)=>!!s && months[i]<=endM).lastIndexOf(true);
+  const sk = stockM[si];
+  const pm = mi>0 ? mi-1 : -1;
+  const nM = months.length;
+  const K = [
+    {g:"var(--k1)", ic:ICON.ton, l:"Total tonase", v:short(tot), u:"ton", d:pm>=0?delta(mTon[mi],mTon[pm]):null,
+     n: pm>=0 ? `vs ${BLN[+months[pm].slice(5)-1]}: ${fmt(mTon[pm])} t · ${days} hari operasi` : (mi>=0||hasRange) ? `${days} hari operasi` : `rata-rata ${short(tot/nM)} t/bulan · ${days} hari operasi`, s:mTon},
+    {g:"var(--k2)", ic:ICON.rit, l:"Jumlah ritase", v:fmt(n), u:"rit", d:pm>=0?delta(mRit[mi],mRit[pm]):null,
+     n:`rata-rata ${nf1.format(n?tot/n:0)} t/rit`, s:mRit},
+    {g:"var(--k3)", ic:ICON.ship, l:"Penerimaan tongkang", v:short(recv), u:"ton", d:pm>=0?delta(mRec[mi],mRec[pm]):null,
+     n:`${tong.length} tongkang · Rp ${nf1.format(tong.reduce((a,t)=>a+t.cost,0)/1e9)} M`, s:mRec},
+    {g:"var(--k4)", ic:ICON.stock, l:"Stok akhir", v:sk?short(sk["Closing (t)"]):"–", u:"ton", d:si>0?delta(mStk[si],mStk[si-1]):null,
+     n: sk?`Port ${fmt(sk["Stok Port (t)"])} · Mini SP ${fmt(sk["Stok Mini Stockpile (t)"])} (${mLabel(sk.Bulan)})`:"", s:mStk},
+  ];
+  ringkasan.innerHTML = K.map(k=>`<div class="kpi" style="--c:${k.g}"><div class="hd"><div class="ic">${k.ic}</div><div style="min-width:0"><div class="l">${k.l}</div><div class="v">${k.v}<small>${k.u}</small>${dchip(k.d)}</div></div></div><div class="n" title="${k.n}">${k.n}</div>${spark(k.s, mi>=0?mi:(k===K[3]?si:-1))}</div>`).join("");
+
+  const MI = {
+    dist:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z"/></svg>',
+    fill:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 20h18M5 20l5-9 3 4 2-3 4 8"/></svg>',
+    avg:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19 20 5M6 6h.01M18 18h.01"/></svg>',
+    lost:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 21h16"/></svg>',
+  };
+  minis.innerHTML = [
+    [MI.dist,"Distribusi ke area", fmt(dist), `ton · ${tot?Math.round(dist/tot*100):0}%`],
+    [MI.fill,"Filling mini stockpile", fmt(tot-dist), `ton · ${tot?Math.round((tot-dist)/tot*100):0}%`],
+    [MI.avg,"Rata-rata per hari", fmt(days?tot/days:0), `ton · ${nf1.format(days?n/days:0)} rit`],
+    [MI.lost,"Lost tonase", nf1.format(lost), `ton · ${tot?(lost/tot*100).toFixed(2).replace(".",","):0}%`],
+  ].map(m=>`<div class="mini"><div class="dot">${m[0]}</div><div><div class="l">${m[1]}</div><div class="v">${m[2]}<small>${m[3]}</small></div></div></div>`).join("");
+
+  /* C1 */
+  legend(lg1);
+  let t1;
+  if(hasRange && !st.bulan){
+    const a = st.dari||FIRST, b = st.sampai||LAST;
+    const ds=[]; for(let d=a; d<=b && ds.length<400; d=addDays(d,1)) ds.push(d);
+    const multiM = a.slice(0,7)!==b.slice(0,7);
+    const back = `<a href="#" id="back">← kembali ke semua bulan</a>`;
+    if(ds.length<=93){
+      const m = groupJ(rows, r=>r[0]);
+      t1 = cols(c1,{cats:ds, labels:ds.map(d=>multiM?`${+d.slice(8)}/${+d.slice(5,7)}`:+d.slice(8)), series:jSeries(ds,m),
+        tipTitle:i=>`${HARI[new Date(ds[i]+"T00:00:00").getDay()]}, ${dLabel(ds[i])} · ${fmt(m.get(ds[i])?.n||0)} rit`});
+      t1el.textContent = `Tonase harian · ${dLabel(a)} – ${dLabel(b)}`;
+    } else {
+      const ms = months.filter(x=>x>=a.slice(0,7) && x<=b.slice(0,7));
+      const m = groupJ(rows, r=>r[0].slice(0,7));
+      t1 = cols(c1,{cats:ms, labels:ms.map(mLabel), series:jSeries(ms,m), onClick:c=>setMonth(c),
+        tipTitle:i=>BLNF[+ms[i].slice(5)-1]+" · "+fmt(m.get(ms[i])?.n||0)+" rit"});
+      t1el.textContent = `Tonase per bulan · ${dLabel(a)} – ${dLabel(b)}`;
+    }
+    big1.innerHTML = `<b>${fmt(tot)} t</b><span class="vs">${ds.length} hari dipilih · ${days} hari ada angkutan · rata-rata ${fmt(days?tot/days:0)} t/hari · ${back}</span>`;
+    document.getElementById("back").onclick=e=>{e.preventDefault(); setMonth("");};
+  } else if(!st.bulan){
+    const m = groupJ(rowsAllM, r=>r[0].slice(0,7));
+    t1 = cols(c1,{cats:months, labels:months.map(mLabel), series:jSeries(months,m), onClick:c=>setMonth(c),
+      tipTitle:i=>BLNF[+months[i].slice(5)-1]+" · "+fmt(m.get(months[i])?.n||0)+" rit"});
+    t1el.textContent="Tonase per bulan";
+    const lm=nM-1, pv=nM-2;
+    big1.innerHTML = `<b>${fmt(tot)} t</b><span class="vs">Klik batang untuk melihat tonase harian bulan itu · ${BLN[+months[lm].slice(5)-1]} masih berjalan (s/d ${+ld.slice(8)})</span>`;
+  } else {
+    const y=+st.bulan.slice(0,4), mo=+st.bulan.slice(5), nd=new Date(y,mo,0).getDate();
+    const ds=[...Array(nd)].map((_,i)=>st.bulan+"-"+String(i+1).padStart(2,"0"));
+    const m = groupJ(rows, r=>r[0]);
+    t1 = cols(c1,{cats:ds, labels:ds.map(d=>+d.slice(8)), series:jSeries(ds,m), tipTitle:i=>`${HARI[new Date(ds[i]).getDay()]}, ${i+1} ${BLN[mo-1]} · ${fmt(m.get(ds[i])?.n||0)} rit`});
+    t1el.textContent=`Tonase harian · ${BLNF[mo-1]}`;
+    const dv = pm>=0?delta(mTon[mi],mTon[pm]):null;
+    big1.innerHTML = `<b>${fmt(tot)} t</b>${dv!=null?`<span class="dl ${dv>=0?"up":"down"}">${dv>=0?"↑":"↓"} ${Math.abs(dv).toFixed(1).replace(".",",")}%</span>`:""}<span class="vs">${pm>=0?`vs ${BLNF[+months[pm].slice(5)-1]} (${fmt(mTon[pm])} t) · `:""}<a href="#" id="back">← kembali ke semua bulan</a></span>`;
+    document.getElementById("back").onclick=e=>{e.preventDefault(); setMonth("");};
+  }
+  if(showTable.c1) c1.innerHTML=tableHTML(t1);
+
+  /* donut + shift */
+  const mj = groupJ(rows, ()=>"x").get("x");
+  donut(cMix, JORDER.filter(j=>st.jenis.has(j)).map(j=>({n:jName(j), c:JCOL[j], v:(mj&&mj.j[j])||0})), tot, "ton total");
+  const sd = D.shift.indexOf("Day"), sday=rows.filter(r=>r[F.shift]===sd).length, sn=n-sday;
+  cShift.innerHTML = !n?'' : `<div class="split"><div style="flex:${sday};background:var(--recv)"></div><div style="flex:${sn||0.0001};background:var(--issue)"></div></div>
+    <div class="legend" style="justify-content:space-between;margin:0"><span><i style="background:var(--recv)"></i>Siang ${fmt(sday)} rit (${Math.round(sday/n*100)}%)</span><span><i style="background:var(--issue)"></i>Malam ${fmt(sn)} rit (${Math.round(sn/n*100)}%)</span></div>`;
+
+  /* insight: hari paling produktif */
+  const byDay = {}; rows.forEach(r=>{ byDay[r[0]]=(byDay[r[0]]||0)+r[F.ton]; });
+  const wk = [0,0,0,0,0,0,0], wc=[0,0,0,0,0,0,0];
+  Object.entries(byDay).forEach(([d,v])=>{ const w=new Date(d+"T00:00:00").getDay(); wk[w]+=v; wc[w]++; });
+  const avgAll = days?tot/days:0; let bw=-1, bv=0; wk.forEach((v,i)=>{ const a=wc[i]?v/wc[i]:0; if(a>bv){bv=a;bw=i;} });
+  const peak = Object.entries(byDay).sort((a,b)=>b[1]-a[1])[0];
+  const nCek = (DATA.cek||[]).filter(c=>!c.hapus).length;
+  insight.innerHTML = bw<0 ? "" : `<svg class="trophy" width="74" height="74" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#f59e0b"/></linearGradient></defs><ellipse cx="32" cy="58" rx="18" ry="4" fill="rgba(139,92,246,.45)"/><path d="M20 8h24v12a12 12 0 0 1-24 0Z" fill="url(#tg)"/><path d="M20 12h-7a7 7 0 0 0 7 9M44 12h7a7 7 0 0 1-7 9" fill="none" stroke="#f59e0b" stroke-width="3"/><rect x="28" y="31" width="8" height="12" fill="#f59e0b"/><rect x="21" y="43" width="22" height="9" rx="2" fill="#b45309"/><path d="m32 12 2.2 4.5 5 .7-3.6 3.5.8 5L32 23.4l-4.4 2.3.8-5-3.6-3.5 5-.7Z" fill="#fff8"/></svg>
+    <div><div class="k">Insight</div><h3>${HARI[bw]} hari paling produktif ⚡</h3><p>Rata-rata ${fmt(bv)} t/hari, ${Math.round((bv/avgAll-1)*100)}% di atas rata-rata harian. Rekor: ${fmt(peak[1])} t pada ${dLabel(peak[0])}.</p></div>
+    <button type="button" onclick="var b=document.getElementById('cekBtn');if(b&&b.getAttribute('aria-expanded')!=='true')b.click();document.getElementById('cek').scrollIntoView({behavior:'smooth'})">Cek data (${nCek})</button>`;
+
+  /* tongkang terakhir */
+  const last3 = [...tongAll].sort((a,b)=>b.selesai.localeCompare(a.selesai)).slice(0,3);
+  const prevSame = t => { const ps = tongAll.filter(x=>x.jenis===t.jenis && x.selesai<t.selesai).sort((a,b)=>b.selesai.localeCompare(a.selesai))[0]; return ps?delta(t.ton,ps.ton):null; };
+  recent.innerHTML = last3.map(t=>{ const j=JEN.indexOf(t.jenis), dv=prevSame(t);
+    return `<div class="rc"><div class="th" style="background:${JGRAD[j]||"var(--g2)"}">${t.jenis.replace("MMJ-","").replace("Splite ","").replace("Base Course","BC")}</div><div><div class="t">${t.kode}</div><div class="s">${t.barge} · ${dLabel(t.selesai)}</div></div><div class="v">${fmt(t.ton)} t${dv!=null?`<small class="${dv>=0?"up":"down"}">${dv>=0?"↑":"↓"} ${Math.abs(dv).toFixed(1).replace(".",",")}%</small>`:"<small>&nbsp;</small>"}</div></div>`; }).join("") || '<div class="empty">Belum ada tongkang</div>';
+
+  /* C2 */
+  const iss = new Map(); rowsAllM.filter(r=>r[F.kategori]===distIdx).forEach(r=>{const k=r[0].slice(0,7); iss.set(k,(iss.get(k)||0)+r[F.ton]);});
+  const t2 = cols(c2,{cats:months, labels:months.map(mLabel), mode:"group", active:st.bulan||null, h:250,
+    series:[{n:"Penerimaan",c:"var(--recv)",vals:mRec},{n:"Distribusi ke area",c:"var(--issue)",vals:months.map(m=>iss.get(m)||0)}],
+    onClick:c=>setMonth(st.bulan===c?"":c)});
+  if(showTable.c2) c2.innerHTML=tableHTML(t2);
+
+  /* C3 */
+  const sm = DATA.stock.filter(s=>months.includes(s.Bulan));
+  const t3 = cols(c3,{cats:sm.map(s=>s.Bulan), labels:sm.map(s=>mLabel(s.Bulan)), active:st.bulan||null, h:250,
+    series:[{n:"Stok port",c:"var(--recv)",vals:sm.map(s=>s["Stok Port (t)"])},{n:"Stok mini stockpile",c:"var(--recv-2)",vals:sm.map(s=>s["Stok Mini Stockpile (t)"])}],
+    tipTitle:i=>sm[i].fromSP?`${BLNF[+sm[i].Bulan.slice(5)-1]} (berjalan, posisi ${dLabel(LAST)} · Komposisi stok)`:"Akhir "+BLNF[+sm[i].Bulan.slice(5)-1]});
+  pStk.textContent = SP_RUN ? `Port SBL + mini stockpile · EOM dari Monthly Summary · ${BLNF[+SP_RUN.slice(5)-1]} (berjalan) = Komposisi stok per ${dLabel(LAST)}` : "Port SBL + mini stockpile (EOM, dari Monthly Summary)";
+  if(showTable.c3) c3.innerHTML=tableHTML(t3);
+
+  /* area / blok */
+  legend(lgA);
+  const distRows = rows.filter(r=>r[F.kategori]===distIdx);
+  const ga = groupJ(distRows, r=>D.blok[r[F.blok]]);
+  const blokArea = {}; DATA.rows.forEach(r=>{ blokArea[D.blok[r[F.blok]]]=r[F.area]; });
+  const mk = b => { const o=ga.get(b); return {label:BLOK_LABEL[b]||b, b, total:o?o.total:0, n:o?o.n:0, segs:segs(o)}; };
+  const clickArea = it=>{ const a=blokArea[it.b]; if(a==null) return; st.area = st.area===String(a)?"":String(a); render(); };
+  let items;
+  if(st.areaSort==="km"){
+    items=[]; const used=new Set();
+    KM_ORDER.forEach(([grp,list])=>{
+      const extra=[...ga.keys()].filter(b=>!list.includes(b) && D.area[blokArea[b]]===grp);
+      const bl=[...list,...extra].filter(b=>ga.has(b) || (ALWAYS.has(b) && !st.area));
+      bl.forEach(b=>used.add(b));
+      if(!bl.length) return;
+      const rowsG = bl.map(mk);
+      items.push({header:true, label:grp, total:rowsG.reduce((a,x)=>a+x.total,0)}, ...rowsG);
+    });
+    const rest=[...ga.keys()].filter(b=>!used.has(b));
+    if(rest.length){ const rg=rest.map(mk); items.push({header:true,label:"Lainnya",total:rg.reduce((a,x)=>a+x.total,0)},...rg); }
+    pArea.textContent="Urutan sesuai format laporan (berdasarkan KM jalan hauling) · blok tanpa distribusi ditampilkan “–”.";
+  } else {
+    items=[...ga.keys()].map(mk).sort((a,b)=>b.total-a.total).slice(0,16);
+    pArea.textContent="Diurutkan dari distribusi terbesar · ton ke area tujuan (tanpa filling mini stockpile) · klik baris untuk filter area.";
+  }
+  const tA = hbars(cArea, items, {onClick:clickArea, extra:it=>fmt(it.n)});
+  if(showTable.cArea) cArea.innerHTML=tableHTML(tA);
+
+  /* KM — pilihan area sendiri; area terpilih = segmen KM lebih rapat di rentang area itu */
+  legend(lgK);
+  kmArea.value = st.kmArea;
+  const kmA = st.kmArea!=="" ? +st.kmArea : (st.area===""?-1:+st.area);
+  const kmBase = (st.kmArea!=="" ? filtered(false, kmA) : rows).filter(r=>r[F.kategori]===distIdx && r[F.km]!=null);
+  let kmStep=5, kmLo=0, kmHi=130, kmOut=0;
+  const R = kmA>=0 ? KM_RANGE[kmA] : null;
+  if(R){ const span=R.hi-R.lo; kmStep = span<=20?1:span<=50?2:5; kmLo=Math.floor(R.lo/kmStep)*kmStep; kmHi=Math.floor(R.hi/kmStep)*kmStep; }
+  const bins=[]; for(let b=kmLo; b<=kmHi; b+=kmStep) bins.push(b);
+  const gk = groupJ(kmBase, r=>{ const k=r[F.km];
+    if(!R) return Math.min(130, Math.floor(k/5)*5);
+    if(k<kmLo || k>=kmHi+kmStep){ kmOut++; return null; } return Math.floor(k/kmStep)*kmStep; });
+  const kmLab = b => kmStep===1 ? `KM ${b}` : `KM ${b}–${b+kmStep}`;
+  const tK = cols(cKm,{cats:bins, labels:bins, series:jSeries(bins,gk), h:250, tipTitle:i=>`${kmLab(bins[i])} · ${fmt(gk.get(bins[i])?.n||0)} rit`});
+  if(showTable.cKm) cKm.innerHTML=tableHTML({h:["Segmen KM",...tK.h.slice(1)], r:tK.r.map((r,i)=>[kmLab(bins[i]),...r.slice(1)])});
+  pKm.textContent = kmA<0 ? "Lokasi dumping di jalan hauling, per segmen 5 KM · pilih area untuk melihat detail per KM"
+    : `${D.area[kmA]} · KM ${kmLo}–${kmHi+kmStep} · per ${kmStep} KM${st.kmArea===""?" · mengikuti filter area di atas":""}`;
+  kmNote.textContent = kmOut ? `${fmt(kmOut)} rit dengan KM di luar rentang utama ${D.area[kmA]} tidak ditampilkan (kemungkinan salah input KM).` : "";
+
+  /* source / kerja / vendor */
+  const one = (key, dict, limit) => { const g=groupJ(rows, r=>r[F[key]]); return [...g.entries()].map(([k,o])=>({label:dict[k]??"(kosong)", total:o.total, n:o.n, segs:[{n:"Tonase",c:"var(--accent)",v:o.total}]})).sort((a,b)=>b.total-a.total).slice(0,limit||99); };
+  hbars(cSrc, one("source", D.source), {extra:it=>fmt(it.n)});
+  hbars(cWork, one("kerja", D.kerja), {extra:it=>fmt(it.n)});
+  hbars(cVen, one("vendor", D.vendor, 10), {extra:it=>fmt(it.n)});
+
+  /* tabel tongkang */
+  const ttot = tong.reduce((a,t)=>a+t.ton,0), tcost=tong.reduce((a,t)=>a+t.cost,0);
+  pT.textContent = `${tong.length} tongkang · ${fmt(ttot)} t · biaya Rp ${fmt(tcost)} · rata-rata Rp ${fmt(ttot?tcost/ttot:0)}/t`;
+  const jc = nm => JCOL[JEN.indexOf(nm)] || "var(--muted)";
+  tTong.innerHTML = `<table><thead><tr><th>No</th><th>Tongkang</th><th>Jenis batu</th><th>Material</th><th>Selesai bongkar</th><th>Port</th><th>Barge</th><th class="r">Volume (m³)</th><th class="r">Tonase (t)</th><th class="r">Density</th><th class="r">Rate/ton (Rp)</th><th class="r">Biaya (Rp)</th></tr></thead><tbody>`
+    + (tong.length? tong.map(t=>`<tr><td>${t.no}</td><td>${t.kode}</td><td><span class="tag"><i style="background:${jc(t.jenis)}"></i>${t.jenis.replace("MMJ-","")}</span></td><td>${t.material}</td><td>${dLabel(t.selesai)}</td><td>${t.port}</td><td>${t.barge}</td><td class="r">${fmt(t.vol)}</td><td class="r">${fmt(t.ton)}</td><td class="r">${t.dens.toFixed(2).replace(".",",")}</td><td class="r">${fmt(t.rate)}</td><td class="r">${fmt(t.cost)}</td></tr>`).join("")
+      : `<tr><td colspan="12" class="empty">Tidak ada tongkang pada periode ini</td></tr>`) + `</tbody></table>`;
+
+  /* sidebar tip: blok tujuan terbesar */
+  const topB = [...ga.entries()].sort((a,b)=>b[1].total-a[1].total)[0];
+  tipcard.innerHTML = topB ? `<span class="pill">Area teratas</span><b>${BLOK_LABEL[topB[0]]||topB[0]} menerima ${dist?Math.round(topB[1].total/dist*100):0}% distribusi</b><p>${fmt(topB[1].total)} t dari ${fmt(topB[1].n)} ritase</p><svg width="110" height="110" viewBox="0 0 24 24" fill="#fff"><path d="M2 20 9 7l4 6 3-4 6 11Z"/></svg>` : "";
+
+  /* ringkasan filter (untuk PDF & Excel) */
+  const fl = filterLabels();
+  pinfo.textContent = `Periode: ${rangeText()} · ${fl.join(" · ")} · Dicetak ${new Date().toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"})}`;
+  renderSP();
+  if(mini) renderFill(rows);
+
+  /* running text */
+  if(mini){
+    const g=groupJ(rows, r=>`${D.source[r[F.source]]} → ${DST[r.dst]??"(kosong)"}`), top=[...g.entries()].sort((x,y)=>y[1].total-x[1].total);
+    const td=[...groupJ(rows, r=>DST[r.dst]??"(kosong)").entries()].sort((x,y)=>y[1].total-x[1].total)[0];
+    const du=rows.map(r=>r[0]).sort(), lastU=du[du.length-1], lastT=rows.filter(r=>r[0]===lastU).reduce((a,r)=>a+r[F.ton],0);
+    tickerRender(ticker,[
+      {ic:"box",tone:"info",tag:"Filling mini stockpile",html:`<b>${fmt(tot)} t</b> · ${fmt(n)} rit · ${top.length} rute`},
+      top[0]&&{ic:"route",tone:"good",tag:"Rute utama",html:`<b>${top[0][0]}</b> ${fmt(top[0][1].total)} t (${tot?Math.round(top[0][1].total/tot*100):0}%)`},
+      td&&{ic:"pin",tone:"info",tag:"Tujuan terbesar",html:`<b>${td[0]}</b> menerima ${fmt(td[1].total)} t`},
+      lastU&&{ic:"cal",tone:lastU<LAST?"warn":"good",tag:"Unload terakhir",html:`${dLabel(lastU)} · <b>${fmt(lastT)} t</b>${lastU<LAST?` · data angkutan sudah s/d ${dLabel(LAST)}, cek kolom Date Unload`:""}`},
+      top.length>1&&{ic:"route",tone:"info",tag:"Rute lainnya",html:top.slice(1,4).map(([k,o])=>`${k} <b>${fmt(o.total)} t</b>`).join(" · ")},
+    ]);
+  } else {
+    const lastR=rowsAllM.filter(r=>r[0]===ld), lastTon=lastR.reduce((a,r)=>a+r[F.ton],0);
+    const lt=[...tongAll].sort((x,y)=>y.selesai.localeCompare(x.selesai))[0];
+    const dv=pm>=0?delta(mTon[mi],mTon[pm]):null, dvT=dv==null?"":` · ${dv>=0?"naik":"turun"} ${Math.abs(dv).toFixed(1).replace(".",",")}% vs ${BLNF[+months[pm].slice(5)-1]}`;
+    tickerRender(ticker,[
+      {ic:"truck",tone:dv==null?"info":dv>=0?"good":"warn",tag:st.kat===""?"Total tonase":D.kategori[+st.kat],html:`<b>${fmt(tot)} t</b> · ${fmt(n)} rit${dvT}`},
+      {ic:"cal",tone:lastTon>0?"good":"warn",tag:`Hari terakhir · ${dLabel(ld)}`,html:`<b>${fmt(lastTon)} t</b> · ${fmt(lastR.length)} rit`},
+      topB&&{ic:"pin",tone:"good",tag:"Area teratas",html:`<b>${BLOK_LABEL[topB[0]]||topB[0]}</b> ${fmt(topB[1].total)} t (${dist?Math.round(topB[1].total/dist*100):0}% distribusi)`},
+      days&&{ic:"trend",tone:"info",tag:"Rata-rata harian",html:`<b>${fmt(tot/days)} t/hari</b> · ${days} hari operasi`},
+      recv>0&&{ic:"ship",tone:"good",tag:"Penerimaan tongkang",html:`<b>${fmt(recv)} t</b> dari ${tong.length} tongkang`},
+      lt&&{ic:"ship",tone:"info",tag:"Tongkang terakhir",html:`<b>${lt.kode}</b> ${fmt(lt.ton)} t · selesai ${dLabel(lt.selesai)}`},
+      sk&&{ic:"box",tone:"info",tag:"Stok akhir",html:`<b>${fmt(sk["Closing (t)"])} t</b> · ${mLabel(sk.Bulan)}`},
+      lost>0.5&&{ic:"alert",tone:"warn",tag:"Lost tonase",html:`<b>${nf1.format(lost)} t</b> (${tot?(lost/tot*100).toFixed(2).replace(".",","):0}%)`},
+    ]);
+  }
+  EXP = {rows, tot, n, dist, lost, days, tong, recv, sk, items, gk, bins, kmStep, kmLab, kmTitle: kmA<0?"semua area":D.area[kmA]};
+}
+let EXP = null, EXPSP = null;
+function renderFill(rows){
+  legend(lgF);
+  const tot = rows.reduce((a,r)=>a+r[F.ton],0), n = rows.length;
+  const g = groupJ(rows, r=>r[F.source]+"|"+r.dst);
+  const items = [...g.entries()].map(([k,o])=>{ const [s,d]=k.split("|").map(Number);
+    return {label:`${D.source[s]} → ${DST[d]??"(kosong)"}`, total:o.total, n:o.n, segs:segs(o)}; }).sort((a,b)=>b.total-a.total);
+  const tF = hbars(cFill, items, {extra:it=>fmt(it.n)+" rit"});
+  if(showTable.cFill) cFill.innerHTML = tableHTML({h:["Asal (Source) → tujuan (Dumping Location)",...tF.h.slice(1)], r:tF.r});
+  const ds = rows.map(r=>r[0]).sort(), nDst = new Set(rows.map(r=>r.dst)).size;
+  pFill.textContent = `Dibaca: asal batu (Source) → stockpile tujuan (Dumping Location) · tanggal unload ${ds.length?`${dLabel(ds[0])} – ${dLabel(ds[ds.length-1])}`:"–"}`;
+  fillSum.innerHTML = [["Total filling", fmt(tot), "ton"], ["Ritase", fmt(n), `rit · ${nf1.format(n?tot/n:0)} t/rit`], ["Stockpile tujuan", fmt(nDst), `lokasi · ${items.length} rute`]]
+    .map(x=>`<div><div class="l">${x[0]}</div><div class="v">${x[1]}<small>${x[2]}</small></div></div>`).join("");
+  /* rincian per asal batu: Asal (Source) -> Tujuan (Dumping Location) */
+  if(!rows.length){ tFill.innerHTML='<div class="empty">Tidak ada filling pada filter ini</div>'; return; }
+  const byS = new Map();
+  rows.forEach(r=>{ const s=r[F.source]; let o=byS.get(s); if(!o){ o={t:0,n:0,d:new Map()}; byS.set(s,o); }
+    o.t+=r[F.ton]; o.n++; const x=o.d.get(r.dst)||{t:0,n:0}; x.t+=r[F.ton]; x.n++; o.d.set(r.dst,x); });
+  const pct = v => tot ? nf1.format(v/tot*100)+"%" : "–";
+  tFill.innerHTML = `<table><thead><tr><th>Asal batu (Source)</th><th>Tujuan (Dumping Location)</th><th class="r">Ton</th><th class="r">Rit</th><th class="r">%</th></tr></thead><tbody>`
+    + [...byS.entries()].sort((x,y)=>y[1].t-x[1].t).map(([sIdx,o])=>
+        `<tr class="grp"><td colspan="2"><b>Dari ${D.source[sIdx]}</b></td><td class="r"><b>${fmt(o.t)}</b></td><td class="r"><b>${fmt(o.n)}</b></td><td class="r"><b>${pct(o.t)}</b></td></tr>`
+        + [...o.d.entries()].sort((x,y)=>y[1].t-x[1].t).map(([d,x])=>`<tr><td style="color:var(--muted)">${D.source[sIdx]}</td><td>→ ${DST[d]??"(kosong)"}</td><td class="r">${fmt(x.t)}</td><td class="r">${fmt(x.n)}</td><td class="r">${pct(x.t)}</td></tr>`).join("")
+      ).join("")
+    + `</tbody><tfoot><tr><td colspan="2">Total filling</td><td class="r">${fmt(tot)}</td><td class="r">${fmt(n)}</td><td class="r">100%</td></tr></tfoot></table>`;
+}
+/* ---------- stok akhir per stockpile & jenis batu (sheet Daily Summary) ---------- */
+function renderSP(){
+  const S = DATA.stockpile;
+  if(!S || !S.items || !S.items.length){ tSP.innerHTML='<div class="empty">Tabel stok per stockpile tidak ditemukan di sheet Daily Summary</div>'; cSPmix.innerHTML=""; pSP.textContent=""; spNote.textContent=""; EXPSP=null; return; }
+  const J = JORDER, owners = S.owners;
+  const lab = !S.month ? "" : S.month===LAST.slice(0,7) ? `per ${dLabel(LAST)}` : `akhir ${BLNF[+S.month.slice(5)-1]} ${S.month.slice(0,4)}`;
+  pSP.textContent = `Posisi stok ${lab} · sumber sheet Daily Summary · ton`;
+  pSPmix.textContent = `Per jenis batu, semua stockpile · ${lab}`;
+  const val = (it,o,j) => ((it.own||{})[o]||{})[JEN[j]]||0;
+  const rowsSP = S.items.map(it=>{ const v=J.map(j=>owners.reduce((a,o)=>a+val(it,o,j),0)); return {name:it.name, v, t:v.reduce((a,b)=>a+b,0)}; });
+  const tot = J.map((_,k)=>rowsSP.reduce((a,r)=>a+r.v[k],0)), T = tot.reduce((a,b)=>a+b,0);
+  const mx = Math.max(...rowsSP.map(r=>r.v.reduce((a,x)=>a+Math.max(x,0),0)), 1);
+  const cell = x => `<td class="r${x<-0.5?" neg":""}">${Math.abs(x)<0.5?"–":(x<0?"−"+fmt(-x):fmt(x))}</td>`;
+  tSP.innerHTML = `<table><thead><tr><th>Stockpile</th>${J.map(j=>`<th class="r jh"><i style="background:${JCOL[j]}"></i>${jName(j)}</th>`).join("")}<th class="r">Total</th><th style="width:28%">Komposisi</th></tr></thead><tbody>`
+    + rowsSP.map(r=>`<tr>${`<td>${r.name}</td>`}${r.v.map(cell).join("")}${cell(r.t)}<td><div class="bar">${r.v.map((x,k)=>x>0?`<b style="width:${x/mx*100}%;background:${JCOL[J[k]]}"></b>`:"").join("")}</div></td></tr>`).join("")
+    + `</tbody><tfoot><tr><td>Total</td>${tot.map(cell).join("")}${cell(T)}<td></td></tr></tfoot></table>`;
+  tSP.querySelectorAll("tbody tr").forEach((tr,i)=>{ const r=rowsSP[i];
+    tr.onmousemove=e=>tip(e, r.name, J.map((j,k)=>({n:jName(j), c:JCOL[j], v:(r.v[k]<0?"−"+fmt(-r.v[k]):fmt(r.v[k]))+" t"})), fmt(r.t)+" t"); tr.onmouseleave=hide; });
+  const neg = rowsSP.flatMap(r=>r.v.map((x,k)=>x<-0.5?`${r.name} ${jName(J[k])} (−${fmt(-x)} t)`:null)).filter(Boolean);
+  spNote.textContent = (neg.length?`Nilai minus perlu dicek di Daily Summary: ${neg.join(", ")}. `:"")
+    + (owners.some(o=>o!=="MMJ")?`Termasuk stok ${owners.filter(o=>o!=="MMJ").join(", ")}. `:"")
+    + (SP_RUN ? "Angka ini juga dipakai sebagai Stok akhir bulan berjalan; bulan sebelumnya tetap dari Monthly Summary." : "Angka ini bisa berbeda dengan Stok akhir bulan (Monthly Summary) karena sumber hitungnya berbeda.");
+  const pos = tot.map(x=>Math.max(x,0)), P = pos.reduce((a,b)=>a+b,0);
+  cSPmix.innerHTML = `<div class="spmix"><div class="l" style="font-size:12px;color:var(--ink-2)">Total stok</div><div class="big2">${fmt(T)}<small>ton</small></div>
+    <div class="split">${J.map((j,k)=>pos[k]>0?`<div style="flex:${pos[k]};background:${JCOL[j]}"></div>`:"").join("")}</div>
+    ${J.map((j,k)=>`<div class="hbr" style="grid-template-columns:1fr auto 44px"><span class="tag"><i style="background:${JCOL[j]}"></i>${jName(j)}</span><span class="vl">${fmt(tot[k])} t</span><span class="vl" style="color:var(--muted)">${P?Math.round(pos[k]/P*100):0}%</span></div>`).join("")}
+    <div class="kmnote" style="margin-top:12px">Stockpile terbesar: ${(()=>{ const b=[...rowsSP].sort((a,c)=>c.t-a.t)[0]; return `${b.name} (${fmt(b.t)} t, ${T?Math.round(b.t/T*100):0}%)`; })()}</div></div>`;
+  EXPSP = {lab, rowsSP, tot, T, J};
+}
+function filterLabels(){
+  const jen = st.jenis.size===JORDER.length ? "Semua jenis batu" : "Jenis: "+[...st.jenis].map(jName).join(", ");
+  return [jen, "Source: "+(st.source===""?"semua":D.source[+st.source]), "Kategori: "+(st.kat===""?"semua":D.kategori[+st.kat]), "Area: "+(st.area===""?"semua":D.area[+st.area])];
+}
+const t1el = document.getElementById("t1");
+
+/* ---------- PDF presentasi ---------- */
+function presentPDF(){
+  const wasDark = document.documentElement.getAttribute("data-theme")==="dark";
+  const oldTitle = document.title;
+  if(wasDark) document.documentElement.removeAttribute("data-theme");
+  document.title = `Presentasi Batu Split PT. Musi Mitra Jaya - ${rangeText()}`;
+  RP.open=false; render();
+  const done = () => { document.title=oldTitle; if(wasDark){ document.documentElement.setAttribute("data-theme","dark"); render(); } removeEventListener("afterprint", done); };
+  addEventListener("afterprint", done);
+  setTimeout(()=>window.print(), 120);
+}
+
+/* ---------- Export Excel (.xlsx tanpa internet) ---------- */
+const CRC = (()=>{ const t=new Uint32Array(256); for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c = c&1 ? 0xEDB88320^(c>>>1) : c>>>1; t[n]=c>>>0; } return t; })();
+const crc32 = b => { let c=0xFFFFFFFF; for(let i=0;i<b.length;i++) c=CRC[(c^b[i])&255]^(c>>>8); return (c^0xFFFFFFFF)>>>0; };
+async function deflate(d){
+  if(typeof CompressionStream==="undefined") return null;
+  try{ const s=new Blob([d]).stream().pipeThrough(new CompressionStream("deflate-raw")); return new Uint8Array(await new Response(s).arrayBuffer()); }
+  catch(e){ return null; }
+}
+async function zipFiles(files){
+  const enc=new TextEncoder(), parts=[], central=[]; let off=0;
+  for(const f of files){
+    const nm=enc.encode(f.name), raw=f.data, crc=crc32(raw);
+    const z=await deflate(raw), method=z?8:0, d=z||raw;
+    const h=new DataView(new ArrayBuffer(30));
+    h.setUint32(0,0x04034b50,true); h.setUint16(4,20,true); h.setUint16(6,0x0800,true); h.setUint16(8,method,true); h.setUint16(12,0x21,true);
+    h.setUint32(14,crc,true); h.setUint32(18,d.length,true); h.setUint32(22,raw.length,true); h.setUint16(26,nm.length,true);
+    parts.push(new Uint8Array(h.buffer), nm, d);
+    const c=new DataView(new ArrayBuffer(46));
+    c.setUint32(0,0x02014b50,true); c.setUint16(4,20,true); c.setUint16(6,20,true); c.setUint16(8,0x0800,true); c.setUint16(10,method,true); c.setUint16(14,0x21,true);
+    c.setUint32(16,crc,true); c.setUint32(20,d.length,true); c.setUint32(24,raw.length,true); c.setUint16(28,nm.length,true); c.setUint32(42,off,true);
+    central.push(new Uint8Array(c.buffer), nm);
+    off += 30+nm.length+d.length;
+  }
+  const csz=central.reduce((a,x)=>a+x.length,0), e=new DataView(new ArrayBuffer(22));
+  e.setUint32(0,0x06054b50,true); e.setUint16(8,files.length,true); e.setUint16(10,files.length,true); e.setUint32(12,csz,true); e.setUint32(16,off,true);
+  return new Blob([...parts,...central,new Uint8Array(e.buffer)],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+}
+const xesc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g,"");
+const colL = i => { let s=""; i++; while(i>0){ const m=(i-1)%26; s=String.fromCharCode(65+m)+s; i=Math.floor((i-1)/26); } return s; };
+/* style: 0 normal · 1 header · 2 angka 0,00 · 3 judul · 4 angka bulat · 5 total tebal 0,00 · 6 sub-judul */
+function sheetXML(s){
+  const rows=s.rows; let x='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">';
+  if(s.freeze) x+=`<sheetViews><sheetView workbookViewId="0"><pane ySplit="${s.freeze}" topLeftCell="A${s.freeze+1}" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>`;
+  if(s.widths) x+="<cols>"+s.widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join("")+"</cols>";
+  x+="<sheetData>";
+  rows.forEach((r,ri)=>{ x+=`<row r="${ri+1}">`;
+    (r||[]).forEach((c,ci)=>{ let v=c, st_=null; if(c && typeof c==="object"){ v=c.v; st_=c.s; } if(v==null || v==="") return;
+      const ref=colL(ci)+(ri+1);
+      if(typeof v==="number" && isFinite(v)) x+=`<c r="${ref}" s="${st_!=null?st_:(Number.isInteger(v)?4:2)}"><v>${v}</v></c>`;
+      else x+=`<c r="${ref}" t="inlineStr" s="${st_||0}"><is><t xml:space="preserve">${xesc(v)}</t></is></c>`; });
+    x+="</row>"; });
+  x+="</sheetData>";
+  if(s.filter) x+=`<autoFilter ref="${s.filter}"/>`;
+  return x+"</worksheet>";
+}
+function makeXlsx(sheets){
+  const enc=new TextEncoder(), X='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>', N=sheets.length;
+  const styles = X+'<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="2"><numFmt numFmtId="164" formatCode="#,##0.00"/><numFmt numFmtId="165" formatCode="#,##0"/></numFmts>'
+    +'<fonts count="4"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="15"/><color rgb="FF3730A3"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts>'
+    +'<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF4F46E5"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE8E8FF"/><bgColor indexed="64"/></patternFill></fill></fills>'
+    +'<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
+    +'<cellXfs count="8"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="165" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="164" fontId="3" fillId="3" borderId="0" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="3" fillId="3" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="14" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/></cellXfs></styleSheet>';
+  const files=[
+    {name:"[Content_Types].xml", data:enc.encode(X+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'+sheets.map((_,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join("")+"</Types>")},
+    {name:"_rels/.rels", data:enc.encode(X+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>')},
+    {name:"xl/workbook.xml", data:enc.encode(X+'<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'+sheets.map((s,i)=>`<sheet name="${xesc(s.name)}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join("")+"</sheets></workbook>")},
+    {name:"xl/_rels/workbook.xml.rels", data:enc.encode(X+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+sheets.map((_,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join("")+`<Relationship Id="rId${N+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`)},
+    {name:"xl/styles.xml", data:enc.encode(styles)},
+    ...sheets.map((s,i)=>({name:`xl/worksheets/sheet${i+1}.xml`, data:enc.encode(sheetXML(s))})),
+  ];
+  return zipFiles(files);
+}
+const H = a => a.map(v=>({v, s:1}));
+function buildSheets(){
+  const E = EXP, J = JORDER, jn = J.map(jName), r2 = v => Math.round(v*100)/100;
+  const title = (t) => [[{v:t,s:3}],["PT. Musi Mitra Jaya · Periode: "+rangeText()],[filterLabels().join(" · ")],[]];
+  // Ringkasan
+  const sk = E.sk;
+  const ring = [...title("Ringkasan Angkutan Batu Split"),
+    H(["Indikator","Nilai","Satuan"]),
+    ["Total tonase angkut", r2(E.tot), "ton"], ["Jumlah ritase", E.n, "rit"], ["Rata-rata per rit", r2(E.n?E.tot/E.n:0), "ton/rit"],
+    ["Distribusi ke area", r2(E.dist), "ton"], ["Filling mini stockpile", r2(E.tot-E.dist), "ton"],
+    ["Hari operasi", E.days, "hari"], ["Rata-rata per hari", r2(E.days?E.tot/E.days:0), "ton/hari"], ["Lost tonase", r2(E.lost), "ton"],
+    ["Penerimaan tongkang", r2(E.recv), "ton"], ["Jumlah tongkang", E.tong.length, "tongkang"], ["Biaya batu (tongkang)", Math.round(E.tong.reduce((a,t)=>a+t.cost,0)), "Rp"],
+    ["Stok akhir"+(sk?` (${BLNF[+sk.Bulan.slice(5)-1]} ${sk.Bulan.slice(0,4)})`:""), sk?r2(sk["Closing (t)"]):"", "ton"],
+    ["  · Stok port", sk?r2(sk["Stok Port (t)"]):"", "ton"], ["  · Stok mini stockpile", sk?r2(sk["Stok Mini Stockpile (t)"]):"", "ton"],
+    [], ["Sumber: "+(DATA.meta.source||"-")+" · dashboard diperbarui "+(DATA.meta.generated||"-")]];
+  // Harian & Bulanan
+  const byKey = keyFn => { const m=new Map(); E.rows.forEach(r=>{ const k=keyFn(r); let o=m.get(k); if(!o){o={n:0,t:0,j:{}};m.set(k,o);} o.n++; o.t+=r[F.ton]; o.j[r[F.jenis]]=(o.j[r[F.jenis]]||0)+r[F.ton]; }); return [...m.entries()].sort((a,b)=>a[0]<b[0]?-1:1); };
+  const tbl = (lab, list, fmtK) => { const out=[H([lab,...jn.map(x=>x+" (t)"),"Total (t)","Ritase"])]; const tt=J.map(()=>0); let T=0,Nn=0;
+    list.forEach(([k,o])=>{ out.push([fmtK(k),...J.map((j,i)=>{tt[i]+=o.j[j]||0; return r2(o.j[j]||0);}), r2(o.t), o.n]); T+=o.t; Nn+=o.n; });
+    out.push([{v:"Total",s:6},...tt.map(v=>({v:r2(v),s:5})),{v:r2(T),s:5},{v:Nn,s:6}]); return out; };
+  const harian = [...title("Tonase Harian per Jenis Batu"), ...tbl("Tanggal", byKey(r=>r[0]), k=>`${HARI[new Date(k+"T00:00:00").getDay()]}, ${dLabel(k)}`)];
+  const bulanan = [...title("Tonase Bulanan per Jenis Batu"), ...tbl("Bulan", byKey(r=>r[0].slice(0,7)), k=>`${BLNF[+k.slice(5)-1]} ${k.slice(0,4)}`)];
+  // Area & blok (urutan sesuai tampilan)
+  const area = [...title(`Distribusi per Area & Blok (${st.areaSort==="km"?"urutan KM":"top distribusi"})`), H(["Area / Blok",...jn.map(x=>x+" (t)"),"Total (t)","Ritase"])];
+  E.items.forEach(it=>{ if(it.header) area.push([{v:it.label,s:6},...J.map(()=>({v:"",s:6})),{v:r2(it.total),s:5},{v:"",s:6}]);
+    else area.push([(st.areaSort==="km"?"   ":"")+it.label, ...it.segs.map(s=>r2(s.v)), r2(it.total), it.n||0]); });
+  // KM
+  const km = [...title(`Sebaran Tonase per KM (distribusi ke area · ${E.kmTitle} · per ${E.kmStep} KM)`), H(["Segmen KM",...jn.map(x=>x+" (t)"),"Total (t)","Ritase"])];
+  E.bins.forEach(b=>{ const o=E.gk.get(b); if(!o) return; km.push([E.kmLab(b), ...J.map(j=>r2(o.j[j]||0)), r2(o.total), o.n]); });
+  // Rincian
+  const grp = key => { const m=new Map(); E.rows.forEach(r=>{ const k=D[key==="vendor"?"vendor":key][r[F[key]]]??"(kosong)"; const o=m.get(k)||{t:0,n:0}; o.t+=r[F.ton]; o.n++; m.set(k,o); }); return [...m.entries()].sort((a,b)=>b[1].t-a[1].t); };
+  const rinc = [...title("Rincian Angkutan")];
+  [["Asal material (source)","source"],["Jenis pekerjaan","kerja"],["Vendor dump truck","vendor"],["Shift","shift"],["Tipe muat","muat"],["Route","route"]].forEach(([lab,key])=>{
+    rinc.push(H([lab,"Tonase (t)","Ritase","Porsi"])); grp(key).forEach(([k,o])=>rinc.push([k, r2(o.t), o.n, {v:Math.round(o.t/(E.tot||1)*1000)/10+"%",s:0}])); rinc.push([]); });
+  // Tongkang
+  const tg = [...title("Penerimaan Tongkang"), H(["No","Tongkang","Jenis batu","Material","Tiba","Selesai bongkar","Supplier","Barge","Port","Volume (m3)","Tonase (t)","Density","Rate/ton (Rp)","Biaya (Rp)"])];
+  E.tong.forEach(t=>tg.push([t.no,t.kode,t.jenis,t.material,dLabel(t.tiba),dLabel(t.selesai),t.supplier,t.barge,t.port,r2(t.vol),r2(t.ton),{v:t.dens,s:2},t.rate,Math.round(t.cost)]));
+  if(E.tong.length) tg.push([{v:"Total",s:6},"","","","","","","","",{v:r2(E.tong.reduce((a,t)=>a+t.vol,0)),s:5},{v:r2(E.recv),s:5},"","",{v:Math.round(E.tong.reduce((a,t)=>a+t.cost,0)),s:6}]);
+  // Stok
+  const stok = [...title("Stok Akhir Bulan (EOM, dari Monthly Summary)"), H(["Bulan","Rock Received (t)","Stok Port (t)","Stok Mini Stockpile (t)","Opening (t)","Closing (t)"])];
+  DATA.stock.forEach(s=>stok.push([`${BLNF[+s.Bulan.slice(5)-1]} ${s.Bulan.slice(0,4)}`, s["Rock Received (t)"], s["Stok Port (t)"], s["Stok Mini Stockpile (t)"], s["Opening (t)"], s["Closing (t)"]].map(v=>typeof v==="number"?r2(v):v)));
+  // Stok per stockpile (Daily Summary)
+  const sp = [[{v:"Stok Akhir per Stockpile & Jenis Batu",s:3}],["PT. Musi Mitra Jaya · Posisi stok "+(EXPSP?EXPSP.lab:"-")+" · sumber sheet Daily Summary"],["Tidak dipengaruhi filter dashboard"],[]];
+  if(EXPSP){ sp.push(H(["Stockpile",...EXPSP.J.map(j=>jName(j)+" (t)"),"Total (t)"]));
+    EXPSP.rowsSP.forEach(r=>sp.push([r.name, ...r.v.map(r2), r2(r.t)]));
+    sp.push([{v:"Total",s:6}, ...EXPSP.tot.map(v=>({v:r2(v),s:5})), {v:r2(EXPSP.T),s:5}]); }
+  // Transaksi
+  const trH = ["Tanggal","Bulan","Jenis batu","Sub jenis","Source","Kategori","Area","Blok / Section","Route","KM dumping","Jenis pekerjaan","Shift","Vendor DT","Vendor loader","Tipe muat","Tonase (t)","Lost (t)"];
+  const tr = [H(trH)];
+  [...E.rows].sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0).forEach(r=>tr.push([{v:(Date.UTC(+r[0].slice(0,4),+r[0].slice(5,7)-1,+r[0].slice(8))-Date.UTC(1899,11,30))/864e5, s:7}, r[0].slice(0,7), D.jenis[r[F.jenis]], D.sub[r[F.sub]], D.source[r[F.source]], D.kategori[r[F.kategori]], D.area[r[F.area]], D.blok[r[F.blok]], D.route[r[F.route]], r[F.km], D.kerja[r[F.kerja]], D.shift[r[F.shift]], D.vendor[r[F.vendor]], D.loader[r[F.loader]], D.muat[r[F.muat]], {v:r[F.ton],s:2}, {v:r[F.lost],s:2}]));
+  // Cek data
+  const ck = [H(["No (Data Input)","ID Trans","Tanggal","No DT","Jenis batu","Tonase (t)","Area","Masalah","Status"])];
+  (DATA.cek||[]).forEach(c=>ck.push([c.no, c.id??"", c.d, c.dt??"", c.jenis??"", c.ton, c.area??"", c.msg, c.hapus?"Tidak dihitung":"Tetap dihitung"]));
+  const w = (a,n) => [a, ...Array(n).fill(14)];
+  return [
+    {name:"Ringkasan", rows:ring, widths:[34,18,12]},
+    {name:"Harian", rows:harian, widths:w(26,5), freeze:5},
+    {name:"Bulanan", rows:bulanan, widths:w(20,5), freeze:5},
+    {name:"Area & Blok", rows:area, widths:w(26,5), freeze:5},
+    {name:"Per KM", rows:km, widths:w(14,5), freeze:5},
+    {name:"Rincian", rows:rinc, widths:[30,14,10,10]},
+    {name:"Tongkang", rows:tg, widths:[6,18,18,20,13,15,22,22,14,13,13,9,14,16], freeze:5},
+    {name:"Stok Bulanan", rows:stok, widths:[18,18,16,22,14,14], freeze:5},
+    {name:"Stok per Stockpile", rows:sp, widths:[20,16,16,16,14], freeze:5},
+    {name:"Transaksi", rows:tr, widths:[11,9,17,17,15,21,16,17,13,10,18,7,11,12,11,11,8], freeze:1, filter:`A1:${colL(trH.length-1)}${tr.length}`},
+    {name:"Cek Data", rows:ck, widths:[14,15,12,12,17,11,16,52,15], freeze:1},
+  ];
+}
+async function exportExcel(btn){
+  try{
+    btn && (btn.disabled=true);
+    const blob = await makeXlsx(buildSheets());
+    const name = `Dashboard Batu Split MMJ - ${rangeText().replace(/[\\/:*?"<>|]/g,"-")}.xlsx`;
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+  } catch(err){ alert("Export Excel gagal: "+err.message); }
+  finally{ btn && setTimeout(()=>btn.disabled=false, 600); }
+}
+document.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>{ if(b.dataset.act==="pdf") presentPDF(); else exportExcel(b); });
+
+/* cek data (statis) - tabel tertutup sampai tombol Tampilkan diklik */
+{
+  const ck = DATA.cek || [];
+  cekBtn.textContent = `Tampilkan (${fmt(ck.length)})`;
+  cekBtn.onclick = ()=>{ const open = tCek.hidden; tCek.hidden = !open; cekBtn.setAttribute("aria-expanded", open);
+    cekBtn.textContent = open ? "Sembunyikan" : `Tampilkan (${fmt(ck.length)})`; };
+  pCek.textContent = `${ck.filter(c=>c.hapus).length} baris tidak dihitung (duplikat persis) · ${ck.filter(c=>!c.hapus).length} baris ditandai, tetap dihitung · cari di sheet Data Input pakai kolom No`;
+  tCek.innerHTML = `<table><thead><tr><th>No (Data Input)</th><th>ID Trans</th><th>Tanggal</th><th>No DT</th><th>Jenis batu</th><th class="r">Tonase (t)</th><th>Area</th><th>Masalah</th></tr></thead><tbody>`
+    + (ck.length ? ck.map(c=>`<tr><td>${c.no}</td><td>${c.id??""}</td><td>${c.d}</td><td>${c.dt??""}</td><td>${(c.jenis??"").replace("MMJ-","")}</td><td class="r">${nf1.format(c.ton)}</td><td>${c.area??""}</td><td style="${c.hapus?"color:var(--crit);font-weight:600":""}">${c.msg}</td></tr>`).join("")
+      : `<tr><td colspan="8" class="empty">Tidak ada data bermasalah</td></tr>`) + `</tbody></table>`;
+}
+note.innerHTML = `<span aria-hidden="true">⚠</span><span><b>Catatan data:</b> dibuat dari <i>${DATA.meta.source||"-"}</i> pada ${DATA.meta.generated||"-"}. ${DATA.meta.dupRemoved} baris duplikat persis tidak dihitung dari ${fmt(DATA.meta.raw)} baris di sheet Data Input. Distribusi ke area = semua angkutan selain filling mini stockpile. Stok akhir diambil dari sheet Monthly Summary. Penerimaan ERM/RIA via DT: ${fmt(DATA.meta.erm_ton)} t (${DATA.meta.erm_rit} rit).</span>`;
+
+render();
+let rz; addEventListener("resize",()=>{clearTimeout(rz); rz=setTimeout(render,150);});
+;try{ if(typeof setView==="function") window.setView=setView; }catch(e){}
+})();

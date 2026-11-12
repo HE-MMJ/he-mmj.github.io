@@ -1,15 +1,16 @@
 """
-Gabungkan 2 Pages menjadi SATU halaman utama: `index.html` (root repo)
+Gabungkan 2 Pages menjadi halaman utama modular: `index.html` (root repo) + `assets/`
 
 - Sumber shell   : dashboard-mmj/index.html                    (dibaca, TIDAK diubah)
 - Sumber HE      : tools/gabungan/he_index.html (HTML) + css/style.css, js/*.js,
                     assets/logo-mmj.png, data/belum.json (root repo, dibaca saja)
 - Keluaran       : index.html  ->  https://he-mmj.github.io/
+                   assets/css, assets/data, assets/js  (lihat emit_site.py)
 
 Isi hasil:
-  * tab "Heavy Equipment" (dashboard HE inline sebagai <template id="mmjT_he">)
+  * tab "Heavy Equipment" (dashboard HE sebagai <template id="mmjT_he">)
   * Monitoring (Dashboard Eksekutif) menampilkan ringkasan data HE + Water Truck
-  * semua file CSS/JS/logo di-inline -> 1 file mandiri, tanpa dependensi eksternal
+  * HTML hanya berisi markup; CSS, data dan logika dipisah ke folder assets/
 
 Jalankan: python build_gabungan_he.py
 """
@@ -154,8 +155,14 @@ def build_he_template(summary):
     body = body.replace('<main class="wrap">', '<div class="wrap">')
     body = body.replace('</main>', '</div>')
 
-    js_all = "\n".join([read(JS_DATA), read(JS_WT), read(JS_APP), read(JS_WTJS),
-                        "if(document.readyState!=='loading'){try{document.dispatchEvent(new Event('DOMContentLoaded'));}catch(e){}}"])
+    # tiap bagian dikirim terpisah supaya bisa jadi file JS sendiri (assets/)
+    js_parts = {
+        "he": read(JS_DATA),
+        "wt": read(JS_WT),
+        "app": "\n".join([read(JS_APP), read(JS_WTJS),
+                          "if(document.readyState!=='loading'){try{document.dispatchEvent(new Event('DOMContentLoaded'));}catch(e){}}"]),
+    }
+    js_all = "\n".join([js_parts["he"], js_parts["wt"], js_parts["app"]])
     logo = ""
     if os.path.exists(LOGO):
         logo = "data:image/png;base64," + base64.b64encode(open(LOGO, "rb").read()).decode()
@@ -180,7 +187,7 @@ def build_he_template(summary):
                   '<main class="mmj-main">')
     shell_close = '</main></div>'
     theme_js = """
-<script>
+<script data-mmj-out="assets/js/tab/he-theme.js" data-mmj-mode="app">
 (function(){
   var b=document.getElementById('heTheme'); if(!b) return;
   var apply=function(dark){
@@ -195,7 +202,8 @@ def build_he_template(summary):
 </script>
 """
     body = shell_open + body + shell_close + theme_js
-    return body, css + "\n" + theme, js_all, json.dumps(summary, ensure_ascii=False, separators=(",", ":"))
+    return (body, css + "\n" + theme, js_all,
+            json.dumps(summary, ensure_ascii=False, separators=(",", ":")), js_parts)
 
 
 # ------------------------------------------------------------------ nav + shell
@@ -243,7 +251,7 @@ HE_SECTION_HTML = '''
 '''
 
 HE_SECTION_JS = '''
-<script>
+<script data-mmj-out="assets/js/tab/exec-he.js" data-mmj-mode="app">
 /* Ringkasan Timesheet HE + Water Truck untuk Dashboard Monitoring */
 (function(){
   var H = (typeof window.mmjData === "function") ? window.mmjData("he") : null;
@@ -306,7 +314,7 @@ def patch_exec(tpl):
 def main():
     shell = read(SRC_SHELL)
     summary = build_summary()
-    body, css, js_all, summary_json = build_he_template(summary)
+    body, css, js_all, summary_json, js_parts = build_he_template(summary)
 
     # 1) patch shell JS (daftar template + tab)
     shell = patch_shell_js(shell)
@@ -345,9 +353,15 @@ def main():
 
     he_tpl = ('<template id="mmjT_he">\n' + he_head + "\n" + nav_css + "\n" + bar_html + "\n"
               + body + "\n"
-              + '<script>\n' + js_all + "\n</script>\n"
+              + '<script data-mmj-out="assets/data/he.js" data-mmj-mode="he-rows">\n'
+              + js_parts["he"] + "\n</script>\n"
+              + '<script data-mmj-out="assets/data/wt.js" data-mmj-mode="wt">\n'
+              + js_parts["wt"] + "\n</script>\n"
+              + '<script data-mmj-out="assets/js/tab/he.js" data-mmj-mode="he-app">\n'
+              + js_parts["app"] + "\n</script>\n"
               + bar_js + "\n"
-              + '<script>const DATA = ' + summary_json + ';\n</script>'
+              + '<script data-mmj-out="assets/data/he-summary.js" data-mmj-mode="summary">'
+              + 'const DATA = ' + summary_json + ';\n</script>'
               + "</template>")
 
     # 4) ganti blok template di shell dengan versi baru (exec + haul + batu + lt + he)
@@ -358,9 +372,14 @@ def main():
     block = "\n".join([tpls["exec"], tpls["haul"], tpls["batu"], tpls["lt"], he_tpl])
     shell = shell[:start] + block + shell[end:]
 
-    with open(OUT, "w", encoding="utf-8") as f:
-        f.write(shell)
-    print("Selesai : %s  (%.1f KB)" % (OUT, len(shell.encode("utf-8")) / 1024))
+    # 5) pecah menjadi situs modular: index.html + assets/css + assets/js + assets/data
+    spec2 = importlib.util.spec_from_file_location("emit_site", os.path.join(TOOLS, "emit_site.py"))
+    emitter = importlib.util.module_from_spec(spec2)
+    spec2.loader.exec_module(emitter)
+    info = emitter.emit(shell, ROOT)
+
+    print("Selesai : %s  (%.1f KB markup)" % (info["index"], info["size"] / 1024))
+    print("Aset    : assets/css, assets/data, assets/js")
     print("Tab     : exec | haul | batu | lt | rf | he")
     print("HE      : %d unit HE, %d unit WT, HM %s jam, MA %s%%, Penyiraman %s rit"
           % (summary["unit"], summary["wtUnit"], summary["hm"], summary["ma"], summary["penyiraman"]))
