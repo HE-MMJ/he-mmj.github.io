@@ -183,6 +183,48 @@
     });
   }
 
+  /* ------------------------------------------------- tema (terang/gelap) --- */
+  /* Satu implementasi untuk semua tab: tombol "Tema" + penyimpanan lokal,
+     tetap berlaku saat pindah tab. */
+  var THEME_KEY = "mmjTheme";
+
+  function currentTheme() {
+    try {
+      var t = localStorage.getItem(THEME_KEY);
+      if (!t) t = localStorage.getItem("dashTheme3") || localStorage.getItem("heTheme");  /* data lama */
+      return t === "dark" ? "dark" : "light";
+    } catch (e) { return "light"; }
+  }
+
+  function applyTheme(t) {
+    var dark = (t === "dark");
+    if (dark) document.documentElement.setAttribute("data-theme", "dark");
+    else document.documentElement.removeAttribute("data-theme");
+    var b = document.querySelector(".side .theme");
+    if (b) b.textContent = "Tema: " + (dark ? "gelap" : "terang");
+    return dark;
+  }
+
+  function mountTheme() {
+    applyTheme(currentTheme());
+    var side = document.querySelector(".side");
+    if (!side) return;
+    var b = side.querySelector(".theme");
+    if (!b) {                       /* tab tanpa tombol tema -> buat seragam */
+      b = document.createElement("button");
+      b.className = "theme";
+      b.type = "button";
+      side.appendChild(b);
+    }
+    if (b.__mmjBound) return;
+    b.__mmjBound = true;
+    b.addEventListener("click", function () {
+      var next = currentTheme() === "dark" ? "light" : "dark";
+      try { localStorage.setItem(THEME_KEY, next); } catch (e) { }
+      applyTheme(next);
+    });
+  }
+
   var seq = 0;
 
   function runQueue(queue, tab, token, i) {
@@ -241,7 +283,6 @@
     };
     while (document.body.firstChild) document.body.removeChild(document.body.firstChild);
     while (document.body.attributes.length) document.body.removeAttribute(document.body.attributes[0].name);
-    document.documentElement.removeAttribute("data-theme");
     try { delete window.setView; } catch (e) { window.setView = undefined; }
 
     /* pasang dashboard terpilih */
@@ -296,6 +337,7 @@
     bindNav();
     markNav();
     mountUserMenu();
+    mountTheme();
     applyAuthMenus();
 
     runQueue(queue, tab, token, 0);
