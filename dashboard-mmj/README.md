@@ -11,16 +11,20 @@ yang dibuka. Tetap bisa dibuka offline (double-click `index.html` di Chrome/Edge
 
 ```
 index.html                     markup + <template id="mmjT_*"> tiap dashboard (~150 KB)
+login.html                     halaman login (pintu masuk sisi browser)
 assets/css/boot.css            tampilan awal sebelum tab aktif
 assets/css/intro.css           CSS animasi pembuka (dari tools/gabungan/intro.css)
+assets/css/login.css           CSS halaman login (dari tools/gabungan/login.css)
+assets/css/shell.css           CSS menu user di sidebar (dari tools/gabungan/shell.css)
 assets/css/<tab>.css           CSS tiap dashboard (exec · haul · batu · lt · he)
 assets/data/<tab>.js           data mentah -> window.MMJ_DATA[<tab>]
 assets/data/he.js              data unit HE (DATA · DAILY · BELUM) -> window.MMJ_HE
 assets/data/wt.js              data Water Truck -> window.MMJ_WT
 assets/data/standar-he.js      data kontrol SOP (Fuel Ratio Tabel 1 & kategori MA) -> window.MMJ_STD
 assets/js/shell.js             loader: pasang tab, muat CSS/data/logika, pindah tab
+assets/js/auth.js              daftar user, sesi, cek role (window.MMJ_AUTH)
 assets/js/intro.js             animasi pembuka (dari tools/gabungan/intro.js)
-assets/js/tab-nav.js           menu dashboard di sidebar (dipakai semua tab)
+assets/js/tab-nav.js           ganti view Loss Time / Rainfall (bukan muat ulang)
 assets/js/tab/<tab>.js         logika tiap dashboard (dibungkus IIFE, aman dijalankan ulang)
 assets/img/favicon.png         ikon halaman
 ```
@@ -93,6 +97,24 @@ Yang perlu dijaga kalau nanti diubah:
 Bantuan cek: `?nointro=1` (lewati intro) dan `?introAt=950` (bekukan intro pada
 detik ke-0,95 untuk memeriksa satu frame). `prefers-reduced-motion` otomatis
 melewati intro.
+
+## Login (pintu masuk sisi browser)
+
+`assets/js/auth.js` → `window.MMJ_AUTH` (daftar user, `login()`, `logout()`,
+`current()`, `isLoggedIn()`, `can()`). Sesi disimpan di `localStorage`
+(bila "Ingat saya" dicentang) atau `sessionStorage`; **kata sandi tidak ikut
+disimpan** di sesi.
+
+Loader (`assets/js/shell.js`) memeriksa sesi **sebelum** dashboard dipasang;
+belum login → diarahkan ke `login.html`. Menu user (avatar, nama, role, tombol
+Keluar) disuntik ke sidebar tiap tab dan diam di dasar sidebar.
+
+> Situsnya statis dan data dashboard berupa file JS publik, jadi ini **pembatas
+> akses, bukan pengaman**. Pengaman sungguhan butuh layanan/server di luar repo.
+> Daftar user & role ada di `tools/gabungan/auth.js` (bagian `users`); hak akses
+> per role disiapkan di `MMJ_AUTH.can("...")` dan `CAPS`.
+
+Periksa hasil build: `python tools/gabungan/check_login.py`.
 
 ## Running text (ticker) tab Heavy Equipment
 
