@@ -73,8 +73,8 @@ table td,table th{font-variant-numeric:tabular-nums}
   border:0;background:transparent;color:inherit;font:inherit;
   padding:2px 0;cursor:pointer;max-width:170px;
 }
-.mmj-bulan select option{background:#fff;color:#172033}
-:root[data-theme="dark"] .mmj-bulan select option{background:#272b5e;color:#eef0ff}
+.mmj-bulan select option{background:#fff;color:#000}
+:root[data-theme="dark"] .mmj-bulan select option{background:#272b5e;color:#000}
 .mmj-bulan select:focus-visible{outline:2px solid #fff;outline-offset:2px}
 
 /* ---------- tema gelap: token & komponen dasar -----------------------------
