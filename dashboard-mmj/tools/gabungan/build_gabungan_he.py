@@ -358,6 +358,17 @@ def main():
         # Hapus pembungkus badge dan aturan responsif lama; selector logo HE
         # harus menang pada desktop dan mobile.
         tpls[key] = tpls[key].replace('.logo .badge{display:grid;place-items:center;width:100%}', '.logo .badge{display:contents}')
+        tpls[key] = tpls[key].replace('</style>', '''
+/* HE sidebar parity: layout, logo, menu, tema */
+.app{display:grid;grid-template-columns:236px minmax(0,1fr);gap:22px;max-width:1500px;margin:0 auto;padding:20px}
+.side{position:sticky;top:20px;height:calc(100vh - 40px);padding:20px 14px;display:flex;flex-direction:column;gap:4px;border-radius:24px}
+.logo{display:flex;flex-direction:column;align-items:center;gap:8px;padding:0 4px 18px;text-align:center}
+.logo img{display:block;height:80px;width:auto}
+.logo .nm{font-size:10.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;font-weight:500;font-size:13.5px}
+.nav svg{width:18px;height:18px;flex:none}
+.theme{margin-top:auto;border-radius:10px;padding:7px 10px;font-size:12px}
+</style>''', 1)
         tpls[key] = tpls[key].replace('.logo .badge{width:auto;padding:6px 12px;border-radius:12px}', '.logo .badge{display:contents}')
         tpls[key] = tpls[key].replace('.logo .badge{width:auto}', '.logo .badge{display:contents}')
         tpls[key] = re.sub(r'\.logo img\{height:46px\}', '.logo img{display:block;height:80px;width:auto}', tpls[key])
