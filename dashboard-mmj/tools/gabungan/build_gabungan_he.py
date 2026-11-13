@@ -353,6 +353,9 @@ def main():
             raise SystemExit("template mmjT_%s tidak ditemukan" % key)
         tpls[key] = m.group(0)
         # Logo lama tertanam di template; pakai logo HE yang sama.
+        # Ganti semua gambar logo: template lama menaruh class pada wrapper
+        # .badge, bukan pada elemen img.
+        tpls[key] = re.sub(r'(<div class="logo">.*?<img\b[^>]*src=")[^"]+', r'\1' + logo_mmj, tpls[key], flags=re.S)
         tpls[key] = re.sub(r'(<img\b[^>]*class="(?:plogo|header-logo)"[^>]*src=")[^"]+', r'\1' + logo_mmj, tpls[key])
         tpls[key] = re.sub(r'(<img\b[^>]*src=")[^"]+("[^>]*class="(?:plogo|header-logo)")', r'\1' + logo_mmj + r'\2', tpls[key])
         # Hapus pembungkus badge dan aturan responsif lama; selector logo HE
