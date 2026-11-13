@@ -165,8 +165,16 @@ def main():
             for tab in TABS:
                 for (w, h) in WIDTHS:
                     out = os.path.join(BASE, "%s-%d.png" % (tab, w))
-                    if shot(chrome, "%s/%s?nointro=1#tab=%s" % (base_url, probe, tab), w, h, out):
-                        n += 1
+                    # ambil 2x: yang kedua dipakai (CSS tab sudah termuat & stabil)
+                    shot(chrome, "%s/%s?nointro=1#tab=%s" % (base_url, probe, tab), w, h,
+                         out + ".1")
+                    shot(chrome, "%s/%s?nointro=1#tab=%s" % (base_url, probe, tab), w, h, out)
+                    for junk in (out + ".1",):
+                        try:
+                            os.remove(junk)
+                        except OSError:
+                            pass
+                    n += 1
             print("baseline dibuat: %d screenshot di %s" % (n, BASE))
             return 0
 
@@ -184,9 +192,11 @@ def main():
                 cur = os.path.join(TMP, name)
                 cur2 = os.path.join(TMP, name + ".2")
                 mask = os.path.join(TMP, name + ".mask.png")
+                # 2x: capture kedua yang dipakai (CSS tab sudah stabil), selisih
+                # keduanya jadi mask (area animasi/bergeser).
+                shot(chrome, "%s/%s?nointro=1#tab=%s" % (base_url, probe, tab), w, h, cur2)
                 if not shot(chrome, "%s/%s?nointro=1#tab=%s" % (base_url, probe, tab), w, h, cur):
                     print("  GAGAL  %s: screenshot gagal" % name); over.append(name); continue
-                shot(chrome, "%s/%s?nointro=1#tab=%s" % (base_url, probe, tab), w, h, cur2)
                 # area yang bergerak (animasi) diabaikan -> diff mengukur perubahan tampilan
                 noise_mask(cur, cur2, mask) if os.path.exists(cur2) else None
                 pct = diff_pct(ref, cur, mask) if os.path.exists(ref) else 100.0

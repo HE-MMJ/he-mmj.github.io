@@ -134,7 +134,7 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape" && RP.open){ RP.op
 
 /* tema */
 function applyTheme(t){ if(t==="dark") document.documentElement.setAttribute("data-theme","dark"); else document.documentElement.removeAttribute("data-theme"); $("themeBtn").textContent="Tema: "+(t==="dark"?"gelap":"terang"); }
-/* tema dipegang loader (assets/js/shell.js) */
+let theme="light"; try{theme=localStorage.getItem("dashTheme3")||"light"}catch(e){} applyTheme(theme);
 $("themeBtn").onclick=()=>{theme=theme==="dark"?"light":"dark"; applyTheme(theme); try{localStorage.setItem("dashTheme3",theme)}catch(e){} render();};
 
 /* nav aktif saat scroll */
