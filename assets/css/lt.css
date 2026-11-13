@@ -605,7 +605,10 @@ section[hidden]{display:none!important}
 
 .tk-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-.ticker:hover .tk-tr,.ticker:focus-within .tk-tr,.ticker.paused .tk-tr{animation-play-state:paused}
+/* jeda: tombol (kelas paused) atau kursor di atas teks; tidak ikut fokus/hover tombol (bug HP: hover "lengket" setelah tap) */
+.ticker.paused .tk-tr{animation-play-state:paused}
+
+@media (hover:hover){.ticker .tk-vp:hover .tk-tr{animation-play-state:paused}}
 
 @keyframes tkMove{to{transform:translateX(-50%)}}
 

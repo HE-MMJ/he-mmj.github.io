@@ -9,7 +9,8 @@ Sumber angka:
   - Loss time  : sheet "Input Stop Hauling", kolom "Convert Duration" (sudah direkonsil,
                  duplikat dihapus, angka disesuaikan SOP). Pembagian route dari kolom Route: Jan-Jun H1 & H2 saja, Jul-Des H1 / ISP / H2.
                  Rincian Mitra Company dari kolom "Desc Type2".
-  - Curah hujan: sheet "Input TCH", akumulasi per hari per pos (Rainfall mm & Duration Convert jam).
+  - Curah hujan: sheet "Input TCH", akumulasi per hari per pos (Rainfall mm & Duration Convert jam);
+                 PORT SBL dari sheet "RAIN FALL" (kolom rain,hr & rainfall), karena data SBL tidak diinput di Input TCH.
                  KM 124 - KM 75 = H1 · ISP68 = ISP · KM 47 - KM 12 & SBL Port = H2.
 
 Cara pakai: klik dua kali "Update Dashboard Loss Time.bat" (di folder 03. Rainfall) setelah file
@@ -260,6 +261,44 @@ def read_file(src, codes, cek, stop, rain, months_info):
         rain.append({"d": d.isoformat(), "p": pos_name(g(r, "Pos")), "mm": round(rf, 3), "h": round(hv or 0, 6),
                      "f": hhmm(g(r, "From")), "t": hhmm(g(r, "To")), "no": no})
         info["rain"] += 1
+
+    # ---------- RAIN FALL: curah hujan PORT SBL (data dari SBL tidak diinput di Input TCH) ----------
+    info["sbl"] = 0
+    sbl_tch = {x["d"] for x in rain if x["p"] == "SBL Port" and x["d"][:7] == ym}
+    if "RAIN FALL" in wb.sheetnames:
+        rows = list(wb["RAIN FALL"].iter_rows(min_row=1, max_row=60, values_only=True))
+        hi = c0 = None
+        for i, r in enumerate(rows[:15]):
+            for j, v in enumerate(r):
+                if isinstance(v, str) and " ".join(v.split()).upper() == "PORT SBL":
+                    hi, c0 = i, j
+                    break
+            if hi is not None:
+                break
+        if hi is not None and hi + 1 < len(rows):
+            sub = rows[hi + 1]
+            ch = cm = None
+            for j in range(c0, min(c0 + 4, len(sub))):
+                s = txt(sub[j]).lower().replace(" ", "")
+                if s.startswith("rain,hr") and ch is None:
+                    ch = j
+                elif s == "rainfall" and cm is None:
+                    cm = j
+            if ch is None or cm is None:
+                cek.append({"no": None, "d": f"{ym}-01", "src": f"RAIN FALL {ym or ''}".strip(),
+                            "msg": "Kolom rain,hr / rainfall PORT SBL tidak ditemukan di sheet RAIN FALL", "hapus": False})
+            else:
+                for r in rows[hi + 2:]:
+                    d = to_date(r[0] if r else None)
+                    if d is None or (ym and d.isoformat()[:7] != ym) or d.isoformat() in sbl_tch:
+                        continue
+                    h = num(r[ch]) if ch < len(r) else None
+                    mm = num(r[cm]) if cm < len(r) else None
+                    if not (h or mm):
+                        continue
+                    rain.append({"d": d.isoformat(), "p": "SBL Port", "mm": round(mm or 0, 3), "h": round(h or 0, 6),
+                                 "f": "", "t": "", "no": "RAIN FALL"})
+                    info["sbl"] += 1
     wb.close()
     try:
         os.remove(tmp)
@@ -334,7 +373,7 @@ def main():
     tot = {rt: sum(s["h"] for s in stop if s["r"] == rt) for rt in ROUTES}
     for m in months_info:
         mh = {rt: sum(s["h"] for s in stop if s["r"] == rt and s["d"][:7] == m["ym"]) for rt in ROUTES}
-        print(f"  {m['ym']}  {m['file']:<42} {m['stop']:>4} baris  jumlah route {m['h']:8.2f} jam  (H1 {mh['H1']:.2f} | ISP {mh['ISP']:.2f} | H2 {mh['H2']:.2f})  TCH {m['rain']}")
+        print(f"  {m['ym']}  {m['file']:<42} {m['stop']:>4} baris  jumlah route {m['h']:8.2f} jam  (H1 {mh['H1']:.2f} | ISP {mh['ISP']:.2f} | H2 {mh['H2']:.2f})  TCH {m['rain']}  SBL {m.get('sbl', 0)} hari")
     print(f"Stop hauling : {len(stop)} baris dihitung")
     print(f"Loss time    : H1 {tot['H1']:.2f} jam | ISP {tot['ISP']:.2f} jam | H2 {tot['H2']:.2f} jam | jumlah route {sum(tot.values()):.2f} jam (Total H0 dihitung di dashboard)")
     print(f"Input TCH    : {len(rain)} baris, {len(pos)} pos")

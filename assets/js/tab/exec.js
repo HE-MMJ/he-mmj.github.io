@@ -158,6 +158,107 @@ function render(){
   eKpi.querySelectorAll("[data-go]").forEach(k=>{ k.onclick=()=>go(k.dataset.go); k.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); go(k.dataset.go); } }; });
   eNote.innerHTML=`<b>Catatan:</b> angka direkap otomatis dari dashboard Monitoring dengan aturan yang sama (Coal Hauling: H0+H2 = SBL WB / tabel BA, H1 = Input CH CCP / tabel CPP GPU-ISP68, target RKAP; Loss Time H0 tanpa jam ganda antar route; curah hujan = akumulasi harian per pos). Klik kartu atau tombol <i>Buka</i> untuk melihat rinciannya.`;
 }
+/* ===== MMJ MOTION v1: grafik dinamis (disalin sama persis ke tiap template; sumber: Tools\mmj_motion_snippet.js) =====
+   Setelah render(): batang tumbuh, garis tergambar, donat berputar masuk, bar HTML terisi, angka KPI naik.
+   Tidak jalan saat resize (lebar layar berubah) & bila perangkat minta kurangi animasi. */
+(function(){
+  if(document.getElementById("mmjMotionCss")) return;
+  const css=document.createElement("style"); css.id="mmjMotionCss";
+  css.textContent=
+   "@keyframes mmGrowY{from{transform:scaleY(0)}}@keyframes mmGrowX{from{transform:scaleX(0)}}"+
+   "@keyframes mmDraw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}@keyframes mmFade{from{opacity:0}}"+
+   "@keyframes mmPop{from{opacity:0;transform:scale(.3)}}@keyframes mmRing{from{opacity:0;transform:rotate(calc(var(--mmrot,0deg) - 80deg)) scale(.8)}to{transform:rotate(var(--mmrot,0deg))}}"+
+   "@keyframes mmWipe{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}@keyframes mmRise{from{opacity:0;transform:translateY(10px)}}"+
+   ".mm-y{transform-box:fill-box;transform-origin:50% 100%;animation:mmGrowY .8s cubic-bezier(.2,.9,.25,1.04) both;animation-delay:var(--mmd,0ms)}"+
+   ".mm-x{transform-box:fill-box;transform-origin:0 50%;animation:mmGrowX .8s cubic-bezier(.2,.9,.25,1.04) both;animation-delay:var(--mmd,0ms)}"+
+   ".mm-l{stroke-dasharray:1;animation:mmDraw 1.3s cubic-bezier(.45,.05,.25,1) .2s both}"+
+   ".mm-p{transform-box:fill-box;transform-origin:center;animation:mmPop .45s cubic-bezier(.3,1.6,.5,1) both;animation-delay:var(--mmd,0ms)}"+
+   ".mm-r{transform-box:view-box;transform-origin:50% 50%;transform:rotate(var(--mmrot,0deg));animation:mmRing .8s cubic-bezier(.2,.9,.3,1) both;animation-delay:var(--mmd,0ms)}"+
+   ".mm-t{animation:mmFade .5s ease-out both;animation-delay:var(--mmd,450ms)}"+
+   ".mm-w{animation:mmWipe .9s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--mmd,0ms)}"+
+   ".mm-k{animation:mmRise .55s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--mmd,0ms)}"+
+   "svg rect.mm-y,svg rect.mm-x,svg path.mm-y,svg path.mm-x{transition:filter .2s}"+
+   ".kpi{transition:transform .2s,box-shadow .2s}.kpi:hover{transform:translateY(-3px)}"+
+   "@media (prefers-reduced-motion:reduce){.mm-y,.mm-x,.mm-l,.mm-p,.mm-r,.mm-t,.mm-w,.mm-k{animation:none!important}}";
+  document.head.appendChild(css);
+})();
+var mmjMotion=(function(){
+  let lastW=window.innerWidth;
+  const still=()=>window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const paint=el=>{ const f=(el.getAttribute("fill")||el.style.fill||"").trim().toLowerCase(); return f&&f!=="none"&&f!=="transparent"&&!/^rgba\([^)]*,\s*0\)$/.test(f); };
+  const num=(el,a)=>parseFloat(el.getAttribute(a))||0;
+  function svgChart(svg){
+    const box=svg.viewBox&&svg.viewBox.baseVal&&svg.viewBox.baseVal.width?svg.viewBox.baseVal:{width:num(svg,"width")||svg.clientWidth,height:num(svg,"height")||svg.clientHeight};
+    if(!box.width||box.width<120) return;                       // ikon kecil: lewati
+    const rings=[...svg.querySelectorAll("circle")].filter(c=>c.getAttribute("stroke-dasharray")&&num(c,"r")>20);
+    const arcs=[...svg.querySelectorAll("path")].filter(p=>paint(p)&&/A/i.test(p.getAttribute("d")||"")&&!svg.querySelector("rect:not(.hit)"));
+    if(rings.length||arcs.length){                               // donat
+      rings.concat(arcs).forEach((e,i)=>{
+        /* irisan donat sudah diputar lewat atribut (mis. rotate(-90 85 85)); CSS animasi menimpa atribut itu,
+           jadi putaran awal dipindah ke --mmrot dan titik putar = pusat lingkaran (bukan pusat kanvas) */
+        const t=(e.getAttribute("transform")||"").match(/^\s*rotate\(\s*(-?[\d.]+)(?:[\s,]+(-?[\d.]+)[\s,]+(-?[\d.]+))?\s*\)\s*$/);
+        if(e.tagName.toLowerCase()==="circle"){ const cx=t&&t[2]!=null?t[2]:num(e,"cx"), cy=t&&t[3]!=null?t[3]:num(e,"cy"); e.style.transformOrigin=cx+"px "+cy+"px"; }
+        if(t){ e.style.setProperty("--mmrot",t[1]+"deg"); e.removeAttribute("transform"); }
+        e.classList.add("mm-r"); e.style.setProperty("--mmd",(i*70)+"ms"); });
+      svg.querySelectorAll("text").forEach(t=>{ t.classList.add("mm-t"); t.style.setProperty("--mmd","500ms"); });
+      return;
+    }
+    const bars=[...svg.querySelectorAll("rect,path")].filter(e=>{
+      if(e.classList.contains("hit")||!paint(e)) return false;
+      if(e.getAttribute("stroke")&&/surface/.test(e.getAttribute("fill")||"")){ e.classList.add("mm-t"); return false; } // chip label
+      if(e.tagName.toLowerCase()==="path"&&!/z\s*$/i.test((e.getAttribute("d")||"").trim())) return false; // hanya path tertutup (ujung batang membulat)
+      if(e.tagName.toLowerCase()==="rect"){ const w=num(e,"width"),h=num(e,"height"); if(w>box.width*.7&&h>box.height*.4) return false; } // latar
+      return true; });
+    if(bars.length){
+      const rects=bars.filter(e=>e.tagName.toLowerCase()==="rect");
+      const cnt=f=>{ const m={}; rects.forEach(r=>{ const k=Math.round(f(r)); m[k]=(m[k]||0)+1; }); return Math.max(0,...Object.values(m)); };
+      const sameBottom=cnt(r=>num(r,"y")+num(r,"height")), sameLeft=cnt(r=>num(r,"x"));
+      const horiz=sameLeft>sameBottom;
+      const pos=e=>{ try{ const b=e.getBBox(); return horiz?b.y:b.x; }catch(_){ return 0; } };
+      const order=[...new Set(bars.map(e=>Math.round(pos(e))))].sort((a,b)=>a-b);
+      // tumbuh dari garis dasar grafik yang sama → segmen bertumpuk naik bersama
+      const bb=bars.map(e=>{ try{ return e.getBBox(); }catch(_){ return null; } }).filter(b=>b&&(b.width||b.height));
+      const base=bb.length?(horiz?Math.min(...bb.map(b=>b.x)):Math.max(...bb.map(b=>b.y+b.height))):0;
+      bars.forEach(e=>{ e.classList.add(horiz?"mm-x":"mm-y");
+        if(base&&!e.closest("g[transform]")){ e.style.transformBox="view-box"; e.style.transformOrigin=horiz?(base+"px 50%"):("50% "+base+"px"); }
+        e.style.setProperty("--mmd",Math.min(700,order.indexOf(Math.round(pos(e)))*45)+"ms"); });
+    }
+    svg.querySelectorAll("polyline,path").forEach(p=>{
+      if(paint(p)||!p.getAttribute("stroke")&&!p.style.stroke) return;
+      if(p.getAttribute("stroke-dasharray")||p.style.strokeDasharray) return;
+      p.setAttribute("pathLength","1"); p.classList.add("mm-l"); });
+    svg.querySelectorAll("circle").forEach((c,i)=>{ if(num(c,"r")<=12){ c.classList.add("mm-p"); c.style.setProperty("--mmd",(300+i*60)+"ms"); } });
+    svg.querySelectorAll("text").forEach(t=>{ if(!t.closest(".mm-p")) t.classList.add("mm-t"); });
+  }
+  function countUp(el){
+    const tn=[...el.childNodes].find(n=>n.nodeType===3&&/\d/.test(n.nodeValue)); if(!tn) return;
+    const m=tn.nodeValue.match(/^(\s*)([\d.]*\d(?:,\d+)?)(.*)$/s); if(!m) return;
+    const dec=(m[2].split(",")[1]||"").length, to=parseFloat(m[2].replace(/\./g,"").replace(",","."));
+    if(!isFinite(to)||to===0) return;
+    const fmt=v=>v.toLocaleString("id-ID",{minimumFractionDigits:dec,maximumFractionDigits:dec});
+    const t0=performance.now(), dur=900, fin=()=>{ tn.nodeValue=m[1]+m[2]+m[3]; };
+    const step=()=>{ const k=Math.max(0,Math.min(1,(performance.now()-t0)/dur)), e=1-Math.pow(1-k,3); if(k<1){ tn.nodeValue=m[1]+fmt(to*e)+m[3]; requestAnimationFrame(step); } else fin(); };
+    tn.nodeValue=m[1]+fmt(0)+m[3]; requestAnimationFrame(step);
+    setTimeout(fin,dur+250);   // jaminan: angka akhir selalu tampil walau tab di latar belakang
+  }
+  return function(){
+    const w=window.innerWidth, resized=w!==lastW; lastW=w;
+    const fresh=s=>[...document.querySelectorAll(s)].filter(e=>!e.hasAttribute("data-mm"));
+    const all=fresh("svg,.hbr .tr,.bar,.split,.mb .t,.kpi");
+    all.forEach(e=>e.setAttribute("data-mm",""));
+    if(resized||still()) return;
+    all.forEach(e=>{
+      if(e.tagName.toLowerCase()==="svg"){ if(!e.closest("button,nav,.tk,.ticker,.logo,.ic")) svgChart(e); return; }
+      if(e.classList.contains("kpi")){ const i=[...e.parentNode.children].indexOf(e); e.classList.add("mm-k"); e.style.setProperty("--mmd",(i*60)+"ms"); const v=e.querySelector(".v"); if(v) countUp(v); return; }
+      const sib=[...e.parentNode.parentNode.children].indexOf(e.parentNode);
+      e.classList.add("mm-w"); e.style.setProperty("--mmd",Math.min(600,Math.max(0,sib)*35)+"ms");
+    });
+  };
+})();
+/* ===== akhir MMJ MOTION ===== */
+
+;(function(){ const _r=render; render=function(){ const out=_r.apply(this,arguments); try{ mmjMotion(); }catch(e){} return out; }; })();
+
 render();
 ;try{ if(typeof setView==="function") window.setView=setView; }catch(e){}
 })();
