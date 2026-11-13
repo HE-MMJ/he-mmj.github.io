@@ -14,7 +14,7 @@ import sys
 TOOLS = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, TOOLS)
 import emit_site                                   # noqa: E402
-from data_codec import compact, inflate            # noqa: E402
+from data_codec import compact, inflate, is_compact   # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(TOOLS, "..", "..", ".."))   # D:\Timesheet\Dashboard
 GAB = os.path.join(ROOT, "dashboard-mmj")
@@ -56,7 +56,11 @@ def sources():
             j += 1
         try:
             end = emit_site._find_literal(body, j)
-            out.append(("tab:" + tab, json.loads(body[j:end + 1])))
+            obj = json.loads(body[j:end + 1])
+            # sumber bisa sudah dipadatkan (MMJ_INFLATE) -> kembalikan ke bentuk asli
+            if is_compact(obj):
+                obj = inflate(obj)
+            out.append(("tab:" + tab, obj))
         except Exception:
             pass
     he = read(os.path.join(ROOT, "js", "data.js"))

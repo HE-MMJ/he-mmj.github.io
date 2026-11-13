@@ -183,6 +183,7 @@ python check_visual.py --make-baseline   # buat ulang baseline
 python test_data_codec.py           # uji encoder data (round-trip + penghematan)
 python test_built_data.py           # data hasil build = data sumber
 python check_data_browser.py        # decoder JS di browser = decoder Python
+python check_duplication.py         # laporan CSS/JS duplikat antar dashboard
 ```
 
 `check_visual.py` membandingkan 10 screenshot (5 tab × 2 lebar) dengan baseline
@@ -234,6 +235,79 @@ Aturan:
 - Kalau menambah sumber data baru, cukup taruh di `emit_site.py`
   (`_data_file()` / `_he_rows_file()` / `_wt_file()`); encoder & decoder
   otomatis bekerja.
+
+### Data inline di halaman yang dipublikasikan
+
+Shell (`dashboard-mmj/index.html`) dan 3 halaman terpisah (`batu-split.html`,
+`coal-hauling.html`, `loss-time.html`) masih memuat data mentah. Build
+memadatkannya dengan encoder yang sama (`tools/gabungan/inline_data.py`),
+decoder-nya disisipkan di `<head>` halaman tersebut.
+
+| Halaman | Sebelum | Sesudah |
+|---|---|---|
+| `index.html` (shell) | 2368 KB | **1039 KB** |
+| `batu-split.html` | 791 KB | **334 KB** |
+| `coal-hauling.html` | 365 KB | **339 KB** |
+| `loss-time.html` | 1201 KB | **362 KB** |
+| **Total** | **4724 KB** | **2074 KB** (hemat 56%) |
+
+Build mengenali kedua bentuk (`const DATA = {...}` maupun
+`const DATA = MMJ_INFLATE({...})`), jadi shell yang sudah dipadatkan tetap
+bisa dipakai sebagai sumber build. Halaman yang dipadatkan tetap bisa dibuka
+langsung (`file://`).
+
+## Struktur folder & alur build
+
+```
+dashboard-mmj/
+  index.html            shell (sumber) berisi <template> tiap dashboard
+  batu-split.html       halaman terpisah (versi 1 file) - ikut dipadatkan build
+  coal-hauling.html     idem
+  loss-time.html        idem
+  gabungan.html         pengalihan ke halaman utama
+  tools/
+    gabungan/           build utama + alat bantu (lihat tabel di bawah)
+    batu-split/         salinan generator Batu Split
+    coal-hauling/       salinan generator Coal Hauling
+    loss-time/          salinan generator Loss Time
+```
+
+Alur build (semua di `tools/gabungan/`):
+
+| Skrip | Fungsi |
+|---|---|
+| `build_gabungan_he.py` | **build utama**: baca shell → tambah tab HE → pecah jadi `index.html` + `assets/` → padatkan data inline |
+| `emit_site.py` | memecah shell jadi modul (CSS/JS/data per tab), memadatkan data, membuat `assets/css/common.css` |
+| `data_codec.py` | encoder data ringkas (kamus + RLE + packed) & decoder JS/Python |
+| `inline_data.py` | memadatkan `const DATA = {...}` pada halaman HTML |
+| `build_gabungan.py` | build shell gabungan (dipakai di folder produksi) |
+| `build_he_template.py` | membuat template tab HE |
+| `check_*.py`, `test_*.py` | pemeriksaan otomatis (lihat di atas) |
+| `capture_visual.py` | menyimpan screenshot semua tab (untuk perbandingan manual) |
+| `_arsip/` | skrip sekali pakai yang sudah selesai tugasnya |
+
+Perilaku build (Fase 3):
+- File yang isinya **sama tidak ditulis ulang** (`git status` tetap bersih).
+- File hasil build yang sudah tidak dipakai **dihapus** sendiri.
+- `?v=` pada URL = **hash isi** (bukan tanggal) → cache busted hanya kalau
+  isi benar-benar berubah; `data-build` di `<html>` memakai hash yang sama.
+- CSS yang identik di beberapa tab dipindah ke `assets/css/common.css`
+  (hanya blok yang posisinya sama & tidak mengubah urutan cascade).
+
+### Duplikasi CSS/JS antar dashboard
+
+Masing-masing dashboard dibuat oleh generator sendiri (di folder produksi,
+di luar repo), jadi aturan dasar seperti `.side`, `.logo`, `.nav a` ditulis
+ulang di tiap tab (~200 blok CSS, 14 fungsi JS). Duplikasi ini tidak_memberi
+beban unduhan (hanya 1 CSS tab yang dimuat per halaman), tapi menyulitkan
+perawatan.
+
+`python check_duplication.py` menampilkan daftarnya. Perbaikan permanen
+harus dilakukan di **template generator** (folder produksi) — kalau dipindah
+paksa dari sisi build, urutan cascade berubah dan tampilan bisa bergeser.
+Build di repo ini sudah punya mechanism aman: blok yang posisinya sama di
+semua tab & tidak bertabrakan dengan aturan sesudahnya dipindah otomatis ke
+`assets/css/common.css` (dicek `check_visual.py` → pixel-diff 0,00%).
 
 ## Running text (ticker) tab Heavy Equipment
 

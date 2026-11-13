@@ -314,6 +314,23 @@ def patch_exec(tpl):
 
 
 def main():
+    # ---- 0) padatkan data inline di halaman yang dipublikasikan
+    # (shell + 3 halaman terpisah) supaya data mentah tidak ditulis 2x.
+    # Dilakukan DI AWAL supaya shell yang dibaca build selalu dalam bentuk
+    # ringkas -> versi build (?v=) stabil antar hari.
+    spec3 = importlib.util.spec_from_file_location("inline_data", os.path.join(TOOLS, "inline_data.py"))
+    inliner = importlib.util.module_from_spec(spec3)
+    spec3.loader.exec_module(inliner)
+    published = [SRC_SHELL,
+                 os.path.join(GAB, "batu-split.html"),
+                 os.path.join(GAB, "coal-hauling.html"),
+                 os.path.join(GAB, "loss-time.html")]
+    inline_before = inline_after = 0
+    for p in published:
+        ch, b, c = inliner.compact_inline(p)
+        inline_before += b
+        inline_after += c
+
     shell = read(SRC_SHELL)
     summary = build_summary()
     body, css, js_all, summary_json, js_parts = build_he_template(summary)
@@ -389,7 +406,15 @@ def main():
     info = emitter.emit(shell, ROOT)
 
     print("Selesai : %s  (%.1f KB markup)" % (info["index"], info["size"] / 1024))
-    print("Aset    : assets/css, assets/data, assets/js")
+    st = info.get("stats") or {}
+    print("Aset    : assets/css, assets/data, assets/js"
+          "  ( tulis %d, tetap %d, hapus %d )"
+          % (st.get("written", 0), st.get("unchanged", 0), st.get("removed", 0)))
+
+    # ---- 6) ringkasan pemadatan data inline
+    print("Inline  : data inline di %d halaman, %.0f KB -> %.0f KB (hemat %.0f%%)"
+          % (len(published), inline_before / 1024, inline_after / 1024,
+             100 * (1 - inline_after / max(1, inline_before))))
     print("Tab     : exec | haul | batu | lt | rf | he")
     print("HE      : %d unit HE, %d unit WT, HM %s jam, MA %s%%, Penyiraman %s rit"
           % (summary["unit"], summary["wtUnit"], summary["hm"], summary["ma"], summary["penyiraman"]))

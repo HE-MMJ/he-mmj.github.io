@@ -39,6 +39,7 @@ import sys
 import json
 import base64
 import datetime
+import hashlib
 
 # encoder data ringkas (kolomar + kamus string) -> file data jauh lebih kecil
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -54,10 +55,44 @@ DATA_DEPS = {"exec": ["haul", "batu", "lt", "he-summary"]}
 
 
 # ------------------------------------------------------------------ util -----
+# Statistik build + daftar file yang baru saja ditulis (untuk membersihkan
+# file yang sudah tidak dipakai tanpa menghapus seluruh folder hasil build).
+_STATS = {"written": 0, "unchanged": 0, "removed": 0}
+_PRODUCED = set()
+
+
 def _write(path, text):
+    """Tulis file hanya kalau isinya berubah (build lebih cepat, diff bersih)."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
+    _PRODUCED.add(os.path.abspath(path))
+    if os.path.exists(path):
+        try:
+            with open(path, encoding="utf-8") as f:
+                if f.read() == text:
+                    _STATS["unchanged"] += 1
+                    return
+        except Exception:
+            pass
     with open(path, "w", encoding="utf-8", newline="\n") as f:
         f.write(text)
+    _STATS["written"] += 1
+
+
+def _cleanup_stale(root, subdirs=("css", "data", "js")):
+    """Hapus file hasil build lama yang tidak lagi produced."""
+    for sub in subdirs:
+        d = os.path.join(root, "assets", sub)
+        if not os.path.isdir(d):
+            continue
+        for name in os.listdir(d):
+            p = os.path.abspath(os.path.join(d, name))
+            if p in _PRODUCED:
+                continue
+            try:
+                os.remove(p)
+                _STATS["removed"] += 1
+            except OSError:
+                pass
 
 
 def _find_literal(txt, i):
@@ -88,19 +123,47 @@ def _find_literal(txt, i):
     raise ValueError("literal tidak tertutup")
 
 
+def _unwrap_inflate(txt, j):
+    """Kalau literal dibungkus MMJ_INFLATE(...), Returns posisi literal dalam.
+
+    (start, end, after) -> start/end = rentang literal, after = posisi setelah
+    penutup wrapper (biar sisa kode tidak ikut memotong).
+    """
+    wrapped = False
+    m2 = re.match(r"MMJ_INFLATE\s*\(", txt[j:])
+    if m2:
+        wrapped = True
+        j += m2.end()
+        while j < len(txt) and txt[j] in " \t\r\n":
+            j += 1
+    if j >= len(txt) or txt[j] not in "{[":
+        return None
+    try:
+        end = _find_literal(txt, j)
+    except ValueError:
+        return None
+    after = end + 1
+    if wrapped:
+        k = after
+        while k < len(txt) and txt[k] in " \t\r\n":
+            k += 1
+        if txt[k:k + 1] == ")":
+            k += 1
+        after = k
+    return j, end, after
+
+
 def _split_const(txt, name):
     """Ambil literal setelah `const NAME = ...` -> (literal, sisa tanpa const itu)."""
     m = re.search(r"\bconst\s+%s\s*=\s*" % re.escape(name), txt)
     if not m:
         return None
-    j = m.end()
-    while j < len(txt) and txt[j] not in "{[(":
-        j += 1
-    if j >= len(txt):
+    span = _unwrap_inflate(txt, m.end())
+    if not span:
         return None
-    end = _find_literal(txt, j)
+    j, end, after = span
     lit = txt[j:end + 1]
-    rest = txt[:m.start()] + re.sub(r"^[ \t]*;", "", txt[end + 1:], count=1)
+    rest = txt[:m.start()] + re.sub(r"^[ \t]*;", "", txt[after:], count=1)
     return lit, rest
 
 
@@ -113,25 +176,26 @@ def _is_only_comments(txt):
 
 
 def _split_data_prefix(code):
-    """`const DATA = { ... };` di awal script -> (json, sisa) bila JSON valid."""
+    """`const DATA = { ... };` di awal script -> (json, sisa) bila JSON valid.
+
+    Bentuk `const DATA = MMJ_INFLATE({...});` (hasil pemadatan inline) juga
+    dikenali, supaya shell yang sudah dipadatkan tetap bisa dipakai build.
+    """
     m = re.search(r"\bconst\s+DATA\s*=\s*", code)
     if not m or not _is_only_comments(code[:m.start()]):
         return None
-    j = m.end()
-    while j < len(code) and code[j] not in "{[(":
-        j += 1
-    if j >= len(code) or code[j] != "{":
+    span = _unwrap_inflate(code, m.end())
+    if not span:
         return None
-    try:
-        end = _find_literal(code, j)
-    except ValueError:
+    j, end, after = span
+    if code[j] != "{":
         return None
     lit = code[j:end + 1]
     try:
         json.loads(lit)
     except Exception:
         return None
-    rest = re.sub(r"^[ \t]*;", "", code[end + 1:], count=1)
+    rest = re.sub(r"^[ \t]*;", "", code[after:], count=1)
     return lit, rest
 
 
@@ -152,8 +216,10 @@ def _app_file(rel, tab, code, bindings=""):
 def _compact_literal(lit):
     """Literal JSON -> JSON ringkas (kolomar + kamus string).
 
-    Kembalikan None kalau tidak bisa diurai atau tidak lebih kecil, supaya
-    pemanggil jatuh ke bentuk biasa (perilaku lama, pasti aman).
+    Kembalikan (teks, True) kalau literal bisa dipadatkan, None kalau tidak
+    (pemanggil lalu memakai bentuk biasa - perilaku lama, pasti aman).
+    Literal yang SUDAH ringkas (hasil pemadatan inline) diteruskan apa adanya
+    supaya tidak dibungkus dua kali.
     """
     if data_codec is None:
         return None
@@ -162,12 +228,14 @@ def _compact_literal(lit):
     except Exception:
         return None
     try:
+        if data_codec.is_compact(obj):
+            return json.dumps(obj, separators=(",", ":"), ensure_ascii=False), True
         small, used = data_codec.compact_json(obj)
     except Exception:
         return None
     if not used:
         return None
-    return small
+    return small, True
 
 
 def _decoder_js():
@@ -177,9 +245,10 @@ def _decoder_js():
 
 def _data_file(rel, target, lit):
     body = (HDR % rel) + "window.MMJ_DATA = window.MMJ_DATA || {};\n"
-    small = _compact_literal(lit)
-    if small is None:
+    res = _compact_literal(lit)
+    if res is None:
         return body + "window.MMJ_DATA[%s] = %s;\n" % (json.dumps(target), lit)
+    small = res[0]
     return body + _decoder_js() \
         + "window.MMJ_DATA[%s] = window.MMJ_INFLATE(%s);\n" % (json.dumps(target), small)
 
@@ -193,11 +262,11 @@ def _he_rows_file(rel, code):
         if not got:
             continue
         lit, rest = got
-        small = _compact_literal(lit)
-        if small is None:
+        res = _compact_literal(lit)
+        if res is None:
             parts.append("window.MMJ_HE.%s = %s;\n" % (name, lit))
         else:
-            parts.append("window.MMJ_HE.%s = window.MMJ_INFLATE(%s);\n" % (name, small))
+            parts.append("window.MMJ_HE.%s = window.MMJ_INFLATE(%s);\n" % (name, res[0]))
     if any("MMJ_INFLATE(" in p for p in parts):
         out.append(_decoder_js())
     out.extend(parts)
@@ -216,12 +285,12 @@ def _wt_file(rel, code):
         if not got:
             continue
         lit, rest = got
-        small = _compact_literal(lit)
-        if small is None:
+        res = _compact_literal(lit)
+        if res is None:
             parts.append("window.MMJ_WT.%s = %s;\n" % (name.replace("WT_", ""), lit))
         else:
             parts.append("window.MMJ_WT.%s = window.MMJ_INFLATE(%s);\n"
-                         % (name.replace("WT_", ""), small))
+                         % (name.replace("WT_", ""), res[0]))
     if any("MMJ_INFLATE(" in p for p in parts):
         out.append(_decoder_js())
     out.extend(parts)
@@ -231,10 +300,130 @@ def _wt_file(rel, code):
     return "".join(out)
 
 
+def _css_blocks(css):
+    """Pecah CSS jadi blok tingkat atas: `sel { ... }` dan `@media ... { ... }`."""
+    blocks = []
+    i, n = 0, len(css)
+    while i < n:
+        j = css.find("{", i)
+        if j < 0:
+            break
+        depth, k = 0, j
+        while k < n:
+            if css[k] == "{":
+                depth += 1
+            elif css[k] == "}":
+                depth -= 1
+                if depth == 0:
+                    break
+            k += 1
+        if k >= n:
+            break
+        blocks.append(css[i:k + 1])
+        i = k + 1
+    return blocks
+
+
+def _css_key(blk):
+    """Kunci pembanding blok CSS (whitespace dirapatkan)."""
+    return re.sub(r"\s+", " ", blk).strip()
+
+
+_CSS_HOIST_MAX_INDEX = 3      # hanya blok paling awal tiap tab yang dipindah
+
+
+_CSS_PSEUDO = {"hover", "focus", "active", "before", "after", "not", "only",
+               "media", "and", "or", "first", "last", "root", "visited",
+               "disabled", "checked", "nth", "child", "of", "type"}
+
+
+def _css_tokens(blk):
+    """Token selector (class/id/element) dari sebuah blok CSS."""
+    sel = blk.split("{", 1)[0]
+    toks = set()
+    for t in re.findall(r"[.#]?[A-Za-z_][\w-]*", sel):
+        toks.add(t.lstrip(".").lstrip("#"))
+    return toks - _CSS_PSEUDO
+
+
+def _hoist_common_css(css_by_tab):
+    """Pindahkan blok CSS yang IDENTIK di >1 tab ke satu file bersama.
+
+    Syarat aman: setelah blok itu tidak ada aturan lain di tab yang sama yang
+    memakai token selector yang sama. Kalau ada, blok itu TIDAK dipindah -
+    kalau dipindah, urutan cascade berubah dan tampilan bisa bergeser.
+
+    File bersama dimuat sebelum CSS tab (tapi setelah theme.css & shell.css),
+    jadi CSS tab tetap bisa menimpanya -> tampilan tidak berubah.
+
+    Return (teks_common, {tab: css_baru}).
+    """
+    occ = {}
+    for tab, css in css_by_tab.items():
+        for blk in _css_blocks(css):
+            occ.setdefault(_css_key(blk), []).append(tab)
+    dup = {k for k, v in occ.items() if len(set(v)) > 1}
+    if not dup:
+        return "", dict(css_by_tab)
+
+    # blok yang aman dipindah: posisinya di awal setiap tab (urutan cascade
+    # tidak berubah) DAN tidak ada aturan sesudahnya dengan token sama
+    hoistable = set()
+    for tab, css in css_by_tab.items():
+        blks = _css_blocks(css)
+        later = set()
+        for i in range(len(blks) - 1, -1, -1):
+            blk = blks[i]
+            k = _css_key(blk)
+            if k in dup and i <= _CSS_HOIST_MAX_INDEX \
+                    and not (_css_tokens(blk) & later):
+                hoistable.add(k)
+            later |= _css_tokens(blk)
+
+    if not hoistable:
+        return "", dict(css_by_tab)
+
+    common = []
+    seen = set()
+    for tab in css_by_tab:
+        for blk in _css_blocks(css_by_tab[tab]):
+            k = _css_key(blk)
+            if k in hoistable and k not in seen:
+                seen.add(k)
+                common.append(blk)
+    out = {}
+    for tab, css in css_by_tab.items():
+        keep = [b for b in _css_blocks(css) if _css_key(b) not in hoistable]
+        out[tab] = "\n".join(keep)
+    return "\n".join(common), out
+
+
 # ------------------------------------------------------------------ emit -----
+_INPUT_FILES = ("theme.css", "shell_loader.js", "auth.js", "intro.css",
+                "intro.js", "login.css", "login.html", "shell.css")
+
+
+def _content_version(html, here):
+    """Versi = hash isi (shell + berkas pendukung).
+
+    Efeknya: `?v=` di URL hanya berubah kalau isinya benar-benar berubah,
+    jadi build yang tidak mengubah apa pun TIDAK menghasilkan diff (hemat
+    unduhan user & `git status` tetap bersih).
+    """
+    h = hashlib.sha1()
+    h.update(html.encode("utf-8"))
+    for name in _INPUT_FILES:
+        p = os.path.join(here, name)
+        if os.path.exists(p):
+            with open(p, "rb") as f:
+                h.update(f.read())
+    return h.hexdigest()[:10]
+
+
 def emit(html, root, version=None):
     """Pecah `html` menjadi index.html + assets/* di folder `root`."""
-    version = version or datetime.datetime.now().strftime("%Y%m%d%H%M")
+    here = os.path.dirname(os.path.abspath(__file__))
+    version = version or _content_version(html, here)
     q = "?v=" + version
 
     tpl_re = re.compile(r'<template id="mmjT_(\w+)">(.*?)</template>', re.S)
@@ -260,15 +449,20 @@ def emit(html, root, version=None):
     nojs = re.search(r'(<div class="mmjbox" id="mmjNojs"[^>]*>.*?</div>)', html, re.S)
     nojs = nojs.group(1) if nojs else ""
 
-    # bersihkan aset hasil build sebelumnya (folder ini sepenuhnya generated)
-    import shutil
-    for sub in ("css", "data", "js"):
-        shutil.rmtree(os.path.join(root, "assets", sub), ignore_errors=True)
+    # Catatan: folder assets/css|data|js TIDAK dihapus wholesale lagi.
+    # File yang isinya sama tidak ditulis ulang, file yang sudah tidak dipakai
+    # saja yang dibersihkan (lihat _cleanup_stale) -> build lebih cepat dan
+    # `git status` tetap bersih.
+    _PRODUCED.clear()
+    for k in _STATS:
+        _STATS[k] = 0
 
     written = set()
     used = set()
     out_tpl = []
     tab_css = []
+    css_text = {}
+    css_rel = {}
 
     def unique(rel):
         if rel not in used:
@@ -297,11 +491,12 @@ def emit(html, root, version=None):
         markup = re.sub(r"<script([^>]*)>(.*?)</script>", take_script, markup, flags=re.S)
         markup = markup.strip("\n")
 
-        # ---- CSS
+        # ---- CSS (ditulis nanti, setelah blok duplikat dipindah ke file bersama)
         head_tags = []
         if styles:
             rel = "assets/css/%s.css" % tab
-            _write(os.path.join(root, rel), HDR % rel + "\n".join(s.strip() for s in styles) + "\n")
+            css_text[tab] = "\n".join(s.strip() for s in styles)
+            css_rel[tab] = rel
             tab_css.append((tab, rel))
             head_tags.append('<link data-mmj-head rel="stylesheet" href="%s%s">' % (rel, q))
 
@@ -409,6 +604,21 @@ def emit(html, root, version=None):
     theme_css = open(os.path.join(here, "theme.css"), encoding="utf-8-sig").read()
     _write(os.path.join(root, "assets/css/theme.css"), HDR % "assets/css/theme.css" + theme_css)
 
+    # ---- CSS tiap tab + file bersama (blok yang identik di >1 tab)
+    common_css, css_text = _hoist_common_css(css_text)
+    for tab, css in css_text.items():
+        rel = css_rel[tab]
+        _write(os.path.join(root, rel), HDR % rel + css + "\n")
+    if common_css:
+        rel_common = "assets/css/common.css"
+        _write(os.path.join(root, rel_common),
+               HDR % rel_common + "/* CSS yang dipakai bersama beberapa dashboard.\n"
+               "   Dimuat SEBELUM CSS tiap tab, jadi CSS tab tetap bisa menimpanya. */\n"
+               + common_css + "\n")
+    else:
+        _write(os.path.join(root, "assets/css/common.css"),
+               HDR % "assets/css/common.css" + "/* (belum ada CSS bersama) */\n")
+
     # ---- boot css
     _write(os.path.join(root, "assets/css/boot.css"), HDR % "assets/css/boot.css" + boot + "\n")
 
@@ -427,6 +637,7 @@ def emit(html, root, version=None):
 <link rel="stylesheet" href="assets/css/intro.css%(q)s">
 <link rel="stylesheet" href="assets/css/theme.css%(q)s">
 <link rel="stylesheet" href="assets/css/shell.css%(q)s">
+<link rel="stylesheet" href="assets/css/common.css%(q)s">
 %(preloads)s</head>
 <body>
 <!-- terlihat hanya bila JavaScript tidak berjalan -->
@@ -443,8 +654,10 @@ def emit(html, root, version=None):
        "preloads": preloads, "nojs": nojs, "templates": "\n\n".join(out_tpl)}
 
     _write(os.path.join(root, "index.html"), doc)
+    _cleanup_stale(root)
     return {
         "index": os.path.join(root, "index.html"),
         "size": len(doc.encode("utf-8")),
         "tabs": [t for t, _ in tpls],
+        "stats": dict(_STATS),
     }

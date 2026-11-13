@@ -290,8 +290,21 @@ def _compact_table(rows):
     return {"$T": {"c": cols, "d": dicts, "m": modes}}
 
 
+_COMPACT_KEYS = ("$O", "$A", "$D", "$T")
+
+
+def is_compact(node):
+    """True kalau node sudah berbentuk ringkas (tidak boleh diringkas lagi)."""
+    if isinstance(node, dict):
+        return bool(node) and all(k in _COMPACT_KEYS for k in node.keys())
+    return False
+
+
 def compact(node):
-    """Kembalikan bentuk ringkas."""
+    """Kembalikan bentuk ringkas (idempoten: node yang sudah ringkas
+    dikembalikan apa adanya supaya tidak dibungkus dua kali)."""
+    if is_compact(node):
+        return node
     if isinstance(node, list):
         if node and all(isinstance(x, dict) for x in node) and _same_keys(node):
             return _compact_dicts(node)

@@ -13,7 +13,7 @@ import sys
 TOOLS = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, TOOLS)
 import emit_site                                   # noqa: E402
-from data_codec import inflate                     # noqa: E402
+from data_codec import inflate, is_compact         # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(TOOLS, "..", "..", ".."))   # D:\Timesheet\Dashboard
 GAB = os.path.join(ROOT, "dashboard-mmj")
@@ -68,6 +68,9 @@ def main():
         while j < len(body) and body[j] != "{":
             j += 1
         src = extract_json(body, j)
+        # sumber boleh sudah dipadatkan (MMJ_INFLATE) -> kembalikan ke bentuk asli
+        if is_compact(src):
+            src = inflate(src)
         p = os.path.join(DATA_OUT, "%s.js" % tab)
         if not os.path.exists(p):
             fails.append("%s: file built tidak ada (%s)" % (tab, p))

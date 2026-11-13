@@ -1,4 +1,8 @@
 """
+[ARSIP] Sekali pakai - sudah selesai tugasnya (menu Heavy Equipment sudah
+terpasang di build_gabungan.py & shell). Disimpan di sini supaya tidak
+terlupakan; tidak dipanggil oleh build mana pun.
+
 Sisipkan entri menu "Heavy Equipment" ke grup Monitoring pada:
   - dashboard-mmj/tools/gabungan/build_gabungan.py   (sumber BAR_HTML -> tahan regenerate)
   - dashboard-mmj/index.html                          (shell jadi, nav ada di 4 template)

@@ -1,0 +1,5 @@
+/* assets/css/common.css - dibuat otomatis oleh emit_site.py, jangan diedit manual. */
+/* CSS yang dipakai bersama beberapa dashboard.
+   Dimuat SEBELUM CSS tiap tab, jadi CSS tab tetap bisa menimpanya. */
+
+*{box-sizing:border-box}

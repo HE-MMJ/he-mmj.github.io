@@ -1,3 +1,10 @@
-﻿__pycache__/
-.superpowers/
+﻿# Tools & cache
 __pycache__/
+*.pyc
+dashboard-mmj/tools/gabungan/cache/
+
+# Folder demo lokal (tidak ikut dipublikasikan)
+demo-loading/
+
+# Catatan kerja lokal
+.superpowers/
