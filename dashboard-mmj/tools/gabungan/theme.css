@@ -58,6 +58,22 @@ table td,table th{font-variant-numeric:tabular-nums}
 }
 .side .theme:hover{background:var(--accent-soft);color:var(--accent)}
 
+/* ---------- pemilih bulan (tab Heavy Equipment) -----------------------------
+   Diletakkan di bawah judul "Dashboard Timesheet HE / MMJ", menggantikan chip
+   periode statis. Gaya mengikuti chip header. */
+.mmj-bulan{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:2px 10px;border-radius:999px;
+  background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.22);
+  font-size:12px;font-weight:500;letter-spacing:.01em;color:inherit;
+}
+.mmj-bulan span{opacity:.75}
+.mmj-bulan select{
+  border:0;background:transparent;color:inherit;font:inherit;
+  padding:2px 0;cursor:pointer;max-width:170px;
+}
+.mmj-bulan select:focus-visible{outline:2px solid #fff;outline-offset:2px}
+
 /* ---------- tema gelap: token & komponen dasar -----------------------------
    Token ini nilainya sama di kelima dashboard (hasil audit). Komponen yang
    spesifik tiap tab tetap diatur di CSS tab-nya. */

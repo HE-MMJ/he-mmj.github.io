@@ -415,6 +415,41 @@ def main():
     print("Inline  : data inline di %d halaman, %.0f KB -> %.0f KB (hemat %.0f%%)"
           % (len(published), inline_before / 1024, inline_after / 1024,
              100 * (1 - inline_after / max(1, inline_before))))
+
+    # ---- 7) data HE/WT PER BULAN (untuk pemilih bulan di tab Heavy Equipment)
+    bulan_ada = []
+    for kind, folder, target in (("he", "data-bulanan", "MMJ_HE"),
+                                 ("wt", "wt-bulanan", "MMJ_WT")):
+        src_dir = os.path.join(ROOT, "js", folder)
+        if not os.path.isdir(src_dir):
+            continue
+        for nama in sorted(os.listdir(src_dir)):
+            if not nama.endswith(".json"):
+                continue
+            mm = os.path.splitext(nama)[0]
+            d = json.load(open(os.path.join(src_dir, nama), encoding="utf-8"))
+            rel = "assets/data/%s-%s.js" % (kind, mm)
+            lines = ["/* %s - data %s bulan %s (dibuat otomatis oleh build). */\n"
+                     % (rel, kind.upper(), mm),
+                     "window.%s = window.%s || {};\n" % (target, target),
+                     "window.%s.PERIODE = %s;\n" % (target, json.dumps(d.get("PERIODE") or {})),
+                     emitter._decoder_js()]
+            for key in ("DATA", "DAILY", "BELUM", "DAILYUNIT"):
+                if key not in d:
+                    continue
+                lit = json.dumps(d[key], ensure_ascii=False, separators=(",", ":"))
+                res = emitter._compact_literal(lit)
+                val = "window.MMJ_INFLATE(%s)" % res[0] if res else lit
+                if key == "DAILYUNIT":
+                    lines.append("window.DAILYUNIT = %s;\n" % val)
+                else:
+                    lines.append("window.%s.%s = %s;\n" % (target, key, val))
+            emitter._write(os.path.join(ROOT, rel), "".join(lines))
+            if kind == "he" and mm.isdigit():
+                bulan_ada.append(int(mm))
+    # daftar bulan yang tersedia (dipakai pemilih bulan di sidebar)
+    bulan_ada = sorted(set(bulan_ada))
+    print("Bulan   : data HE/WT per bulan untuk %s" % (bulan_ada or "-"))
     print("Tab     : exec | haul | batu | lt | rf | he")
     print("HE      : %d unit HE, %d unit WT, HM %s jam, MA %s%%, Penyiraman %s rit"
           % (summary["unit"], summary["wtUnit"], summary["hm"], summary["ma"], summary["penyiraman"]))

@@ -403,8 +403,8 @@ _INPUT_FILES = ("theme.css", "shell_loader.js", "auth.js", "intro.css",
                 "intro.js", "login.css", "login.html", "shell.css")
 
 
-def _content_version(html, here):
-    """Versi = hash isi (shell + berkas pendukung).
+def _content_version(html, here, extra=""):
+    """Versi = hash isi (shell + berkas pendukung + bulan data HE/WT).
 
     Efeknya: `?v=` di URL hanya berubah kalau isinya benar-benar berubah,
     jadi build yang tidak mengubah apa pun TIDAK menghasilkan diff (hemat
@@ -412,6 +412,8 @@ def _content_version(html, here):
     """
     h = hashlib.sha1()
     h.update(html.encode("utf-8"))
+    if extra:
+        h.update(("|" + extra).encode("utf-8"))
     for name in _INPUT_FILES:
         p = os.path.join(here, name)
         if os.path.exists(p):
@@ -420,10 +422,20 @@ def _content_version(html, here):
     return h.hexdigest()[:10]
 
 
+def _bulan_tersedia(root):
+    """Bulan yang punya data HE (js/data-bulanan/<MM>.json)."""
+    d = os.path.join(root, "js", "data-bulanan")
+    if not os.path.isdir(d):
+        return []
+    return sorted(int(n[:2]) for n in os.listdir(d)
+                  if n.endswith(".json") and n[:2].isdigit())
+
+
 def emit(html, root, version=None):
     """Pecah `html` menjadi index.html + assets/* di folder `root`."""
     here = os.path.dirname(os.path.abspath(__file__))
-    version = version or _content_version(html, here)
+    bulan = _bulan_tersedia(root)
+    version = version or _content_version(html, here, ",".join(map(str, bulan)))
     q = "?v=" + version
 
     tpl_re = re.compile(r'<template id="mmjT_(\w+)">(.*?)</template>', re.S)
@@ -646,12 +658,14 @@ def emit(html, root, version=None):
 %(templates)s
 
 <script src="assets/js/auth.js%(q)s"></script>
+<script>window.MMJ_BULAN = %(bulan)s;</script>
 <script src="assets/js/shell.js%(q)s"></script>
 <script src="assets/js/intro.js%(q)s"></script>
 </body>
 </html>
 """ % {"ver": version, "title": title, "fav": fav_href, "q": q,
-       "preloads": preloads, "nojs": nojs, "templates": "\n\n".join(out_tpl)}
+       "preloads": preloads, "nojs": nojs, "templates": "\n\n".join(out_tpl),
+       "bulan": json.dumps(bulan)}
 
     _write(os.path.join(root, "index.html"), doc)
     _cleanup_stale(root)

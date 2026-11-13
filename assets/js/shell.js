@@ -242,6 +242,61 @@
 
   var seq = 0;
 
+  /* ------------------------------------------------- pemilih bulan (HE) --- */
+  /* Tab Heavy Equipment bisa menampilkan bulan lain: #tab=he&m=10 memuat
+     assets/data/he-10.js (+ wt-10.js). Data tiap bulan dibuat saat build. */
+  function bulanAktif() {
+    var m = /[?&#]m=(\d{1,2})/.exec(location.hash || "");
+    return m ? parseInt(m[1], 10) : 0;
+  }
+
+  function srcData(src) {
+    var mb = bulanAktif();
+    if (!mb || !src) return src;
+    var kode = (mb < 10 ? "0" : "") + mb;
+    return src
+      .replace("assets/data/he.js", "assets/data/he-" + kode + ".js")
+      .replace("assets/data/wt.js", "assets/data/wt-" + kode + ".js");
+  }
+
+  var BULAN_NAMA = ["Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+  function mountBulan(tab) {
+    var old = document.querySelector(".mmj-bulan");
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    var list = window.MMJ_BULAN || [];
+    if (tab !== "he" || !list.length) {
+      var chip0 = document.querySelector("#he .header-text .chip-period, .header-text .chip-period");
+      if (chip0) chip0.style.display = "";
+      return;
+    }
+    /* diletakkan di bawah judul "Dashboard Timesheet HE / MMJ"
+       (menggantikan chip periode statis di baris .sub) */
+    var host = document.querySelector("#he .header-text .sub")
+      || document.querySelector(".header-text .sub");
+    if (!host) return;
+    var chip = host.querySelector(".chip-period");
+    if (chip) chip.style.display = "none";
+    var cur = bulanAktif() || list[list.length - 1];
+    var wrap = document.createElement("label");
+    wrap.className = "mmj-bulan";
+    wrap.innerHTML = "<span>Bulan</span><select></select>";
+    var sel = wrap.querySelector("select");
+    for (var i = 0; i < list.length; i++) {
+      var o = document.createElement("option");
+      o.value = list[i];
+      o.textContent = BULAN_NAMA[list[i] - 1] + " 2026";
+      if (list[i] === cur) o.selected = true;
+      sel.appendChild(o);
+    }
+    sel.addEventListener("change", function () {
+      location.hash = "tab=he&m=" + sel.value;
+      try { window.mmjSwitch("he"); } catch (e) { }
+    });
+    host.insertBefore(wrap, chip || host.firstChild);
+  }
+
   function runQueue(queue, tab, token, i) {
     if (token !== seq || i >= queue.length) return;
     var item = queue[i];
@@ -338,7 +393,7 @@
     var queue = [], ss = frag.querySelectorAll("script");
     for (var r = 0; r < ss.length; r++) {
       var o = ss[r];
-      if (o.src) queue.push({ src: o.getAttribute("src") });
+      if (o.src) queue.push({ src: srcData(o.getAttribute("src")) });
       else queue.push({ code: o.text || o.textContent });
       o.parentNode.removeChild(o);
     }
@@ -353,6 +408,7 @@
     markNav();
     mountUserMenu();
     mountTheme();
+    mountBulan(tab);
     applyAuthMenus();
 
     runQueue(queue, tab, token, 0);

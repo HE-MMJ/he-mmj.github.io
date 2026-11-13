@@ -472,8 +472,21 @@ function belumDays(d) {
 }
 
 // ---------- peringatan "timesheet belum lengkap" di header grafik ----------
-const PERIODE = { y: 2026, m: 11, last: 30 };
+const PERIODE = (window.MMJ_HE && window.MMJ_HE.PERIODE) || { y: 2026, m: 11, last: 30 };
 const BULAN_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+// label periode mengikuti BULAN DATA (tab HE bisa menampilkan bulan lain lewat
+// pemilih bulan di sidebar; PERIODE dibaca dari berkas data bulan itu).
+(function () {
+  const nm = BULAN_ID[PERIODE.m - 1];
+  const cp = document.querySelector('.chip-period');
+  if (cp) cp.textContent = nm + ' ' + PERIODE.y;
+  const rentang = '01 ' + nm + ' \u2013 ' + PERIODE.last + ' ' + nm + ' ' + PERIODE.y;
+  ['rangeVal', 'wtRangeVal'].forEach(function (id) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = rentang;
+  });
+})();
 
 // batas hari yang seharusnya sudah masuk = kemarin (dibatasi akhir periode)
 function cutoffDay() {
@@ -1185,18 +1198,19 @@ function updateTitle() {
   const el = document.getElementById('chartTitle');
   if (!el) return;
   const rs = rangeState();
-  el.textContent = TITLE_BASE + (rs.full ? '' : ` · ${rs.from}\u2013${rs.to} Nov 2026`);
+  el.textContent = TITLE_BASE + (rs.full ? '' : ` – ${rs.from}\u2013${rs.to} ${BULAN_ID[PERIODE.m - 1]} ${PERIODE.y}`);
 }
 
 // ---------- kalender rentang: satu kalender, klik tanggal awal lalu tanggal akhir ----------
-const CAL = { y: 2026, m: 11, pick: null };
+const CAL = { y: PERIODE.y, m: PERIODE.m, pick: null };
 
-function isoOf(day) { return `2026-11-${String(day).padStart(2, '0')}`; }
+function isoOf(day) { return `${PERIODE.y}-${String(PERIODE.m).padStart(2, '0')}-${String(day).padStart(2, '0')}`; }
 
 function rangeLabel() {
   const rs = rangeState();
   const nm = d => String(d).padStart(2, '0');
-  return `${nm(rs.from)} Nov \u2013 ${nm(rs.to)} Nov 2026`;
+  const bl = BULAN_ID[PERIODE.m - 1];
+  return `${nm(rs.from)} ${bl} \u2013 ${nm(rs.to)} ${bl} ${PERIODE.y}`;
 }
 
 function setRange(from, to) {
@@ -1234,7 +1248,7 @@ function renderKalender() {
   const hariIni = (now.getFullYear() === CAL.y && now.getMonth() === CAL.m - 1) ? now.getDate() : 0;
   const dow = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
 
-  let html = `<div class="cal-head"><span>November 2026</span><span class="cal-hint">${CAL.pick ? 'klik tanggal akhir' : 'klik tanggal awal'}</span></div><div class="cal-grid">`;
+  let html = `<div class="cal-head"><span>${BULAN_ID[PERIODE.m - 1]} ${PERIODE.y}</span><span class="cal-hint">${CAL.pick ? 'klik tanggal akhir' : 'klik tanggal awal'}</span></div><div class="cal-grid">`;
   html += dow.map(d => `<div class="cal-dow">${d}</div>`).join('');
   for (let i = 0; i < mulai; i++) html += '<div></div>';
   for (let d = 1; d <= jml; d++) {
