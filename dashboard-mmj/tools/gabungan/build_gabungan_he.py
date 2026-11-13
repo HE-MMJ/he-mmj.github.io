@@ -355,7 +355,12 @@ def main():
         # Logo lama tertanam di template; pakai logo HE yang sama.
         tpls[key] = re.sub(r'(<img\b[^>]*class="(?:plogo|header-logo)"[^>]*src=")[^"]+', r'\1' + logo_mmj, tpls[key])
         tpls[key] = re.sub(r'(<img\b[^>]*src=")[^"]+("[^>]*class="(?:plogo|header-logo)")', r'\1' + logo_mmj + r'\2', tpls[key])
+        # Hapus pembungkus badge dan aturan responsif lama; selector logo HE
+        # harus menang pada desktop dan mobile.
         tpls[key] = tpls[key].replace('.logo .badge{display:grid;place-items:center;width:100%}', '.logo .badge{display:contents}')
+        tpls[key] = tpls[key].replace('.logo .badge{width:auto;padding:6px 12px;border-radius:12px}', '.logo .badge{display:contents}')
+        tpls[key] = tpls[key].replace('.logo .badge{width:auto}', '.logo .badge{display:contents}')
+        tpls[key] = re.sub(r'\.logo img\{height:46px\}', '.logo img{display:block;height:80px;width:auto}', tpls[key])
     tpls["exec"] = patch_exec(tpls["exec"])
 
     # nav: ganti/link eksternal "../index.html" -> tab internal "#tab=he"

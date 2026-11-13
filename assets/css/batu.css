@@ -461,8 +461,8 @@ tbody tr:hover td{background:var(--surface-2)}
   .app{grid-template-columns:minmax(0,1fr);padding:12px}
   .side{min-width:0;position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:12px;border-radius:16px}
   .logo{flex-direction:row;padding:0;gap:10px;text-align:left}
-  .logo .badge{width:auto;padding:6px 12px;border-radius:12px}
-  .logo img{height:46px}
+  .logo .badge{display:contents}
+  .logo img{display:block;height:80px;width:auto}
   .nav{display:flex;gap:4px;overflow-x:auto;flex:1 1 100%;min-width:0;order:3}
   .nav a{padding:8px 12px;white-space:nowrap}
   .side .lbl,.tipcard,.qbtn{display:none}
