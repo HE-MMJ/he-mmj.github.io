@@ -975,9 +975,6 @@ td .z{color:var(--muted)}
     <a href="#rincian"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 16V7h11v9M13 10h4l4 4v2h-8"/><circle cx="6.5" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/></svg>Mitra &amp; Unit</a>
     <a href="#cek"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 2 20h20L12 3Zm0 6v5m0 3v.5"/></svg>Cek Data</a>
   </nav>
-  <div class="lbl">Aksi cepat</div>
-  <button class="qbtn" type="button" data-act="pdf"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z"/><path d="M14 3v6h6M8 14h8M8 17h5"/></svg>PDF Presentasi</button>
-  <button class="qbtn" type="button" data-act="xls" style="margin-top:6px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 8 8 8M16 8l-8 8"/></svg>Export Excel</button>
   <div class="tipcard" id="tipcard"></div>
   <button class="theme" id="themeBtn" type="button">Tema: gelap</button>
 </aside>
@@ -1239,8 +1236,8 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape" && RP.open){ RP.op
 
 /* tema */
 function applyTheme(t){ if(t==="dark") document.documentElement.setAttribute("data-theme","dark"); else document.documentElement.removeAttribute("data-theme"); themeBtn.textContent="Tema: "+(t==="dark"?"gelap":"terang"); }
-let theme="light"; try{theme=localStorage.getItem("dashTheme3")||"light"}catch(e){} applyTheme(theme);
-themeBtn.onclick=()=>{theme=theme==="dark"?"light":"dark"; applyTheme(theme); try{localStorage.setItem("dashTheme3",theme)}catch(e){} render();};
+let theme="light"; try{theme=localStorage.getItem("mmjTheme")||"light"}catch(e){} applyTheme(theme);
+themeBtn.onclick=()=>{theme=theme==="dark"?"light":"dark"; applyTheme(theme); try{localStorage.setItem("mmjTheme",theme)}catch(e){} render();};
 
 /* nav aktif saat scroll */
 const navLinks=[...document.querySelectorAll("#nav a")], secs=navLinks.map(a=>document.querySelector(a.getAttribute("href")));
@@ -2240,9 +2237,6 @@ tbody tr:hover td{background:var(--surface-2)}
     <a href="#tongkang" data-mini="hide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 15h18l-2 5H5l-2-5Zm3 0V9h12v6M12 9V4"/></svg>Tongkang</a>
     <a href="#cek" data-mini="hide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 2 20h20L12 3Zm0 6v5m0 3v.5"/></svg>Cek Data</a>
   </nav>
-  <div class="lbl">Aksi cepat</div>
-  <button class="qbtn" type="button" data-act="pdf"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z"/><path d="M14 3v6h6M8 14h8M8 17h5"/></svg>PDF Presentasi</button>
-  <button class="qbtn" type="button" data-act="xls" style="margin-top:6px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 8 8 8M16 8l-8 8"/></svg>Export Excel</button>
   <div class="tipcard" id="tipcard"></div>
   <button class="theme" id="themeBtn" type="button">Tema: gelap</button>
 </aside>
@@ -2529,8 +2523,8 @@ const KM_RANGE = (()=>{ const by={}, di=D.kategori.indexOf("Distribusi ke Area")
 
 /* tema */
 function applyTheme(t){ if(t==="dark") document.documentElement.setAttribute("data-theme","dark"); else document.documentElement.removeAttribute("data-theme"); themeBtn.textContent="Tema: "+(t==="dark"?"gelap":"terang"); }
-let theme="light"; try{theme=localStorage.getItem("dashTheme3")||"light"}catch(e){} applyTheme(theme);
-themeBtn.onclick=()=>{theme=theme==="dark"?"light":"dark"; applyTheme(theme); try{localStorage.setItem("dashTheme3",theme)}catch(e){} render();};
+let theme="light"; try{theme=localStorage.getItem("mmjTheme")||"light"}catch(e){} applyTheme(theme);
+themeBtn.onclick=()=>{theme=theme==="dark"?"light":"dark"; applyTheme(theme); try{localStorage.setItem("mmjTheme",theme)}catch(e){} render();};
 
 /* nav aktif saat scroll */
 const navLinks=[...document.querySelectorAll("#nav a")];
@@ -3639,9 +3633,6 @@ section[hidden]{display:none!important}
     <a href="#rfCb" data-nv="rf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>Hujan vs Loss Time</a>
     <a href="#rincian" data-nv="lt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Rincian</a>
   </nav>
-  <div class="lbl">Aksi cepat</div>
-  <button class="qbtn" type="button" data-act="pdf"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z"/><path d="M14 3v6h6M8 14h8M8 17h5"/></svg>PDF Presentasi</button>
-  <button class="qbtn" type="button" data-act="xls" style="margin-top:6px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 8 8 8M16 8l-8 8"/></svg>Export Excel</button>
   <div class="tipcard" id="tipcard"></div>
   <button class="theme" id="themeBtn" type="button">Tema: gelap</button>
 </aside>
@@ -3926,8 +3917,8 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape" && RP.open){ RP.op
 
 /* tema */
 function applyTheme(t){ if(t==="dark") document.documentElement.setAttribute("data-theme","dark"); else document.documentElement.removeAttribute("data-theme"); $("themeBtn").textContent="Tema: "+(t==="dark"?"gelap":"terang"); }
-let theme="light"; try{theme=localStorage.getItem("dashTheme3")||"light"}catch(e){} applyTheme(theme);
-$("themeBtn").onclick=()=>{theme=theme==="dark"?"light":"dark"; applyTheme(theme); try{localStorage.setItem("dashTheme3",theme)}catch(e){} render();};
+let theme="light"; try{theme=localStorage.getItem("mmjTheme")||"light"}catch(e){} applyTheme(theme);
+$("themeBtn").onclick=()=>{theme=theme==="dark"?"light":"dark"; applyTheme(theme); try{localStorage.setItem("mmjTheme",theme)}catch(e){} render();};
 
 /* nav aktif saat scroll */
 const navLinks=[...document.querySelectorAll("#nav a")];

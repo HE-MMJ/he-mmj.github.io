@@ -503,7 +503,7 @@ section[hidden]{display:none!important}
     <a href="#rfCb" data-nv="rf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>Hujan vs Loss Time</a>
     <a href="#rincian" data-nv="lt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Rincian</a>
   </nav>
-  <div class="lbl">Aksi cepat</div>
+
   <div class="tipcard" id="tipcard"></div>
   <button class="theme" id="themeBtn" type="button">Tema: gelap</button>
 </aside>
@@ -789,7 +789,7 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape" && RP.open){ RP.op
 /* tema */
 function applyTheme(t){ if(t==="dark") document.documentElement.setAttribute("data-theme","dark"); else document.documentElement.removeAttribute("data-theme"); $("themeBtn").textContent="Tema: "+(t==="dark"?"gelap":"terang"); }
 /* tema dipegang loader (assets/js/shell.js) */
-$("themeBtn").onclick=()=>{theme=theme==="dark"?"light":"dark"; applyTheme(theme); try{localStorage.setItem("dashTheme3",theme)}catch(e){} render();};
+$("themeBtn").onclick=()=>{theme=theme==="dark"?"light":"dark"; applyTheme(theme); try{localStorage.setItem("mmjTheme",theme)}catch(e){} render();};
 
 /* nav aktif saat scroll */
 const navLinks=[...document.querySelectorAll("#nav a")];

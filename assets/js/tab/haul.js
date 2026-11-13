@@ -120,8 +120,8 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape" && RP.open){ RP.op
 
 /* tema */
 function applyTheme(t){ if(t==="dark") document.documentElement.setAttribute("data-theme","dark"); else document.documentElement.removeAttribute("data-theme"); themeBtn.textContent="Tema: "+(t==="dark"?"gelap":"terang"); }
-let theme="light"; try{theme=localStorage.getItem("dashTheme3")||"light"}catch(e){} applyTheme(theme);
-themeBtn.onclick=()=>{theme=theme==="dark"?"light":"dark"; applyTheme(theme); try{localStorage.setItem("dashTheme3",theme)}catch(e){} render();};
+let theme="light"; try{theme=localStorage.getItem("mmjTheme")||"light"}catch(e){} applyTheme(theme);
+themeBtn.onclick=()=>{theme=theme==="dark"?"light":"dark"; applyTheme(theme); try{localStorage.setItem("mmjTheme",theme)}catch(e){} render();};
 
 /* nav aktif saat scroll */
 const navLinks=[...document.querySelectorAll("#nav a")], secs=navLinks.map(a=>document.querySelector(a.getAttribute("href")));

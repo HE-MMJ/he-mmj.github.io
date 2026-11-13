@@ -191,15 +191,23 @@ def build_he_template(summary):
     theme_js = """
 <script data-mmj-out="assets/js/tab/he-theme.js" data-mmj-mode="app">
 (function(){
-  var b=document.getElementById('heTheme'); if(!b) return;
-  var apply=function(dark){
+  var b=document.getElementById('heTheme') || document.querySelector('.side .theme'); if(!b) return;
+  var KEY='mmjTheme';
+  var read=function(){
+    try{ var t=localStorage.getItem(KEY); if(!t) t=localStorage.getItem('dashTheme3') || localStorage.getItem('heTheme'); return t==='dark'; }
+    catch(e){ return false; }
+  };
+  var apply=function(dark,save){
     if(dark) document.documentElement.setAttribute('data-theme','dark');
     else document.documentElement.removeAttribute('data-theme');
     b.textContent = dark? 'Tema: gelap' : 'Tema: terang';
-    try{ localStorage.setItem('heTheme', dark?'dark':'light'); }catch(e){}
+    if(save){ try{ localStorage.setItem(KEY,dark?'dark':'light'); }catch(e){} }
   };
-  b.addEventListener('click', function(){ apply(document.documentElement.getAttribute('data-theme')!=='dark'); });
-  try{ if(localStorage.getItem('heTheme')==='dark') apply(true); }catch(e){}
+  /* shell.js owns click binding; HE only applies initial state and storage updates. */
+  window.addEventListener('storage', function(e){
+    if(e.key===KEY || e.key==='dashTheme3' || e.key==='heTheme') apply(e.newValue==='dark',false);
+  });
+  apply(read(),false);
 })();
 </script>
 """
@@ -352,6 +360,9 @@ def main():
         if not m:
             raise SystemExit("template mmjT_%s tidak ditemukan" % key)
         tpls[key] = m.group(0)
+        # Hapus blok Aksi cepat dan kartu capaian dari sidebar semua dashboard.
+        tpls[key] = re.sub(r'\s*<div class="lbl">Aksi cepat</div>\s*<button class="qbtn".*?</button>\s*<button class="qbtn".*?</button>', '', tpls[key], flags=re.S)
+        tpls[key] = re.sub(r'\s*<div class="tipcard"[^>]*id="tipcard"[^>]*>.*?</div>', '', tpls[key], flags=re.S)
         # Logo lama tertanam di template; pakai logo HE yang sama.
         # Ganti semua gambar logo: template lama menaruh class pada wrapper
         # .badge, bukan pada elemen img.

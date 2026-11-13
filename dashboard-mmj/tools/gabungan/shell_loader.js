@@ -202,7 +202,7 @@
   function currentTheme() {
     try {
       var t = localStorage.getItem(THEME_KEY);
-      if (!t) t = localStorage.getItem("dashTheme3") || localStorage.getItem("heTheme");  /* data lama */
+      if (!t) t = localStorage.getItem("mmjTheme") || localStorage.getItem("heTheme");  /* data lama */
       return t === "dark" ? "dark" : "light";
     } catch (e) { return "light"; }
   }

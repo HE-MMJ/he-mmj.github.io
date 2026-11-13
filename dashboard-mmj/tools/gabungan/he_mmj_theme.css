@@ -199,6 +199,16 @@ table.grid tbody tr:hover { background: var(--accent-soft); }
 }
 :root[data-theme="dark"] table.grid tbody tr:nth-child(even){ background: rgba(255,255,255,.03); }
 :root[data-theme="dark"] table.grid tbody tr:hover{ background: var(--accent-soft); }
+:root[data-theme="dark"] table.grid tbody tr:hover td,
+:root[data-theme="dark"] table.grid tbody tr:hover th,
+:root[data-theme="dark"] table.grid tbody tr:hover td b,
+:root[data-theme="dark"] table.grid tbody tr:hover td.model-cell,
+:root[data-theme="dark"] table.grid tbody tr:hover td.model-cell b { color: var(--ink); }
+:root[data-theme="dark"] .table-wrap tbody tr td:first-child,
+:root[data-theme="dark"] .table-wrap tbody tr:nth-child(even) td:first-child { background: var(--surface-solid); color: var(--ink-2); }
+:root[data-theme="dark"] .table-wrap tbody tr td:first-child b { color: var(--ink); }
+:root[data-theme="dark"] .table-wrap tbody tr:hover td:first-child { background: var(--surface-2); color: var(--ink); }
+:root[data-theme="dark"] .grid tbody td.sisa-over { background: rgba(248,113,113,.12); }
 /* canvas grafik digambar sendiri (latar putih) -> pertahankan panel terang agar grafik tetap tajam */
 :root[data-theme="dark"] .chart-box { background: #ffffff; }
 :root[data-theme="dark"] .chart-box .note { color: #64748B; }

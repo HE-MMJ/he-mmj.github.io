@@ -46,8 +46,8 @@ table td,table th{font-variant-numeric:tabular-nums}
 
 /* ---------- kaki sidebar: menu user + tombol tema (menempel di bawah) ------ */
 .side-foot{
-  position:sticky;bottom:0;z-index:2;margin-top:auto;
-  display:flex;flex-direction:column;gap:6px;padding-top:8px;
+  position:sticky;bottom:-20px;z-index:2;margin-top:auto;margin-bottom:-20px;
+  display:flex;flex-direction:column;gap:6px;padding:8px 0 0;
   background:var(--surface-solid,#fff);border-top:1px solid var(--hair);
 }
 
@@ -73,7 +73,8 @@ table td,table th{font-variant-numeric:tabular-nums}
   padding:2px 0;cursor:pointer;max-width:170px;
 }
 .mmj-bulan select option{background:#fff;color:#000}
-:root[data-theme="dark"] .mmj-bulan select option{background:#272b5e;color:#000}
+:root[data-theme="dark"] .mmj-bulan select option{background:#272b5e;color:#eef0ff}
+:root[data-theme="dark"] .mmj-bulan span{color:var(--ink-2);opacity:1}
 .mmj-bulan select:focus-visible{outline:2px solid #fff;outline-offset:2px}
 
 /* ---------- tema gelap: token & komponen dasar -----------------------------
