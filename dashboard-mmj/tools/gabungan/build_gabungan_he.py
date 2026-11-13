@@ -352,6 +352,10 @@ def main():
         if not m:
             raise SystemExit("template mmjT_%s tidak ditemukan" % key)
         tpls[key] = m.group(0)
+        # Logo lama tertanam di template; pakai logo HE yang sama.
+        tpls[key] = re.sub(r'(<img\b[^>]*class="(?:plogo|header-logo)"[^>]*src=")[^"]+', r'\1' + logo_mmj, tpls[key])
+        tpls[key] = re.sub(r'(<img\b[^>]*src=")[^"]+("[^>]*class="(?:plogo|header-logo)")', r'\1' + logo_mmj + r'\2', tpls[key])
+        tpls[key] = tpls[key].replace('.logo .badge{display:grid;place-items:center;width:100%}', '.logo .badge{display:contents}')
     tpls["exec"] = patch_exec(tpls["exec"])
 
     # nav: ganti/link eksternal "../index.html" -> tab internal "#tab=he"

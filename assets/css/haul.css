@@ -56,7 +56,7 @@ button:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(
 
 .logo{display:flex;flex-direction:column;align-items:center;gap:8px;padding:0 4px 18px;text-align:center}
 
-.logo .badge{display:grid;place-items:center;width:100%}
+.logo .badge{display:contents}
 
 .logo img{display:block;height:80px;width:auto}
 
