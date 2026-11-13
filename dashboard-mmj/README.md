@@ -17,7 +17,7 @@ assets/css/intro.css           CSS animasi pembuka (dari tools/gabungan/intro.cs
 assets/css/login.css           CSS halaman login (dari tools/gabungan/login.css)
 assets/css/shell.css           CSS menu user di sidebar (dari tools/gabungan/shell.css)
 assets/css/<tab>.css           CSS tiap dashboard (exec · haul · batu · lt · he)
-assets/data/<tab>.js           data mentah -> window.MMJ_DATA[<tab>]
+assets/data/<tab>.js           data ringkas -> window.MMJ_DATA[<tab>] (lihat "Lapisan data ringkas")
 assets/data/he.js              data unit HE (DATA · DAILY · BELUM) -> window.MMJ_HE
 assets/data/wt.js              data Water Truck -> window.MMJ_WT
 assets/data/standar-he.js      data kontrol SOP (Fuel Ratio Tabel 1 & kategori MA) -> window.MMJ_STD
@@ -180,12 +180,60 @@ python check_login.py               # kelengkapan hasil build
 python check_login_browser.py       # 16 uji perilaku di Chrome headless
 python check_visual.py              # penjaga regresi tampilan (pixel-diff)
 python check_visual.py --make-baseline   # buat ulang baseline
+python test_data_codec.py           # uji encoder data (round-trip + penghematan)
+python test_built_data.py           # data hasil build = data sumber
+python check_data_browser.py        # decoder JS di browser = decoder Python
 ```
 
 `check_visual.py` membandingkan 10 screenshot (5 tab × 2 lebar) dengan baseline
 di `.visual-baseline/`; **ambang 0,5%** → kalau tema terang berubah karena
 refactor, build dianggap gagal. Halaman yang isinya bergerak (ticker
 "INFO PENTING") dinormalkan dulu (waktu dibekukan + animasi dimatikan).
+
+## Lapisan data ringkas (`tools/gabungan/data_codec.py`)
+
+File data (`assets/data/*.js`) dulu memuat JSON mentah, jadi browser harus
+membaca ratusan KB – 1 MB per tab. Sekarang isinya **format ringkas** yang
+didekode otomatis oleh `MMJ_INFLATE` (decoder-nya ikut disisipkan di setiap
+file data, jadi tidak bergantung urutan muat).
+
+Format (hasil dekode **persis sama** dengan aslinya):
+
+| Kode | Arti |
+|---|---|
+| `$D` / `$R` / `$S` / `$M` | list of object → kolom per kunci + kamus nilai + mode |
+| `$T` (`c`/`d`/`m`) | list of array (tabel) → kolom + kamus + mode |
+| `$A` | list biasa |
+| `$O` | object biasa |
+
+Mode per kolom (`$M`): `0` polos, `1` RLE (nilai beruntun), `2` packed
+(indeks jadi string 1–2 byte per nilai). Encoder otomatis memilih yang
+paling hemat.
+
+| File | Sebelum | Sesudah |
+|---|---|---|
+| `lt.js` | 1038 KB | **200 KB** |
+| `batu.js` | 653 KB | **196 KB** |
+| `haul.js` | 216 KB | **189 KB** |
+| `he.js` | 142 KB | **57 KB** |
+| `he-summary.js` | 13 KB | **8,5 KB** |
+| **Total** | **~2083 KB** | **~680 KB** (hemat 67%) |
+
+Yang TIDAK berubah:
+- Isi datanya persis sama (dibuktikan `test_built_data.py`: file hasil build
+  vs sumber, dan `check_data_browser.py`: decoder JS di browser vs decoder
+  Python → hash sama).
+- Tampilan tidak berubah (`check_visual.py`: pixel-diff build sebelum vs
+  sesudah codec = 0,00–0,01%).
+- Mode offline `file://` tetap jalan (data tetap dimuat lewat `<script>`).
+
+Aturan:
+- `assets/data/*.js` adalah **hasil build** — jangan diedit manual.
+- Data tetap hanya boleh diubah dari sumbernya (`js/data.js`,
+  `dashboard-mmj/index.html`), lalu build ulang.
+- Kalau menambah sumber data baru, cukup taruh di `emit_site.py`
+  (`_data_file()` / `_he_rows_file()` / `_wt_file()`); encoder & decoder
+  otomatis bekerja.
 
 ## Running text (ticker) tab Heavy Equipment
 

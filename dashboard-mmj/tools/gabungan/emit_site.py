@@ -35,9 +35,17 @@ Mode eksplisit:
 """
 import os
 import re
+import sys
 import json
 import base64
 import datetime
+
+# encoder data ringkas (kolomar + kamus string) -> file data jauh lebih kecil
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+try:
+    import data_codec
+except Exception:            # pragma: no cover - fallback kalau modul hilang
+    data_codec = None
 
 TABS = ["exec", "haul", "batu", "lt", "he"]
 
@@ -141,20 +149,58 @@ def _app_file(rel, tab, code, bindings=""):
     return body
 
 
+def _compact_literal(lit):
+    """Literal JSON -> JSON ringkas (kolomar + kamus string).
+
+    Kembalikan None kalau tidak bisa diurai atau tidak lebih kecil, supaya
+    pemanggil jatuh ke bentuk biasa (perilaku lama, pasti aman).
+    """
+    if data_codec is None:
+        return None
+    try:
+        obj = json.loads(lit)
+    except Exception:
+        return None
+    try:
+        small, used = data_codec.compact_json(obj)
+    except Exception:
+        return None
+    if not used:
+        return None
+    return small
+
+
+def _decoder_js():
+    """Blok decoder (dipakai kalau data disimpan dalam bentuk ringkas)."""
+    return data_codec.DECODER_JS.strip() + "\n"
+
+
 def _data_file(rel, target, lit):
-    return (HDR % rel) + "window.MMJ_DATA = window.MMJ_DATA || {};\n" \
-        + "window.MMJ_DATA[%s] = %s;\n" % (json.dumps(target), lit)
+    body = (HDR % rel) + "window.MMJ_DATA = window.MMJ_DATA || {};\n"
+    small = _compact_literal(lit)
+    if small is None:
+        return body + "window.MMJ_DATA[%s] = %s;\n" % (json.dumps(target), lit)
+    return body + _decoder_js() \
+        + "window.MMJ_DATA[%s] = window.MMJ_INFLATE(%s);\n" % (json.dumps(target), small)
 
 
 def _he_rows_file(rel, code):
     out = [HDR % rel, "window.MMJ_HE = window.MMJ_HE || {};\n"]
     rest = code
+    parts = []
     for name in ("DATA", "DAILY", "BELUM"):
         got = _split_const(rest, name)
         if not got:
             continue
         lit, rest = got
-        out.append("window.MMJ_HE.%s = %s;\n" % (name, lit))
+        small = _compact_literal(lit)
+        if small is None:
+            parts.append("window.MMJ_HE.%s = %s;\n" % (name, lit))
+        else:
+            parts.append("window.MMJ_HE.%s = window.MMJ_INFLATE(%s);\n" % (name, small))
+    if any("MMJ_INFLATE(" in p for p in parts):
+        out.append(_decoder_js())
+    out.extend(parts)
     rest = rest.strip()
     if rest and not _is_only_comments(rest):
         out.append("/* sisa kode data (dijalankan apa adanya) */\n" + rest + "\n")
@@ -164,12 +210,21 @@ def _he_rows_file(rel, code):
 def _wt_file(rel, code):
     out = [HDR % rel, "window.MMJ_WT = window.MMJ_WT || {};\n"]
     rest = code
+    parts = []
     for name in ("WT_PERIODE", "WT_DATA"):
         got = _split_const(rest, name)
         if not got:
             continue
         lit, rest = got
-        out.append("window.MMJ_WT.%s = %s;\n" % (name.replace("WT_", ""), lit))
+        small = _compact_literal(lit)
+        if small is None:
+            parts.append("window.MMJ_WT.%s = %s;\n" % (name.replace("WT_", ""), lit))
+        else:
+            parts.append("window.MMJ_WT.%s = window.MMJ_INFLATE(%s);\n"
+                         % (name.replace("WT_", ""), small))
+    if any("MMJ_INFLATE(" in p for p in parts):
+        out.append(_decoder_js())
+    out.extend(parts)
     rest = rest.strip()
     if rest and not _is_only_comments(rest):
         out.append("/* sisa kode data (dijalankan apa adanya) */\n" + rest + "\n")
