@@ -547,7 +547,7 @@ function render(){
 
   /* sidebar tip: blok tujuan terbesar */
   const topB = [...ga.entries()].sort((a,b)=>b[1].total-a[1].total)[0];
-  tipcard.innerHTML = topB ? `<span class="pill">Area teratas</span><b>${BLOK_LABEL[topB[0]]||topB[0]} menerima ${dist?Math.round(topB[1].total/dist*100):0}% distribusi</b><p>${fmt(topB[1].total)} t dari ${fmt(topB[1].n)} ritase</p><svg width="110" height="110" viewBox="0 0 24 24" fill="#fff"><path d="M2 20 9 7l4 6 3-4 6 11Z"/></svg>` : "";
+  (document.getElementById("tipcard")||{}).innerHTML = topB ? `<span class="pill">Area teratas</span><b>${BLOK_LABEL[topB[0]]||topB[0]} menerima ${dist?Math.round(topB[1].total/dist*100):0}% distribusi</b><p>${fmt(topB[1].total)} t dari ${fmt(topB[1].n)} ritase</p><svg width="110" height="110" viewBox="0 0 24 24" fill="#fff"><path d="M2 20 9 7l4 6 3-4 6 11Z"/></svg>` : "";
 
   /* ringkasan filter (untuk PDF & Excel) */
   const fl = filterLabels();

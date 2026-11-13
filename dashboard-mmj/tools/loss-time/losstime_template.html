@@ -1250,7 +1250,7 @@ function render(){
     ROUTES.forEach(r=>{ o["mm"+r]=sum(R.filter(y=>posIn(y.p,r) && B.key(y.d)===k),y=>y.mm)/posN(r); }); return o; });
 
   /* tipcard */
-  $("tipcard").innerHTML = wettest ? `<span class="pill">Pos terbasah</span><b>${wettest[0]} · ${fmm(wettest[1])} mm</b><p>${fh(posH.get(wettest[0])||0)} jam hujan pada periode ini · rute ${POSR[wettest[0]]}</p><svg width="110" height="110" viewBox="0 0 24 24" fill="#fff"><path d="M12 3s6 6.4 6 11a6 6 0 0 1-12 0c0-4.6 6-11 6-11Z"/></svg>` : `<span class="pill">Curah hujan</span><b>Tidak ada hujan tercatat</b><p>pada periode &amp; route terpilih</p>`;
+  ($("tipcard")||{}).innerHTML = wettest ? `<span class="pill">Pos terbasah</span><b>${wettest[0]} · ${fmm(wettest[1])} mm</b><p>${fh(posH.get(wettest[0])||0)} jam hujan pada periode ini · rute ${POSR[wettest[0]]}</p><svg width="110" height="110" viewBox="0 0 24 24" fill="#fff"><path d="M12 3s6 6.4 6 11a6 6 0 0 1-12 0c0-4.6 6-11 6-11Z"/></svg>` : `<span class="pill">Curah hujan</span><b>Tidak ada hujan tercatat</b><p>pada periode &amp; route terpilih</p>`;
 
   $("pinfo").textContent = `Periode: ${rangeText()} · Route: ${routesSel.join(", ")} · Tipe: ${st.type?TN[st.type]:"semua"} · Dicetak ${new Date().toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"})}`;
   const X = renderExtra({B, SA, R, H0m, h0Type, routesSel, H0, lMMJ, grpRows});

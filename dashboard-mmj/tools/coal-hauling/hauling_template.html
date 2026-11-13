@@ -1027,7 +1027,7 @@ function render(){
     <div><div class="k">Proyeksi akhir bulan · ${ROUTE[R].n}</div><h3>${t.T?`${pct(t.proj/t.T*100)} dari target bulanan (${short(t.proj)} / ${short(t.T)} t)`:`${short(t.proj)} t`}</h3>
     <p>${t.T&&ac.rem?`Perlu rata-rata ${fmt(t.need)} t/hari selama ${ac.rem} hari tersisa; saat ini ${fmt(t.avg)} t/hari.`:""}${ranked.length>1?` Tertinggi vs target: <b>${ranked[0].c}</b> ${pct(ranked[0].pE)}; terendah: <b>${ranked[ranked.length-1].c}</b> ${pct(ranked[ranked.length-1].pE)}.`:""}</p></div>
     <a href="#achieve">Lihat achievement</a>`;
-  tipcard.innerHTML=t.T?`<span class="pill">Capaian s/d hari ini</span><b>${ROUTE[R].n} ${pct(t.pE)} dari target ${short(t.e)} t</b><p>${t.a>=t.e?"Di atas":"Kurang dari"} target ${fmt(Math.abs(t.a-t.e))} t · ${mLab}</p><svg width="110" height="110" viewBox="0 0 24 24" fill="#fff"><path d="M3 15h18l-2 5H5l-2-5Zm3 0V9h12v6M12 9V4"/></svg>`:"";
+  (document.getElementById("tipcard")||{}).innerHTML=t.T?`<span class="pill">Capaian s/d hari ini</span><b>${ROUTE[R].n} ${pct(t.pE)} dari target ${short(t.e)} t</b><p>${t.a>=t.e?"Di atas":"Kurang dari"} target ${fmt(Math.abs(t.a-t.e))} t · ${mLab}</p><svg width="110" height="110" viewBox="0 0 24 24" fill="#fff"><path d="M3 15h18l-2 5H5l-2-5Zm3 0V9h12v6M12 9V4"/></svg>`:"";
 
   /* running text */
   { const a02=achCalc("H02"), a1=achCalc("H1"), t02=a02.tot, t1=a1.tot;
