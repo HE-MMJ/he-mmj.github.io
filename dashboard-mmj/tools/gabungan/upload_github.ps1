@@ -81,7 +81,9 @@ if (Test-Path $HEB) {
 }
 
 # ---------- 5. Commit & push ----------
-$OUTS = @("dashboard-mmj", "index.html", "login.html", "assets")   # hasil build halaman utama modular
+# semua hasil build (halaman utama, halaman per tab mis. Batu-Split/, assets/, login.html) - struktur bisa
+# berubah sewaktu-waktu oleh collaborator; salinan repo ini hanya cermin & dibersihkan di awal, jadi aman ambil semua
+$OUTS = @(".")
 git add -A -- $OUTS
 git diff --cached --quiet -- $OUTS
 if ($LASTEXITCODE -eq 0) {
