@@ -28,7 +28,7 @@
 
   // ---------- state ----------
   const WTD = (typeof WT_DATA !== 'undefined' && Array.isArray(WT_DATA)) ? WT_DATA : [];
-  const PERIODE = (typeof WT_PERIODE !== 'undefined') ? WT_PERIODE : { y: 2026, m: 11, last: 30, label: 'November 2026' };
+  const PERIODE = (typeof WT_PERIODE !== 'undefined' && WT_PERIODE) ? WT_PERIODE : { y: 2026, m: 11, last: 30, label: 'November 2026' };
 
   const VENDOR_ORDER = ['SKN', 'WT TSA', 'WT PBT', 'WT ASA', 'WT FBS', 'WT TJP', 'WT TLK'];
   const VENDOR_COLOR = {
