@@ -17,32 +17,37 @@
   var users = [
     { id: "u1", name: "Rizualdi Fadli", username: "admin", pass: "mmj2026", role: "admin" },
     { id: "u2", name: "Admin HSE", username: "hse", pass: "hse2026", role: "hse" },
-    { id: "u3", name: "Admin ECC", username: "ecc", pass: "ecc2026", role: "ecc" }
+    { id: "u3", name: "Admin ECC", username: "ecc", pass: "ecc2026", role: "ecc" },
+    { id: "u4", name: "Admin Eksternal", username: "ext", pass: "ext2026", role: "external" }
   ];
 
   /* hak akses per role. Role "admin" (Admin General) selalu boleh semuanya.
      Kunci capability dipakai pada penanda data-mmj-cap di menu sidebar:
        public       -> dashboard monitoring (terbuka juga untuk tamu)
        hse          -> Data Simper + Data DT
+       external     -> hanya dasbor publik (tanpa data sensitif)
        costcontrol  -> Cost Control */
   var CAPS = {
     admin: { all: true },
     hse: { hse: true },
-    ecc: { costcontrol: true }
+    ecc: { costcontrol: true },
+    external: {}
   };
 
   /* nama role yang ditampilkan di sidebar */
   var ROLE_LABEL = {
     admin: "Admin General",
     hse: "Admin HSE",
-    ecc: "Admin ECC"
+    ecc: "Admin ECC",
+    external: "Admin Eksternal"
   };
 
   /* halaman pertama tiap role setelah login (relatif terhadap root situs) */
   var ROLE_HOME = {
     admin: "index.html",
     hse: "Data-Simper/",
-    ecc: "Cost-Control/"
+    ecc: "Cost-Control/",
+    external: "index.html"
   };
 
   var sessionKey = "mmjSession";
