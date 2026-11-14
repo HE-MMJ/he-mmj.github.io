@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="id" data-build="fc03a68329" data-mmj-page="lt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loss Time & Curah Hujan MMJ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link data-mmj-head rel="stylesheet" href="../assets/css/lt.css?v=fc03a68329">
+<meta name="theme-color" content="#6366f1">
+<meta name="description" content="Dashboard MMJ 2026: Eksekutif, Heavy Equipment (Timesheet HE/WT), Coal Hauling, Batu Split, Loss Time &amp; Rainfall.">
+<link rel="icon" type="image/png" href="../assets/img/favicon.png?v=fc03a68329">
+<link rel="stylesheet" id="mmjBootCss" href="../assets/css/boot.css?v=fc03a68329">
+<link rel="stylesheet" href="../assets/css/theme.css?v=fc03a68329">
+<link rel="stylesheet" href="../assets/css/shell.css?v=fc03a68329">
+<link rel="stylesheet" href="../assets/css/common.css?v=fc03a68329">
+</head>
+<body>
+<!-- terlihat hanya bila JavaScript tidak berjalan -->
+<div class="mmjbox" id="mmjNojs"><b>Dashboard belum tampil?</b>File ini perlu dibuka dengan browser (Chrome, Edge, atau Safari), bukan pratinjau WhatsApp / pembaca file.
+  <ol><li>Unduh file dari WhatsApp.</li><li>Ketuk ⋮ / Bagikan → <i>Buka dengan</i> → pilih <b>Chrome</b>.</li><li>Di laptop: klik kanan file → <i>Open with</i> → Chrome / Edge.</li></ol></div>
+
+
+
+
+
+
+<div class="mmjnav" id="mmjNav" role="navigation" aria-label="Pilih dashboard"><div class="mlbl">Overview</div><a href=".././" data-mmj-cap="public" data-mmjtab="exec"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z"/></svg>Dashboard Eksekutif</a><div class="mlbl">Monitoring</div>
+            <a href="../Heavy-Equipment/" data-mmj-cap="public" data-mmjtab="he"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V9m5 10V5m5 14v-7m5 7V8"/></svg>Heavy Equipment</a><a href="../Coal-Hauling/" data-mmj-cap="public" data-mmjtab="haul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 16V7h11v9M13 10h4l4 4v2h-8"/><circle cx="6.5" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/></svg>Coal Hauling</a><a href="../Batu-Split/" data-mmj-cap="public" data-mmjtab="batu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4-9 4-9-4Zm0 5 9 4 9-4M3 17l9 4 9-4"/></svg>Batu Split</a><a href="../Loss-Time/" data-mmj-cap="public" data-mmjtab="lt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>Loss Time</a><a href="../Rainfall/" data-mmj-cap="public" data-mmjtab="rf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 15a5 5 0 1 1 .9-9.9A6 6 0 0 1 19 9a4 4 0 0 1-1 7.9M8 19l-1 2M12 18l-1 3M16 19l-1 2"/></svg>Rainfall</a><a href="../Data-Simper/" data-mmjtab="simper" data-mmj-cap="hse" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3h8a2 2 0 0 1 2 2v16l-6-3-6 3V5a2 2 0 0 1 2-2Z"/><path d="M9 8h6M9 12h6"/></svg>Data Simper</a><a href="../Data-DT/" data-mmjtab="dt" data-mmj-cap="hse" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17V7h9v10M12 10h4l4 4v3h-8"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>Data DT</a><a href="../Cost-Control/" data-mmjtab="cost" data-mmj-cap="costcontrol" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V9m5 10V5m5 14v-7m5 7V8"/></svg>Cost Control</a><div class="mmjg">Data per 13-11-2026 16:29</div><div class="mlbl mhere">Menu halaman</div></div>
+
+<div class="app">
+
+<aside class="side">
+  <div class="logo">
+    <div class="badge"><img src="data:image/png;base64,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" alt="Logo PT. Musi Mitra Jaya"></div>
+    <div class="nm">Loss Time &amp; Curah Hujan</div>
+  </div>
+  <nav class="nav" id="nav">
+    <a href="#top" class="on" id="navDash"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>Dashboard</a>
+    <div class="viewsw" id="viewSw" role="tablist" aria-label="Pilih dashboard">
+      <button type="button" role="tab" data-view-btn="lt"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>Loss Time</button>
+      <button type="button" role="tab" data-view-btn="rf"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 15a5 5 0 1 1 .9-9.9A6 6 0 0 1 19 9a4 4 0 0 1-1 7.9M8 19l-1 2M12 18l-1 3M16 19l-1 2"/></svg>Rainfall</button>
+    </div>
+    <a href="#mmj" data-nv="lt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 1 0 9 9h-9Z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15Z"/></svg>MMJ vs Bukan MMJ</a>
+    <a href="#losstime" data-nv="lt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Total Loss Time (H0)</a>
+    <a href="#route" data-nv="lt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Route &amp; Area</a>
+    <a href="#sop" data-nv="lt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4zM4 10h16M10 10v10"/></svg>Kelompok Loss Time</a>
+    <a href="#mitra" id="navMc" data-nv="lt" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 11a4 4 0 1 0-8 0M3 21a9 9 0 0 1 18 0"/><circle cx="12" cy="7" r="0.5"/></svg>Mitra Company<span class="caret" aria-hidden="true">›</span></a>
+    <div class="subnav" id="mcSub" hidden>
+      <a href="#mitra" data-mcv="t2">Per Desc Type2</a>
+      <a href="#mitra" data-mcv="day">Harian / bulanan</a>
+      <a href="#mitra" data-mcv="desc">Penyebab</a>
+    </div>
+    <a href="#hujan" data-nv="rf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>Curah Hujan per Pos</a>
+    <a href="#rfRh" data-nv="rf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Rainfall vs Rain Hours</a>
+    <a href="#rfPos" data-nv="rf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Total per Pos</a>
+    <a href="#rfCb" data-nv="rf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>Hujan vs Loss Time</a>
+    <a href="#rincian" data-nv="lt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Rincian</a>
+  </nav>
+  <button class="theme" id="themeBtn" type="button">Tema: gelap</button>
+</aside>
+
+<main>
+  <header class="top">
+    <div class="ttl">
+      <img class="plogo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAK4AAABuCAYAAAC+5ChaAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAIdUAACHVAQSctJ0AAB8gSURBVHhe7V0JlBXF1R40JjHyugfXmJjFRLOYPdEkJmpMYmLUbCbxN3ti/sjJrzERuvsNIFBLd78ZlmFfRcAlsgyoyDLMdPdjBJTIogiKiBvgAsoqo8CwvFf/ufVe96uufsOsvBm0v3O+M2e6qm7Xq7pdfevWreqysi5C7969T6GUfgVj8yZCzOGI2vMItZ/A2H6NUHs/oTYTuJ9Q63VC7LWI2vOJaY2g1Po7QtbFt902+gOy7BgxOhWmaZ5PiPUvQqxFmJhvScrZLiJsvoOo6WFqVSBkX1RWVtZDvm+MGG1Gv36VvbBp30qIvZJQOyMrXmcSEyuLsP0MIXY/hNBH5LrEiNEiKKUXYmpPxMR8R1awUhAT8zDG5kxkWRfLdYsRI4I7TPN8jO17CLWPyMrUFUTYzIJpQmnl1+S6xohRNmzYsNMIsVOE2gdl5ekOxMQ6irE9FSF0tlz3GO9RINO8CmH7ZVlZSkVqplh19Sg2ddrdrGbOA2zBwkWsrs5hdfUuW7iols2Z+yCbNv0eNrx6FCjwLozNP8WTuPcwRo8e/QFCrFHHe9Il07QquZIuaXiEvfjiS+ydd95hrUVjYyPbsOFZtnLlyjmNjY1nyr8pxrscCFV9HFFrlaxUx4vUtNn06fewNWuebJOiHguZTObtbDb7D8ZYPPq+F4As69uEWttl5ZIJr/BU5VBWPWI0GztuApswcTKbOOlONm78JDZq9Fg2ZGg1Hz3lciKh/KLaxWzHjp2y3nUaMpnMvYyxD8q/M8a7CIRY18krW3ZqCJty1zS2YGEtW7lyFXvhhRfZzp27WFNTE8tms7KehHDkyBG2b98+9sorr7J169azdLqBzZg5m40eM565brrTRteWkMlkljLGyuXfG+NdAEKsX2NiNcFIetdd09kjjyxjW7a+wpXv3YBMJvN4rLzvMsBIO2nylEP/fXwl29fYKPf5uwaZTGZZNps9Vf79MU5ANDU1XfPGG2+U5p3dDZDJZGbEE7YTHNls9tpMJnNY7twTFUePHmXbt2/nLrE1TzzJnnhyLdu48Tm2Y8cOUNggXzab1eS2iHGCIJvNXsgYeyvU8ycgQFk3PreJzZ37EKsaMjziufA5dNgINu/hBezVV18DJT6UzWbjOIcTDYyxUzKZzCpZCU4kHDhwgC1dupyNGDE6oqQt8f4Zs8AFt54x9n65bWJ0Y2Sz2QGyIpxIADdcbW0d9yXLStlaVlUNY7Nnz+kjt02Mboo9e/Z8Yu/evQd2797DgG+99Rb3px46dChkB54I2Lx5Cxs/YVJEKVtLhM09lmWdK7dRjG4ITC1T7kCgvxI2YuQYdueUqWzmzBo+qq347+Ns06bn2a7du7ulYoOf2fOWtLhK1xwxNu+T2yhGNwPEIGBsHpA7r7UExYZVtIULa9natU+xnTt3trh6VirA6tyYseMjdW6JENNrWdY35baK0Y0AMatyx3WU9/1nRrdR3oNNTWzu3AcjdWyJmNhpua1idBPAZkaEzcNyp3WEY8aMZ2+//basP12OFSseb9PEje9nM80r5DaL0Q1AiDVG7rCOEKK/INimu2L9+mfaZPdiYi2Q2yxGFwMhpBBq75M7q70EhXjxpZdkXel2ePqZDW1R3gxCqQvktovRhcDYvrlIR7Wbjz32X1lHui1g2Veuf3PE1KqU2y5GFwJRc5ncSe3lrFlzus1krLWAbUDy7yhGhO1XbrjhhpPl9ovRBbAs66OdtW9s5KgxbP+BA7JedBgrV61me/fulS93GuBBmzV7TuT3FCMyzcvkNozRBaDU6i13TnsIs3TYvNjZWLpsOZcPOy3q610eg3A8cPDgwdb5eYk9VG7DGF0AhOwHI53TDsK28M7Gs89ujLitIIpr9eo1x2WVDiLDWpqsIWytl9swRokB9hrC5g65c9pK2BAJI1ZnAjZIVlYNi9zL55Qp09jr27bJxToML70kci+RcLiIbdtnyW0Zo4SglH5W7pj2cN36p+X+7xAgoGf8hMmR+8iE0dH10p267+3w4cNszNgJkXuJRDT1U7ktY5QQGJu/kzulrYTDOTrbizDv4fmR+xyLsPV927btsph2A4KG5HuESOzBclvGKCGIaVuRTmkjt259Re73DuHpp5+J3KM1tOwqHqnWWQ/R3ffcF7lHQGLVyG0Zo4Qg1K6JdEobeP/9s+T+7hD27WvkS8XyfdrCWbNqOsXehq33suyAxF4rt2WMEgJR6/FIp7SBMAvvLMBICVtm5Hu0h2PHTmBvvrlDvkWbAYflybJztHbLbRmjhCDU3BrtlNbx7rvvk/u5Q3hq3frIPTpC2HoDtmpHALuBZblAHi2GULwfrauAsdkod0prufG55+R+bjf279/Phg0fGblHR2laKbZy5Wr5dq0G7BCG40llucD+/e1z5PaMUSK0d6kXDq3rzAWAhx9eELlHZxK27rR30ra4rj4iDwjxy3J7xigR5M5oLRsa4Iy4zgFsqZFXx44HYTtRe5R3y9atEVlA0zQ/LbdnjBJB7ozWEJRs167dcv+2C6BIsEdNvsfx4kPzHm7zmwLyDy3i6YgVtwuBsdkkd0hLvHPKNLlv242nnloXkX+8+dC8+W0eeWcXiRwbMMD6qNyeMUoE3I44hWXLHpX7tV2ApdWRo8ZG5JeC8G2ItgAC42UZCKGecnvGKBEINTfIHdISt29/Q+7XduHRx1ZEZJeS6SUNcpWaxUsvvyyX3x9/AKULgajpyB16LA6vHtnm12wxwMoWhCfK8kvNJ59cK1etKGBFTyyHsP283JYxSghCrElyZx6L8DmmzkDDI0sjsruCEJz+2muvy9WLACZocNiJXw4hu05uyxglBKb2v+XOPBYhiKWjOHDwYIfjETqTo8eMa1Vsg2iPY2qPlNsyRgmBTPNKuSOPRfBpdhQwuZPldjXnPvCQXM0IJk2eEuTHZuovclvGKCEQGq3AB5vljixG8N92dL8XeBKOx9JuZ/CZDc/K1Q3hrqnTg7wI2RfJbRmjxCDEXi13YjHCAckdxapVayJyuwMH00p2uVXL9u5v/qsBU6fenc9vvRlvUe8GgEMu5I4sxul3w3fs2g+Y4IwdNzEit6uJqc0uHTCLqYbH9IeaDxwSTIVZchvG6AIgZF4md2YxPvjgPLkv24RNm16IyOxqYppilw2YwZUWeEZFmj2/Y79cdQ5/cobNFHzEOkZXo6am5mRCrdflTpVZ73hyX7YJ/7l/ZkRmV/IOUsW+3n9OoLQ+//f+6MZPCG+07SqGidmEEDpdbsMYXQRK7Wq5Y2XCMUXtxZ49e0sSAdZa3oJGsfMrFkSU1h91t+4Ju8d2797NyyFqz5PbLkYXAiH7ixDVL3ewSPi2bnvxyNJlEXldwYGkkv3ojnvZ6YYbUViRdn34RJ5gJwSxfiG3XYwuBqLmI3JHi1ywoP0n1dxz738i8kpJRFPsxkGT2XnJ2oiSFuMlw8KnTdbVO7DMuwUh9D653WJ0MRClP5c7XOSMGbNDndlaQGxDV62UDaYp9ttBk9mnmjELjsU39jUFvwHObSAk1VdusxjdAAihkxC2npI73+e48RNDCtla7N37VkTW8WYFGcquGzi91SNsMS59YQ+v/85du2BStsMYMiQht1mMbgJEU82OunDcUVPTIVkvWwSc4CjLOh4cRCvZnwZPYN/oX9OiDdsazlv/Jq8/nCWGsR1/27ebowcmVoOsFD43b94s62WLgI89y3I6izDZ+vPgCezSATPZOcm6iPJ1hHPWbudnmA0bPuolhNAH5YaK0c1AaeWXmvv6TluCr33A93RlOR3h7biaXT/wLvbV/nPZmUknonCdRWfjLrZ8+WOM0tTP5TaK0U1BiJ2SFQYIk5S2AmbkspzWErwBt+GR7NeDprBvD5jFzksuiijY8eDZ/Zewl1/fyYYOHzlHbpsY3RjwaiTUXCcrErCtpyIuWrQ4IkMmxAsYZBi7GY3hSvq9Afezi/o9xM5K1keUqhQ0HtoILrw3+tvxoR8nHCilX4C9VbKSzW+jP3f+Yo/9YfBE9ouBUzmvHTidXXXHfew7A2ayr/R/gLuqzjS6RkGL8RtDV7CZDyzImGbqJ3KbxDhBQKn9R0zM0IoabHfZt2+frJ/NApaKIZjlpsHj2SV8xn/87NKO8mN3LGHDp9YwYtpYbosYJxgwtYZERt35C2X9bBar1zwRKtuPDOHmwJf6Pch6dYLbqjMI9YDQxiSthmXdOeDTltshxgkG6ERC7Rmi8kHADByd1Bo0d4SRr8SwsvWt/rPZucnFEYU63jw7WcftafBUQH0wsZZXV1efKrdBjBMUcKQmovZ8UenGjZvI/ZwtAbbrgHkhK61MmKCBB+FXg+7iox/Yvp09IpcbHvt4xSL23QEzuP8XFi38+yNqramqqlLl3x7jBAd4GuRPS8F29dacs9Daj9/JhAWGW9FI9vtBk/ik7vIBM9jX+s9ln+03j32iYiH7SHIxOztZz87ME7wQH04u5sr5mX4P87xQ5mcDp7G/Dh7PkqSwxVwkouaKysrKXvJvjvEuAURHYWxPETu9rt6V9TSCLVuaNxc6ShipRcrpLRFRe2F8nNJ7Az0IsZOE2kf8zq+rc1oceWFCJytNV5LHHxNrVByq+B4DIfaPEDbf8BVhds1c1tRUCAWUAbbunVOmRhSoK4iw2Yio/Xv5N8V4jwAh9GFx0jZ23IRjehvgXIZ7770/okglJbGXI5S6QP4tMd576EGp/XtCre2gGOAqA7OgsbFR1lsOMCnAtzti5JioUh1f7iXE+md8JkKMEMCVRIhdhbB5ABQFDomrXVzX7Onl8BnTp5/ZwD0Ox/pmbyfwCBzuB28Huc4xYgSwLOujMOkh1H4bFAdG4GnT7mGPPrqCbdu2rehR9kePZnjwztq161g63cBPDZ8xczabOKlwXldbCVvJCbGmDaT0QrmOMWI0Czh/AFNbI8TcKCpU1ZDhfPMkeCJWr17Dv0UGdjEoLnzwb9Pzz7MVKx7nX4hszcJFlOZWQmyMhgz5iFynGDFaDcZYD2RZ3yTEHE6ouSmqaJ1B61VM7YmmWfkDOOBErkOMGB0GfB+MUuuvGNuTEbVW+SZFG3iQUPNpjM37MLZvpbTqC/Gx9jFKDhghc3Zx6lJK7V9inLoJm/athKRuBy8AotbfKbV/Y5qVVyBU+an4U6QxYsSIESNGjBgxYsSIcQLBtu1zEBr6YfgLk79SRYGdo9Wfdnof76On9ffO+dDti89V+y3snnG+jPUoQzXvL+u95pSyG2IXYrcBIfZK0Y2GEDpTznM8kNC9P4Z2XugukfN0B/TUvItUw2tSNOegari95fQYXQSErScDpcXm0VIFi6u691dRcRXNq5DzAHpVuB9XDPfG8j7Ol+S0UqC8T/orCc15NWF4ryia8z9yeowuAsbmjRjbNwMRtXqXakWtVzL9BTWZvlnVnZtVPX1zeUX6K2I6mBGq4b0Z7IPT3fiw6BjdH+V67ZdDI7Je/2M5T4xWgG8/J9Z1hFhXAymt5CMEQuhsRKx/EGKNodQeS4j1j1QqdYZfjscgmJVXYWqZEDaIaaqSEOtnxSZBCJlXFOSnrm3u3AL+pct8PkRT18rpkydPPiVXV5tCbAKl9nhCbCtXT/u7Yl5kmj/2ZUEZPw43kXS+rSSXXK30da5Wdfcqnvm22g+ouvtrJekNVXV3opJ0+/dMOp8X5XGbUPeSqlE/QdHdUarh/k3pUxf5kInSr+GChJG+FuTzv3r603D9DOPRxGnJ9BcSuvvn8O5j929wHXiq4fDAIJjYJTTnOl/GmQOWnguTKEXzfgv3BvaqcMUdyT3A9CjXvJ+puttXMdxh8DtUw5ugGi4u15f84ly05kNC/rLTb6tVVM29EggTSjENcJpWf7aiuz9R9PRtquFaeZkETKFyLf0JMW+vvnUf66nXf7fc8C4vQw2R/hehakvPTyTT34F+KFxlPaDd1KT3G9VwDVV3qxTdG6oY3gBV966HuooyOEAZQqczEmscxuZfEDbfkeMEEDb3gILYtn0W7CSQ03N5rCdhJi/eAxP7CSHP26D0YroPhO3nhHvtCqWh1AWEhiPNwrReFfP7ge1ATKx3/IdF1b06X2kSuvdSedL5EvwNKxPnUWjEMsRO4oqqeZkieXarhvd98b5KRbqfpJh84gMPRpHyYWruOMib0OqvEa/zCZ/mrAzlvd39lH/PhOGsi8iK0NmZMNyf+mXU272v+2nyQ6oYzhDVcLL59CbFcF5LaN5WlU/k+LWjatIb7ytpQncv9WUpmnuJKEtGQnOW8HyGOz24JtQ/obmNCcPZomje67k+gGveW4rh/iEkCA7AgMlLoADEXhn6XyYxN7X0vQhCrXvFexBqbiikmVvFNBGEmpuFfJtCacUflAwmFq8rxuZb4kiOibVbqE+g1AndTRcaKTc5iXZynrp7VNHdaZHrAqGBuVspD8XwBofyJNO/yt9XGmmjhFGGy9Drfxy6bjivyXl7JRdDcFFZmVZ/Gu9gnSvaRlX3Zit93ZGKkR6pGt4KsUxCd95WUO4toRjOxYGsvks/5tc/lwajq6OX696X4W3kXz+vz4pTy2EE9h9i3fsrT2Csh2o4L+Z+gztIlCUiYTgX+nXlsgG31X5AMdwHE0b6T3wkF1xz8OZRDWdmrp7O4dOTDecFwhBCCiiAqBAwAsMXwrGZ+gNEYRVRGPiYx3OEWLdQav1dnMHnlMjeFtwgN/ptLaRZT4ppIhA2dwTyqfW4fx1GcOmrQDsJsb/fp0/1qfywEmR/jpDULeIEDBOrsVBXa71/XdG95bISqIa3sFxz/8KVrjCqFDpccxpVzcW5kc+bJaerev1XffmqkbakdD4i99IavqgkvX+qhrdYTC83vMFwHZjok3t9gpkQvYeTVTVvAdRR0d3hoARcbt+6j0HZ05O1hU4NwHqAUohyFD3NbepEsu47uWtOtpjJcyyouvMYlE309e4Mrmke5dc054lw7gLyDxPUY7Gc1hygbv7Iq+r11wcJYMtGlJJauScpD0Ls0CnlCNuviPYuKBah9qFAOQl/zQfmAKHC6EdsNxAcRg9CrcLpkMQKfhz4YEMPV/MyAoj1QdRc5l9Xk97qsFI4M6GD/XTF8CpC6TC6aO6VgeAy1kPVvf+KeRJa/beC8np6eKh8hfu1Qlkuv1pM79m/9iwxHdCzb90vw3VwM6qRvkHO1xqohne/KKuXkeZzB7XCvTIn2zlybu/5Ifv3mEANH0wY7hYoC28j/3LCSH9WNdwsNzH6FcwYH2Djwyuf37Ov80M5vTmoBpg0IJf3VaENUFXVx8NKaT0v26CRg+9IShfTAYQUXvPwaSUxDROrSShf9Fu4/KSc8EnooXyImo6QlpEfLhEwCvsmRE5x7YV+mqJ5zxY60s36I5cPGCHFjk7oniem8zx6GiY+BeUTbETVSI8T0/zJmQ/FcO4S00ERxPRcHvdGMQ8on5znWDgXzf+QqqV/oOje3YKtylmupa+APErSuZpf092msmYmyyEgdlKvvu5l0B6BPN0dK2ZRDW9V7no6oh+K5sDbxh+Ri85xRMDDpBjO77ht7feF5l0TZKCUfj6slNbdIQm5EbdKUtxLo3nMwBwg1F7rXweFFJUIU3t8uGQOfKuPYA5AoLmYbprmJ2CkD9JzB3qMKRafW8T8CR4CMPwLHelsF0dbQDAS+dQcKqbzPEZ6kpjnQ3pDsBFT0bypYtpp//JCE1XVcGv8NFi1KjYLB7MlVIekw+3k5gEmQcPFqu7a+bdBU6i8QFh4gBLlhvNz+D+huXtkaT5Urf58xXBvSRje3MD3rHubCpPZtCXmTxjev3PX3cDM40DoJG5/c3s9/btQmg+ETlKS3jfBRoYJXELz9ufu59b5D18vvb7gOSKEXBJWyujZsJjS0WIehKpke6oHeAGCdGo+4icgNCxsihA7FS6aA6X0s+F85nA5D0LovPyuCVHecjB3pHyS+WMFrzSYXRc6Umpgbvt5oRm9anh/l/OouvefIF13sqI7SdX9yUSO8IoMlTXceiF9N48ZkKAaS3qLMk7T6r8o5/GR0JZ8S9Vk8wfIO3uVqrmLxOvgNoNysFoG//PJpSwzueQ6xXAf9RUGJrH8gdS962Eiqur5kRW8LgLOMJyPgOkB5pXoMgP3I5djOFt4bIQIcEUanpYwvJe5TM3LJHT3KfBsgAnWs2/DmUE7JNO5CSnANCuvFDsZtsOEBPNVKHtqkE6so/I3v2BShIl1sKBM1gI/DaHUZ0T5lKbuEMv6gM+NSgo5WM4DAC8Ixvb0sGKa68QlXdgeFJaVmsATEDopoeef5FynBfX0AXZUSAGKjHaKkZ5fyOMcDtnIuvuwkJYVZ+UA0T4GhRDTfEBHinWQR20fYHvnYg0K90vo9Q3wWvZNlLBN7WTVfzeUw/Vy38uhuy+IMrlHAWxKzTmS0L3J3L2FWMiUUAxnQ65s+mbxOiChuzlTQvdu968JD0/os1vcl+y3h+7tUDS3v+wjhv/9+oe8CrBoEFYs+49iQZ6H2jVCnkPyIgMoU1iR7BlBWUK+FVYia4RY1gfG9j1iPtghLOcRQYg9MJzfCtwwCNlflu45KpdQ8/6Qzdc3ajuqmnOTqDTFVrYShtfgpycMZ28oLe+nzCvKYXmEUQ2XvzLz6S+KaT5U3TODPJqbOQs1FI2zCPs/nUbZp5zL490p/J4m/0FSNZeP6oruBR4X1Vjyw/w9D6la/Q9CggQktHpud8KCiJymGum/5eUuh//hAQKvAEzMpEWTwkOle5tEc0sEjLK5PIWHjiN3Ck2okwsuhzxghi/keVtOl80BONExSDPNK0LyqblZPtKTr4YJh+gBEbFuEfPIANu2Oc8BLJKE6kOtYXBd6bMCXCuBUsKIEhIastNy7FXhXhbJo6Wf8NMV3XlNTFMNd00gX3P3yyGDece6r7g7i02MYNIT5NGcI8XsYDBPct6GQNYkOQ9AdN+BH9efGCV053Z+XfdW+Xlzo63HlKT7cEiIBFV3YeGFlSeXXBdJ67ewV97GPgqmg6I7Q7lMw6uW8yq6+0y+Df9PTvPBTSG/HW57vvD2gqXckGIR6+pQSVASaq4IFERa0QJQSi+UZORGuNxr+9OhtLw7jRB7KD/1kVgPFFvwoNT6G5QHEwAhuhBR688IVX4SzBKEUDki5oCQTGo6/j0RTf00XB+7Cq6rFQ2fLHQ0d+cE9fShGE5oAUHpF10J8p3tuQZ1nxPTxFU4GAVlxVQ1d4coXzW8Slj+BJNE1Ru4P1g13PsK8r1DYvkAqOF9gXspN9FbJj8kAFV3aoM8hvemf50vp+ZGzWA+oupeiufVnaAtI6ipOVk13MM5mcXdWoruPJSX/U8wAXj+isWflPOBLcvbyXD7yGk+YNk51w7OwVACxlZ/sZMHEfK9UAZoI2w9W8hjRYx5QlKhCR7KK0ohPRwbW5TEWiD+b5qpYIkPEzNYTAAbG+HwB1WAlNrBawubqb+IaZhaPCYWFENWGr+MD9nPWl5RF4ruAqiat8tPh8YPEhjrAbP0IM1w90YUN++8L8qKBu4vBts7uNac4uY6NbSqxxVBd8YrenpKQnfgG20hn3NC917xywZKKiwGwKydm1Kal1F079aCfc56QFA8LHLk3lr5SVsy/R2/rAglmZv4BW2heUVdoBADka/Dmz15nEO+rRA7CWJDzusz+1RY6s3/tn2hwnzkCylQ1NWFsL2tkMfcHEmHgJYiiuIDXFmEhuIVRB6CoBnLqrpavE6pHcSIijEMMnlMBTFDXzbH1DLEPIHiSj5a1UhHPCiyMpzRt+FzoQy915wSWl3TnJVBWp8Vp4oxDcUUl8+wi6zOAf0VrNDqHlfcqOcB0LP/srNUvWCaSBwNeVTDDd4O8Dbwy6qGy/3NMDqKMqFNCjEC7v6E5m7mrjDdySpa7SX5ZdtcfY2Gi8WyPiCgJ2F4+3L5nCy4ueQ8gLNuqekZ8gsb3m7wLoCSqoa7HRQ4obn/ysvZGSrMZ/1gE+Z4ebHvICDTvMzPY1lWpBL5oJvL/TyosjLyWoDoLELsH8IkCvyv8MBgM3UTbKuBdFiJM80qfh/4CzL9sty9RaxrMLb/jalViXm0mp3C2PwDQtWR5crc+QuFOoOXAa6DawUimHrqS74LBD+lXBYmA356uVZ/BazPhzLcUHMyXA9k9BVWxlDN+8sr0kEaMFQ2j9yExe0DS6CcuttPdK6r2pJvBHWAkaiIyywAangfRJEpSXeQatSPUXRvhKI5Ff7CCoyKviwxAEbVnbxLL31fSF5u0nch2J0wKsPyMixLQ6wF3OsMY16iZ4V7GVB29YmA5Wmu3GDCHAsInQSyIDYC7GFOvnqZM0PAfQd1h0AeuWiM9yBUI2/76umJclpHAW6uhO7szY+iv5TTY8RoN8B/m1Ncr+iCUEegGO5ALlvzni82YYwRo12AwJ+CXdm5GyUhRDLvU4ZwzH/I6TFitAo8gF1zr4QoNFgA4LskCu68o0q/ug59VgDsfb6MPHnNKbC/DoJo8pOpDWXomUgcSYwYrQIssgiz9gLB5WV4A+T8bQVMBvMyg8AeWMo+XfMukvPGiNFqgIeCB58b7nSIo1CM9IOK5lU356JqK3LbdpxJPEZDd2aWw8rjcT4E5f8BanwAD6btiboAAAAASUVORK5CYII=" alt="">
+      <div>
+        <div class="eyebrow" id="eyebrow">Loss time hauling</div>
+        <h1><b id="h1t" style="font-weight:inherit">Loss Time Hauling</b><span>PT. Musi Mitra Jaya</span></h1>
+        <div class="sub" id="sub"></div>
+        <div class="pinfo" id="pinfo"></div>
+      </div>
+    </div>
+    <div class="tright">
+      <div class="period"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span id="periodTxt"></span></div>
+      <button class="exp" type="button" data-act="pdf"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z"/><path d="M14 3v6h6"/></svg>PDF</button>
+      <button class="exp pri" type="button" data-act="xls"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 21h16"/></svg>Excel</button>
+      <div class="stamp" id="stamp"></div>
+    </div>
+  </header>
+
+  <div class="lockbar" id="lockbar">
+  <div class="ticker" id="ticker" role="region" aria-label="Info penting"></div>
+  <button class="lk-ft" id="lkFt" type="button" aria-expanded="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg><span>Filter</span></button>
+  <div class="filters" role="group" aria-label="Filter">
+    <label>Bulan <select id="fBulan"></select></label>
+    <div class="rp" id="rp">
+      <button class="rpbtn" id="rpBtn" type="button" aria-haspopup="dialog"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span id="rpTxt">Semua tanggal</span><svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <div class="rppop" id="rpPop" role="dialog" aria-label="Pilih rentang tanggal" hidden></div>
+    </div>
+    <div class="chips" id="fRoute" aria-label="Route"></div>
+    <label data-view="lt">Tipe <select id="fType"></select></label>
+    <button class="reset" id="reset" type="button">Reset filter</button>
+  </div>
+  </div>
+
+  <section class="kpis" id="ringkasan" data-view="lt"></section>
+  <section class="minis" id="minis" data-view="lt"></section>
+  <section class="kpis" id="rfKpi" data-view="rf"></section>
+
+  <section class="grid pg" data-title="Loss Time MMJ vs Bukan MMJ" id="mmj" data-view="lt" style="margin-bottom:16px">
+    <div class="card c8">
+      <div class="ch"><div><h2 id="tGt">Tren kelompok loss time (H0)</h2><p>Warna hangat = disebabkan MMJ · biru/abu/ungu = bukan MMJ</p></div>
+        <div class="ctl"><div class="seg" id="segGv" role="group" aria-label="Tampilan kelompok"><button type="button" data-v="mmj">MMJ vs Bukan MMJ</button><button type="button" data-v="grp">8 kelompok</button></div><button class="tbtn" data-t="cGt">Tabel</button></div></div>
+      <div class="big" id="bGt"></div>
+      <div class="legend" id="lgGt"></div><div id="cGt"></div>
+    </div>
+    <div class="card c4">
+      <div class="ch"><div><h2>MMJ vs Bukan MMJ</h2><p>Porsi per route &amp; H0 (abaikan filter tipe)</p></div></div>
+      <div id="cMmj"></div>
+    </div>
+  </section>
+
+  <section class="grid pg" data-title="Total Loss Time (H0) & Komposisi" data-view="lt">
+    <div class="stack c8">
+      <div class="card" id="losstime">
+        <div class="ch"><div><h2 id="t1">Total loss time (H0)</h2><p>Gabungan H1 + ISP + H2, jam yang terjadi bersamaan di beberapa route dihitung sekali</p></div>
+          <div class="ctl"><button class="tbtn dtb" type="button" data-dt="H0">Detail penyebab</button><button class="tbtn" data-t="c1">Tabel</button></div></div>
+        <div class="big" id="big1"></div>
+        <div class="legend" id="lg1"></div><div id="c1"></div><div class="dtl" id="dt_H0" hidden></div>
+      </div>
+      <div class="insight" id="insight"></div>
+    </div>
+    <div class="stack c4">
+      <div class="card">
+        <div class="ch"><div><h2>Komposisi tipe (H0)</h2><p>Porsi jam H0 · klik Mitra Company untuk detail</p></div></div>
+        <div class="donut" id="cMix"></div>
+      </div>
+      <div class="card">
+        <div class="ch"><div><h2>Route vs H0</h2><p>Jumlah 3 route dikurangi jam tumpang tindih = H0</p></div></div>
+        <div id="cSplit"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid pg" data-title="Loss Time per Route" data-view="lt">
+    <div class="card c4" id="route"><div class="ch"><div><h2 class="rtitle"><i style="background:var(--s1)"></i><span id="tR_H1">H1</span></h2><p>KM 130 – KM 70 · warna = tipe</p></div><div class="ctl"><button class="tbtn dtb" type="button" data-dt="H1">Detail</button><button class="tbtn" data-t="cR_H1">Tabel</button></div></div><div class="rbig" id="bR_H1"></div><div id="cR_H1"></div><div class="dtl" id="dt_H1" hidden></div></div>
+    <div class="card c4"><div class="ch"><div><h2 class="rtitle"><i style="background:var(--s2)"></i><span id="tR_ISP">ISP</span></h2><p>KM 70 – KM 65 · warna = tipe</p></div><div class="ctl"><button class="tbtn dtb" type="button" data-dt="ISP">Detail</button><button class="tbtn" data-t="cR_ISP">Tabel</button></div></div><div class="rbig" id="bR_ISP"></div><div id="cR_ISP"></div><div class="dtl" id="dt_ISP" hidden></div></div>
+    <div class="card c4"><div class="ch"><div><h2 class="rtitle"><i style="background:var(--s3)"></i><span id="tR_H2">H2</span></h2><p>KM 65 – KM 0 · warna = tipe</p></div><div class="ctl"><button class="tbtn dtb" type="button" data-dt="H2">Detail</button><button class="tbtn" data-t="cR_H2">Tabel</button></div></div><div class="rbig" id="bR_H2"></div><div id="cR_H2"></div><div class="dtl" id="dt_H2" hidden></div></div>
+    <div class="legend c12" id="lgR" style="justify-content:center;margin:0"></div>
+  </section>
+
+  <section class="grid pg" data-title="Kelompok Loss Time, Area & Route x Tipe" data-view="lt">
+    <div class="card c12" id="sop">
+      <div class="ch"><div><h2>Kelompok loss time</h2><p>Jam · Loss Time MMJ = Technical + Traffic + Dust &amp; Social · Bukan MMJ = Idle + NH + FM + RG + Mitra Company</p></div><button class="tbtn" id="mcBtn2" type="button">Detail Mitra Company</button></div>
+      <div class="tw grp" id="cGrp" style="max-height:none"></div>
+    </div>
+    <div class="card c12" id="area">
+      <div class="ch"><div><h2>Loss time per area kerja</h2><p id="pArea">Jam, dikelompokkan per route · warna = tipe</p></div>
+        <div class="ctl"><div class="seg" id="segArea" role="group" aria-label="Tampilan area"><button type="button" data-v="bar">Grafik</button><button type="button" data-v="tbl">Tabel per tipe</button></div></div></div>
+      <div data-av="bar"><div class="legend" id="lgA"></div><div id="cArea" class="hb"></div></div>
+      <div data-av="tbl"><div class="tw grp" id="cT5" style="max-height:none"></div></div>
+    </div>
+    <div class="card c12" id="mxCard">
+      <div class="ch"><div><h2>Rekap loss time route × tipe</h2><p>Jam · klik baris untuk filter tipe · baris MC membuka detail Mitra Company</p></div></div>
+      <div class="tw" id="cMx" style="max-height:none"></div>
+    </div>
+  </section>
+
+  <section class="grid pg" data-title="Detail Mitra Company" id="mitraSec" data-view="lt" hidden>
+    <div class="card c12" id="mitra">
+      <div class="ch"><div><h2>Detail Mitra Company</h2><p id="pMc">Jam (kejadian) · warna = route</p></div>
+        <div class="ctl"><div class="seg" id="segMc" role="group" aria-label="Sub menu Mitra Company"><button type="button" data-v="t2">Per Desc Type2</button><button type="button" data-v="day">Harian / bulanan</button><button type="button" data-v="desc">Penyebab</button></div><button class="tbtn" id="mcClose" type="button">Tutup ✕</button></div></div>
+      <div data-mcp="t2"><div class="legend" id="lgMc"></div><div id="cMc" class="hb"></div></div>
+      <div data-mcp="day"><div class="ch" style="margin-bottom:6px"><div><h2 id="tMc2" style="font-size:12px">Mitra Company harian</h2><p>Jam per Desc Type2</p></div><button class="tbtn" data-t="cMc2">Tabel</button></div><div class="legend" id="lgMc2"></div><div id="cMc2"></div></div>
+      <div data-mcp="desc"><div class="ch" style="margin-bottom:6px"><div><p>Dikelompokkan per keterangan · urut jam terbesar</p></div></div><div class="tw" id="tMc"></div></div>
+    </div>
+  </section>
+
+  <section class="grid pg" data-title="Curah Hujan per Pos" data-view="rf">
+    <div class="card c12" id="hujan">
+      <div class="ch"><div><h2 id="tHm">Curah hujan harian per pos</h2><p id="pHm">Akumulasi per hari per pos dari Input TCH (SBL Port dari sheet RAIN FALL)</p></div>
+        <div class="ctl"><div class="seg" id="segPos" role="group" aria-label="Acuan pos ISP68" title="Acuan pos untuk rata-rata rainfall per route"><button type="button" data-v="dash">ISP68 = ISP</button><button type="button" data-v="sop">ISP68 = H1 + ISP + H2</button></div><div class="seg" id="segHm" role="group" aria-label="Nilai heatmap"><button type="button" data-v="mm">Rainfall (mm)</button><button type="button" data-v="h">Durasi hujan (jam)</button></div></div></div>
+      <div class="hm" id="cHm"></div>
+      <div class="scale" id="scHm"></div>
+    </div>
+    <div class="card c7" id="rfRh">
+      <div class="ch"><div><h2>Rainfall vs rain hours</h2><p>Batang = rata-rata rainfall pos (mm) · garis = rata-rata durasi hujan pos (jam)</p></div>
+        <div class="ctl"><div class="seg" id="segRh" role="group" aria-label="Route"></div><button class="tbtn" data-t="cRh">Tabel</button></div></div>
+      <div class="legend" id="lgRh"></div><div id="cRh"></div>
+    </div>
+    <div class="card c5" id="rfPos">
+      <div class="ch"><div><h2>Total per pos</h2><p>Rainfall (mm) · jam hujan · hari hujan</p></div><button class="tbtn" data-t="cPos">Tabel</button></div>
+      <div id="cPos" class="hb"></div>
+    </div>
+    <div class="card c12" id="rfCb">
+      <div class="ch"><div><h2>Curah hujan vs loss time hujan</h2><p>Batang = rata-rata rainfall pos (mm) · garis = loss time Idle (Rain + Slippery) dalam jam · "Semua" memakai H0</p></div>
+        <div class="ctl"><div class="seg" id="segCb" role="group" aria-label="Route"></div><button class="tbtn" data-t="cCb">Tabel</button></div></div>
+      <div class="legend" id="lgCb"></div><div id="cCb"></div>
+    </div>
+  </section>
+
+  <section class="grid pg" data-title="Rincian Kejadian" data-view="lt">
+    <div class="card c12" id="rincian">
+      <div class="ch"><div><h2>Rincian kejadian stop hauling</h2><p id="pEvt"></p></div><div class="ctl"><input type="search" id="qEvt" placeholder="Cari keterangan, area, KM…" aria-label="Cari kejadian" hidden><button class="tbtn tog" type="button" data-open="evt" aria-expanded="false">Tampilkan ▾</button></div></div>
+      <div class="tw" id="tEvt" hidden></div>
+    </div>
+    <div class="card c12" id="cek">
+      <div class="ch"><div><h2>Data yang perlu dicek</h2><p id="pCek"></p></div><button class="tbtn tog" type="button" data-open="cek" aria-expanded="false">Tampilkan ▾</button></div>
+      <div class="tw" id="tCek" hidden></div>
+    </div>
+  </section>
+
+  <div class="note" id="note"></div>
+</main>
+</div>
+<div id="tip" role="tooltip"></div>
+
+<script src="../assets/js/auth.js?v=fc03a68329"></script>
+<script>window.MMJ_BULAN = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];</script>
+<script src="../assets/js/shell.js?v=fc03a68329"></script>
+<script type="text/x-mmj-data" src="../assets/data/lt.js?v=fc03a68329"></script>
+<script type="text/x-mmj-app" src="../assets/js/tab/lt.js?v=fc03a68329"></script>
+<script type="text/x-mmj-app" src="../assets/js/tab-nav.js?v=fc03a68329"></script>
+</body>
+</html>

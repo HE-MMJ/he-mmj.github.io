@@ -45,8 +45,22 @@ if idx:
 need("assets/js/shell.js", ("mmj-user", "mmj-user-in", "data-mmj-auth", "location.replace"))
 need("assets/css/shell.css", (".mmj-user", ".mmj-user-out", ".mmj-user-in", "[data-mmj-auth][hidden]"))
 
-# --- menu tambahan per izin: Cost Control di Monitoring
-need("index.html", ("data-mmj-auth=\"costcontrol\"", "ex-cost"))
+# --- menu tambahan per izin/role: Cost Control + Data Simper + Data DT
+need("index.html", ('data-mmj-cap="costcontrol"', 'data-mmj-cap="hse"',
+                    "Cost-Control/", "Data-Simper/", "Data-DT/"))
+need("Cost-Control/index.html", ('data-mmj-auth-page="costcontrol"',
+                                 "assets/js/auth.js", "assets/js/shell.js"))
+need("Data-Simper/index.html", ('data-mmj-auth-page="hse"', "assets/js/shell.js"))
+need("Data-DT/index.html", ('data-mmj-auth-page="hse"', "assets/js/shell.js"))
+need("assets/js/shell.js", ("data-mmj-auth-page", "loginWall", "?next=",
+                            "data-mmj-cap", "roleLabel"))
+
+# --- role: Admin General (admin), Admin HSE (hse), Admin ECC (ecc)
+need("assets/js/auth.js", ('username: "admin"', 'username: "hse"', 'username: "ecc"',
+                           "Admin General", "Admin HSE", "Admin ECC",
+                           "roleLabel:", "homeOf:", "hse: { hse: true }",
+                           "ecc: { costcontrol: true }"))
+need("login.html", ("homeOf",))
 
 if fails:
     print("GAGAL:")

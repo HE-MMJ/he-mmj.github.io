@@ -22,12 +22,27 @@
      Login dipakai untuk menu TAMBAHAN (mis. Cost Control) yang berlabel
      data-mmj-auth="<izin>" dan hanya ditunjukkan bila user punya izin. */
 
+  /* alamat dasar halaman ini: "" untuk halaman utama, "../" untuk halaman
+     di subfolder (Heavy-Equipment/, Coal-Hauling/, ...). Dipakai supaya
+     tautan login.html / index.html tetap benar dari halaman mana pun. */
+  var BASE = (function () {
+    var s = document.currentScript;
+    if (!s || !s.src) return "";
+    return s.src.replace(/assets\/js\/shell\.js.*$/, "");
+  })();
+
   /* kotak "Dashboard belum tampil?" itu untuk pengguna TANPA JavaScript.
      Begitu JS jalan, sembunyikan supaya tidak sempat berkedip. */
   var nojsBox = document.getElementById("mmjNojs");
   if (nojsBox) nojsBox.hidden = true;
 
   var KEYS = ["exec", "haul", "batu", "lt", "he"];
+
+  /* alamat halaman tiap dashboard (dipakai tombol "Buka ..." di halaman
+     terpisah). Halaman utama = Dashboard Eksekutif di root. */
+  var PAGE_URL = { exec: "", he: "Heavy-Equipment/", haul: "Coal-Hauling/",
+                   batu: "Batu-Split/", lt: "Loss-Time/", rf: "Rainfall/",
+                   cost: "Cost-Control/", simper: "Data-Simper/", dt: "Data-DT/" };
 
   var asFrag = function (t) {
     if (!t) return null;
@@ -63,7 +78,11 @@
     return null;
   };
 
-  if (!KEYS.some(function (k) { return T[k]; })) {
+  /* Halaman terpisah (Heavy-Equipment/, Coal-Hauling/, ...) tidak memakai
+     <template>: markupnya sudah ada di body dan ditandai data-mmj-page. */
+  var pageTab = document.documentElement.getAttribute("data-mmj-page");
+
+  if (!KEYS.some(function (k) { return T[k]; }) && !pageTab) {
     var nb = document.getElementById("mmjNojs");
     if (nb) {
       nb.hidden = false;
@@ -144,7 +163,7 @@
       /* belum login -> hanya tombol Masuk */
       box.innerHTML = '<button type="button" class="mmj-user-in">Masuk</button>';
       box.querySelector(".mmj-user-in").addEventListener("click", function () {
-        location.replace("login.html");
+        location.replace(BASE + "login.html");
       });
     } else {
       box.innerHTML =
@@ -153,26 +172,87 @@
         '<button type="button" class="mmj-user-out">Keluar</button>';
       box.querySelector(".mmj-user-av").textContent = String(u.name || "?").trim().charAt(0).toUpperCase();
       box.querySelector(".mmj-user-tx b").textContent = u.name || "";
-      box.querySelector(".mmj-user-tx span").textContent = u.role || "";
+      box.querySelector(".mmj-user-tx span").textContent =
+        (window.MMJ_AUTH && window.MMJ_AUTH.roleLabel) ? window.MMJ_AUTH.roleLabel(u.role) : (u.role || "");
       box.querySelector(".mmj-user-out").addEventListener("click", function () {
         try { window.MMJ_AUTH.logout(); } catch (e) { }
         /* keluar -> langsung ke halaman utama (dashboardnya publik) */
-        location.replace("index.html");
+        location.replace(BASE + "index.html");
       });
     }
     sideFoot(side).appendChild(box);
   }
 
   /* --------------------------------- menu tambahan berlabel (per izin/role) --- */
-  /* Elemen ber-atribut data-mmj-auth="<izin>" disembunyikan untuk yang tidak
-     punya izin; contoh: data-mmj-auth="costcontrol" -> menu Cost Control. */
+  /* Dua cara menandai menu:
+       data-mmj-auth="<izin>"  -> tampil hanya untuk role yang punya izin
+       data-mmj-cap="<cap>"    -> seperti di atas, kecuali "public": menu itu
+                                  juga tampil untuk tamu (belum login), dan
+                                  disembunyikan untuk role lain (mis. HSE/ECC). */
   function applyAuthMenus() {
+    var u = (window.MMJ_AUTH && window.MMJ_AUTH.current) ? window.MMJ_AUTH.current() : null;
     var can = (window.MMJ_AUTH && window.MMJ_AUTH.can) ? window.MMJ_AUTH.can : function () { return false; };
+
     document.querySelectorAll("[data-mmj-auth]").forEach(function (el) {
       var ok = can(el.getAttribute("data-mmj-auth"));
       if (ok) el.removeAttribute("hidden");
       else el.setAttribute("hidden", "");
     });
+
+    document.querySelectorAll("[data-mmj-cap]").forEach(function (el) {
+      var cap = el.getAttribute("data-mmj-cap");
+      var ok = can(cap) || (cap === "public" && !u);
+      if (ok) el.removeAttribute("hidden");
+      else el.setAttribute("hidden", "");
+    });
+  }
+
+  /* ------------------------------------------- halaman khusus login -------- */
+  /* Halaman bertanda data-mmj-auth-page="<izin>" (mis. Cost Control) hanya
+     terbuka untuk user yang sudah login dan punya izin itu. Tanpa izin, isi
+     halaman tidak ditampilkan dan diganti panel "Perlu masuk". */
+  function authOk(perm) {
+    if (!perm) return true;
+    var can = (window.MMJ_AUTH && window.MMJ_AUTH.can) ? window.MMJ_AUTH.can : null;
+    return !!(can && can(perm));
+  }
+
+  /* alamat halaman ini (tanpa index.html) untuk parameter ?next= di login */
+  function pagePath() {
+    return location.pathname.replace(/index\.html$/, "") || "/";
+  }
+
+  function loginWall(perm) {
+    var main = document.querySelector("main");
+    if (!main) return;
+    var u = (window.MMJ_AUTH && window.MMJ_AUTH.current) ? window.MMJ_AUTH.current() : null;
+    var box = document.createElement("div");
+    box.className = "mmj-wall";
+    if (u) {
+      /* sudah login tapi role-nya tidak berhak -> arahkan ke halaman role itu */
+      var label = window.MMJ_AUTH.roleLabel ? window.MMJ_AUTH.roleLabel(u.role) : u.role;
+      var home = window.MMJ_AUTH.homeOf ? window.MMJ_AUTH.homeOf(u.role) : "index.html";
+      box.innerHTML =
+        '<div class="mmj-wall-card">' +
+        '<h2>Tidak punya akses</h2>' +
+        '<p>Akun Anda (' + label + ') tidak punya akses ke halaman ini.</p>' +
+        '<a class="mmj-wall-in" href="' + BASE + home + '">Buka halaman saya</a>' +
+        '</div>';
+    } else {
+      box.innerHTML =
+        '<div class="mmj-wall-card">' +
+        '<h2>Perlu masuk</h2>' +
+        '<p>Halaman ini hanya bisa dibuka setelah login.</p>' +
+        '<a class="mmj-wall-in" href="' + BASE + 'login.html?next=' +
+        encodeURIComponent(pagePath()) + '">Masuk</a>' +
+        '</div>';
+    }
+    main.innerHTML = "";
+    main.appendChild(box);
+    /* <main> disembunyikan CSS selama izin belum dipastikan; panel ini justru
+       harus terlihat, jadi tandai halaman sudah selesai diperiksa. */
+    document.documentElement.setAttribute("data-mmj-auth-ok", "");
+    document.title = (u ? "Tidak punya akses" : "Perlu masuk") + " - MMJ";
   }
 
   function bindNav() {
@@ -245,7 +325,8 @@
   /* Tab Heavy Equipment bisa menampilkan bulan lain: #tab=he&m=10 memuat
      assets/data/he-10.js (+ wt-10.js). Data tiap bulan dibuat saat build. */
   function bulanAktif() {
-    var m = /[?&#]m=(\d{1,2})/.exec(location.hash || "");
+    var m = /[?&#]m=(\d{1,2})/.exec(location.hash || "")
+      || /[?&#]m=(\d{1,2})/.exec(location.search || "");
     return m ? parseInt(m[1], 10) : 0;
   }
 
@@ -290,6 +371,11 @@
       sel.appendChild(o);
     }
     sel.addEventListener("change", function () {
+      if (pageTab) {
+        /* halaman terpisah: muat ulang halaman dengan bulan pilihan */
+        location.search = "?m=" + sel.value;
+        return;
+      }
       location.hash = "tab=he&m=" + sel.value;
       try { window.mmjSwitch("he"); } catch (e) { }
     });
@@ -415,6 +501,55 @@
 
   /* dipanggil dari bar tab di atas dashboard */
   window.mmjSwitch = function (tab) { setTimeout(function () { mount(tab); }, 0); };
+
+  /* ------------------------------------------------------- halaman sendiri --- */
+  /* Halaman terpisah (Heavy-Equipment/, Coal-Hauling/, Batu-Split/, Loss-Time/,
+     Rainfall/): markup dashboard sudah ada di body, jadi tidak ada yang perlu
+     dipasang. Cukup siapkan sidebar lalu muat data + logika dashboard itu. */
+  function mountPage(tab) {
+    window.__MMJ_TAB = tab;
+    try { localStorage.setItem("mmjTab", tab); } catch (e) { }
+
+    placeNav();
+    markNav();
+    mountUserMenu();
+    mountTheme();
+    applyAuthMenus();
+
+    /* halaman ber-izin (mis. Cost Control): jangan muat isi/data kalau belum
+       login atau tidak punya izinnya */
+    var need = document.documentElement.getAttribute("data-mmj-auth-page");
+    if (!authOk(need)) { loginWall(need); return; }
+    document.documentElement.setAttribute("data-mmj-auth-ok", "");
+
+    var queue = [], ss = document.querySelectorAll('script[type^="text/x-mmj-"]');
+    for (var r = 0; r < ss.length; r++) {
+      var o = ss[r];
+      if (o.src) queue.push({ src: srcData(o.getAttribute("src")) });
+      o.parentNode.removeChild(o);
+    }
+
+    mountBulan(tab === "rf" ? "lt" : tab);
+
+    runQueue(queue, tab, ++seq, 0);
+  }
+
+  if (pageTab) {
+    /* tombol "Buka <dashboard>" (data-go) -> pindah ke halaman dashboard itu */
+    window.mmjSwitch = function (tab) {
+      if (Object.prototype.hasOwnProperty.call(PAGE_URL, tab)) {
+        location.href = BASE + PAGE_URL[tab];
+      }
+    };
+    /* script data/app ada di AKHIR body, sedangkan shell.js dimuat lebih dulu.
+       Tunggu DOM selesai diparse supaya semua tag itu sudah ada. */
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", function () { mountPage(pageTab); });
+    } else {
+      mountPage(pageTab);
+    }
+    return;
+  }
 
   var tab = "", m = /tab=(exec|haul|batu|lt|rf|he)/.exec(location.hash || "");
   if (m) tab = m[1];

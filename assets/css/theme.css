@@ -46,10 +46,13 @@
 table td,table th{font-variant-numeric:tabular-nums}
 
 /* ---------- kaki sidebar: menu user + tombol tema (menempel di bawah) ------ */
+/* Menempel betul di dasar sidebar: tidak ada jarak ke tepi bawah, dan sudut
+   bawahnya mengikuti lengkung sidebar. */
 .side-foot{
-  position:sticky;bottom:-20px;z-index:2;margin-top:auto;margin-bottom:-20px;
-  display:flex;flex-direction:column;gap:6px;padding:8px 0 0;
+  position:sticky;bottom:0;z-index:2;margin:auto 0 0;
+  display:flex;flex-direction:column;gap:6px;padding:8px 0 14px;
   background:var(--surface-solid,#fff);border-top:1px solid var(--hair);
+  border-radius:0 0 24px 24px;
 }
 
 /* ---------- tombol tema (dipakai semua tab) -------------------------------- */

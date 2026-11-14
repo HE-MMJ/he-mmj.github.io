@@ -48,10 +48,73 @@ try:
 except Exception:            # pragma: no cover - fallback kalau modul hilang
     data_codec = None
 
-TABS = ["exec", "haul", "batu", "lt", "he"]
+TABS = ["exec", "haul", "batu", "lt", "he", "cost"]
 
 # Dashboard Eksekutif membaca data dashboard lain lewat window.mmjData()
 DATA_DEPS = {"exec": ["haul", "batu", "lt", "he-summary"]}
+
+# --------------------------------------------------------------- halaman ----
+# Tiap dashboard dipublikasikan sebagai halaman sendiri (folder + index.html,
+# supaya URL-nya tanpa ekstensi di GitHub Pages). Halaman utama = Eksekutif.
+#
+#   tab   : template sumber di HTML gabungan
+#   dir   : folder halaman ("" = root / halaman utama)
+#   css   : tab CSS yang dipakai (Rainfall memakai CSS Loss Time,
+#           Cost Control punya CSS sendiri karena isinya berbeda)
+#   judul : judul <title> halaman
+#   view  : nilai window.MMJ_VIEW (khusus dashboard dengan beberapa tampilan)
+#   auth  : izin yang diperlukan (halaman hanya terbuka untuk user yang login)
+PAGES = [
+    {"tab": "exec", "dir": "", "css": "exec",
+     "judul": "Dashboard Eksekutif MMJ", "menu": "Dashboard Eksekutif"},
+    {"tab": "he", "dir": "Heavy-Equipment", "css": "he",
+     "judul": "Heavy Equipment - MMJ", "menu": "Heavy Equipment"},
+    {"tab": "haul", "dir": "Coal-Hauling", "css": "haul",
+     "judul": "Coal Hauling - MMJ", "menu": "Coal Hauling"},
+    {"tab": "batu", "dir": "Batu-Split", "css": "batu",
+     "judul": "Batu Split - MMJ", "menu": "Batu Split"},
+    {"tab": "lt", "dir": "Loss-Time", "css": "lt",
+     "judul": "Loss Time - MMJ", "menu": "Loss Time"},
+    {"tab": "rf", "dir": "Rainfall", "css": "lt", "view": "rain", "src": "lt",
+     "judul": "Rainfall - MMJ", "menu": "Rainfall"},
+    {"tab": "cost", "dir": "Cost-Control", "css": "cost", "auth": "costcontrol",
+     "judul": "Cost Control - MMJ", "menu": "Cost Control"},
+    {"tab": "simper", "dir": "Data-Simper", "css": "simper", "auth": "hse",
+     "judul": "Data Simper - MMJ", "menu": "Data Simper"},
+    {"tab": "dt", "dir": "Data-DT", "css": "dt", "auth": "hse",
+     "judul": "Data DT - MMJ", "menu": "Data DT"},
+]
+
+# tautan menu sidebar: #tab=<tab> -> halaman tujuan (relatif terhadap root situs)
+NAV_URL = {
+    "exec": "",
+    "he": "Heavy-Equipment/",
+    "haul": "Coal-Hauling/",
+    "batu": "Batu-Split/",
+    "lt": "Loss-Time/",
+    "rf": "Rainfall/",
+    "cost": "Cost-Control/",
+    "simper": "Data-Simper/",
+    "dt": "Data-DT/",
+}
+
+# ikon menu tambahan (di luar 5 dashboard monitoring)
+_IC_COST = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
+            '<path d="M4 19V9m5 10V5m5 14v-7m5 7V8"/></svg>')
+_IC_SIMPER = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
+              '<path d="M8 3h8a2 2 0 0 1 2 2v16l-6-3-6 3V5a2 2 0 0 1 2-2Z"/>'
+              '<path d="M9 8h6M9 12h6"/></svg>')
+_IC_DT = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
+          '<path d="M3 17V7h9v10M12 10h4l4 4v3h-8"/>'
+          '<circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>')
+
+# menu tambahan yang disisipkan ke sidebar tiap halaman (urutan tampil)
+#   (tab, capability, folder tujuan, label, ikon)
+_EXTRA_NAV = [
+    ("simper", "hse", "Data-Simper/", "Data Simper", _IC_SIMPER),
+    ("dt", "hse", "Data-DT/", "Data DT", _IC_DT),
+    ("cost", "costcontrol", "Cost-Control/", "Cost Control", _IC_COST),
+]
 
 
 # ------------------------------------------------------------------ util -----
@@ -431,6 +494,74 @@ def _bulan_tersedia(root):
                   if n.endswith(".json") and n[:2].isdigit())
 
 
+def _pull_head(markup):
+    """Pindahkan <title>/<link data-mmj-head> dari markup ke <head> halaman.
+
+    Kembalikan (markup tanpa tag itu, daftar tag head tanpa penanda
+    data-mmj-head).
+    """
+    heads = []
+
+    def take(m):
+        heads.append(m.group(0).replace(" data-mmj-head", "").replace("data-mmj-head ", ""))
+        return ""
+
+    markup = re.sub(r"<title[^>]*data-mmj-head[^>]*>.*?</title>", take, markup, flags=re.S)
+    markup = re.sub(r"<link[^>]*data-mmj-head[^>]*>", take, markup)
+    return markup, heads
+
+
+def _prefix_paths(txt, prefix):
+    """`assets/...` -> `../assets/...` untuk halaman di subfolder."""
+    if not prefix:
+        return txt
+    return re.sub(r'(["\'])assets/', lambda m: m.group(1) + prefix + "assets/", txt)
+
+
+def _rewrite_nav(markup, prefix):
+    """Menu sidebar: #tab=<tab> -> halaman tujuan (Heavy-Equipment/ dst).
+
+    Cost Control, Data Simper, dan Data DT juga dipindah dari menu dalam-halaman
+    Eksekutif (#ex-cost) menjadi halaman sendiri. Tiap tautan diberi penanda
+    capability supaya shell.js bisa menyaring menu per role:
+      public      -> 5 dashboard monitoring + Eksekutif (tamu tetap boleh)
+      hse         -> Data Simper, Data DT
+      costcontrol -> Cost Control
+    """
+    def rep(m):
+        url = NAV_URL.get(m.group(1))
+        if url is None:
+            return m.group(0)
+        return 'href="%s%s" data-mmj-cap="public"' % (prefix, url or "./")
+
+    markup = re.sub(r'href="#tab=(\w+)"', rep, markup)
+
+    # 1) bagian Cost Control di dalam halaman Eksekutif sudah tidak dipakai
+    markup = re.sub(r'\s*<div class="sec" id="ex-cost".*?</section>', "", markup, flags=re.S)
+    markup = re.sub(r'\s*<a\b[^>]*href="#ex-cost"[^>]*>.*?</a>', "", markup, flags=re.S)
+
+    # 2) menu tambahan di sidebar (setelah Rainfall, sebelum keterangan)
+    extra = ""
+    for tab, cap, url, label, icon in _EXTRA_NAV:
+        extra += ('<a href="%s%s" data-mmjtab="%s" data-mmj-cap="%s" hidden>%s%s</a>'
+                  % (prefix, url, tab, cap, icon, label))
+    if extra:
+        markup = markup.replace('<div class="mmjg">', extra + '<div class="mmjg">', 1)
+
+    return markup
+
+
+def _view_patch(code, tab):
+    """Loss Time & Rainfall berbagi satu dashboard.
+
+    Halaman Rainfall menyetel `window.MMJ_VIEW = "rain"`, jadi tampilan awal
+    langsung Rainfall tanpa mengubah kode Loss Time.
+    """
+    if tab != "lt":
+        return code
+    return code.replace('view:pref.view||"lt"', 'view:(window.MMJ_VIEW||pref.view||"lt")')
+
+
 def emit(html, root, version=None):
     """Pecah `html` menjadi index.html + assets/* di folder `root`."""
     here = os.path.dirname(os.path.abspath(__file__))
@@ -471,7 +602,8 @@ def emit(html, root, version=None):
 
     written = set()
     used = set()
-    out_tpl = []
+    page_data = {}
+    head_extra = {}
     tab_css = []
     css_text = {}
     css_rel = {}
@@ -489,6 +621,7 @@ def emit(html, root, version=None):
         return rel
 
     for tab, body in tpls:
+        body = _view_patch(body, tab)
         styles, scripts = [], []
 
         def take_style(m):
@@ -583,8 +716,8 @@ def emit(html, root, version=None):
             '<script type="text/x-mmj-%s" src="%s%s"></script>\n' % (kind, rel, q)
             for kind, rel in (dep_tags + tags))
 
-        out_tpl.append('<template id="mmjT_%s">\n%s\n%s\n%s</template>' % (
-            tab, "\n".join(head_tags), markup, script_tags))
+        page_data[tab] = {"markup": markup, "head": "\n".join(head_tags),
+                          "scripts": script_tags}
 
     # ---- loader
     here = os.path.dirname(os.path.abspath(__file__))
@@ -634,44 +767,81 @@ def emit(html, root, version=None):
     # ---- boot css
     _write(os.path.join(root, "assets/css/boot.css"), HDR % "assets/css/boot.css" + boot + "\n")
 
-    # ---- index.html
-    preloads = "".join('<link rel="preload" as="style" href="%s%s">\n' % (rel, q) for _, rel in tab_css)
-    doc = """<!doctype html>
-<html lang="id" data-build="%(ver)s">
+    # ---- halaman: satu dokumen per dashboard -----------------------------
+    # Halaman utama (root) = Dashboard Eksekutif; dashboard lain jadi halaman
+    # sendiri di folder masing-masing supaya URL-nya tanpa ekstensi.
+    doc = ""
+    written_pages = []
+    for page in PAGES:
+        tab = page["tab"]
+        data = page_data.get(page.get("src", tab))
+        if data is None:
+            continue                       # template tidak ada di shell -> lewati
+        folder = page["dir"]
+        prefix = "../" if folder else ""
+        rel = (folder + "/index.html") if folder else "index.html"
+
+        markup, heads = _pull_head(data["markup"])
+        markup = _rewrite_nav(markup, prefix)
+        markup = _prefix_paths(markup, prefix)
+
+        head = "\n".join(heads + ([data["head"]] if data["head"] else []))
+        head = _prefix_paths(head, prefix)
+
+        view = ""
+        if page.get("view"):
+            view = '\n<script>window.MMJ_VIEW = %s;</script>' % json.dumps(page["view"])
+
+        intro_css = ('<link rel="stylesheet" href="%sassets/css/intro.css%s">\n' % (prefix, q)
+                     if not folder else "")
+        intro_js = ('<script src="%sassets/js/intro.js%s"></script>\n' % (prefix, q)
+                    if not folder else "")
+
+        doc = """<!doctype html>
+<html lang="id" data-build="%(ver)s" data-mmj-page="%(tab)s"%(auth)s>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>%(title)s</title>
-<link rel="icon" type="image/png" href="%(fav)s%(q)s">
+%(head)s
 <meta name="theme-color" content="#6366f1">
 <meta name="description" content="Dashboard MMJ 2026: Eksekutif, Heavy Equipment (Timesheet HE/WT), Coal Hauling, Batu Split, Loss Time &amp; Rainfall.">
-<link rel="stylesheet" id="mmjBootCss" href="assets/css/boot.css%(q)s">
-<link rel="stylesheet" href="assets/css/intro.css%(q)s">
-<link rel="stylesheet" href="assets/css/theme.css%(q)s">
-<link rel="stylesheet" href="assets/css/shell.css%(q)s">
-<link rel="stylesheet" href="assets/css/common.css%(q)s">
-%(preloads)s</head>
+<link rel="icon" type="image/png" href="%(p)s%(fav)s%(q)s">
+<link rel="stylesheet" id="mmjBootCss" href="%(p)sassets/css/boot.css%(q)s">
+%(intro_css)s<link rel="stylesheet" href="%(p)sassets/css/theme.css%(q)s">
+<link rel="stylesheet" href="%(p)sassets/css/shell.css%(q)s">
+<link rel="stylesheet" href="%(p)sassets/css/common.css%(q)s">
+</head>
 <body>
 <!-- terlihat hanya bila JavaScript tidak berjalan -->
 %(nojs)s
 
-%(templates)s
+%(markup)s
 
-<script src="assets/js/auth.js%(q)s"></script>
-<script>window.MMJ_BULAN = %(bulan)s;</script>
-<script src="assets/js/shell.js%(q)s"></script>
-<script src="assets/js/intro.js%(q)s"></script>
-</body>
+<script src="%(p)sassets/js/auth.js%(q)s"></script>
+<script>window.MMJ_BULAN = %(bulan)s;</script>%(view)s
+<script src="%(p)sassets/js/shell.js%(q)s"></script>
+%(intro_js)s%(scripts)s</body>
 </html>
-""" % {"ver": version, "title": title, "fav": fav_href, "q": q,
-       "preloads": preloads, "nojs": nojs, "templates": "\n\n".join(out_tpl),
-       "bulan": json.dumps(bulan)}
+""" % {"ver": version, "tab": tab, "head": head, "p": prefix, "fav": fav_href,
+       "q": q, "nojs": _prefix_paths(nojs, prefix), "markup": markup,
+       "bulan": json.dumps(bulan), "view": view, "intro_css": intro_css,
+       "intro_js": intro_js, "scripts": _prefix_paths(data["scripts"], prefix),
+       "auth": (' data-mmj-auth-page="%s"' % page["auth"]) if page.get("auth") else ""}
 
-    _write(os.path.join(root, "index.html"), doc)
+        _write(os.path.join(root, rel), doc)
+        written_pages.append(rel)
+
+    index_doc = ""
+    p_index = os.path.join(root, "index.html")
+    if os.path.exists(p_index):
+        with open(p_index, encoding="utf-8") as f:
+            index_doc = f.read()
+
     _cleanup_stale(root)
     return {
-        "index": os.path.join(root, "index.html"),
-        "size": len(doc.encode("utf-8")),
+        "index": p_index,
+        "size": len(index_doc.encode("utf-8")),
         "tabs": [t for t, _ in tpls],
+        "pages": written_pages,
         "stats": dict(_STATS),
     }

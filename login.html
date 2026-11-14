@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Masuk · Dashboard MMJ 2026</title>
-<link rel="icon" href="assets/img/favicon.png?v=2237673b43">
-<link rel="stylesheet" href="assets/css/login.css?v=2237673b43">
+<link rel="icon" href="assets/img/favicon.png?v=fc03a68329">
+<link rel="stylesheet" href="assets/css/login.css?v=fc03a68329">
 </head>
 <body>
 <main class="lg-wrap">
@@ -43,7 +43,7 @@
   </form>
 </main>
 
-<script src="assets/js/auth.js?v=2237673b43"></script>
+<script src="assets/js/auth.js?v=fc03a68329"></script>
 <script>
 (function () {
   "use strict";
@@ -94,7 +94,15 @@
 
     b.disabled = true;
     b.textContent = "Memproses…";
-    location.replace("index.html");
+
+    /* kembali ke halaman yang tadi meminta login (mis. /Cost-Control/); kalau
+       tidak ada, ke halaman role user (HSE -> Data Simper, ECC -> Cost Control,
+       General -> Dashboard Eksekutif). Hanya alamat internal (diawali "/")
+       yang diterima, supaya ?next= tidak bisa mengalihkan ke situs lain. */
+    var next = "";
+    try { next = new URLSearchParams(location.search).get("next") || ""; } catch (x) { }
+    var home = (window.MMJ_AUTH && window.MMJ_AUTH.homeOf) ? window.MMJ_AUTH.homeOf(user.role) : "index.html";
+    location.replace(next && next.charAt(0) === "/" ? next : (home || "index.html"));
   });
 })();
 </script>

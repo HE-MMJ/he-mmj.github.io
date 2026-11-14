@@ -231,6 +231,146 @@ def patch_nav(shell_html):
     return shell_html.replace(old, new)
 
 
+# --------------------------------------------------- halaman Cost Control ----
+# Halaman ini terpisah dari dashboard lain dan hanya dibuka untuk user yang
+# sudah login dengan izin "costcontrol" (lihat data-mmj-auth-page di emit_site).
+# Isinya sengaja berupa kerangka: kartu + tabel contoh, menunggu data biaya.
+_IC_MONEY = ('<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+             'stroke-width="2"><rect x="2" y="6" width="20" height="13" rx="2"/>'
+             '<path d="M2 11h20M6 15h4"/></svg>')
+_IC_ROCK = ('<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+            'stroke-width="2"><path d="M3 7l9-4 9 4-9 4-9-4Zm0 5 9 4 9-4M3 17l9 4 9-4"/></svg>')
+_IC_GEAR = ('<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+            'stroke-width="2"><circle cx="12" cy="12" r="3"/>'
+            '<path d="M12 2v3m0 14v3M4.2 4.2l2.1 2.1m11.4 11.4 2.1 2.1M2 12h3m14 0h3'
+            'M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>')
+_IC_CLOCK = ('<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+             'stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>')
+
+_COST_MAIN = '''
+  <header class="top" id="cc-top">
+    <div>
+      <div class="eyebrow">Cost Control</div>
+      <h1>Cost Control<span>PT. Musi Mitra Jaya</span></h1>
+      <div class="sub">Rekap biaya operasional &mdash; data belum tersedia.</div>
+    </div>
+  </header>
+
+  <section class="kpis">
+    <div class="kpi" style="--c:var(--k1)">
+      <div class="hd"><div class="ic">%(ic_total)s</div><div><div class="l">Total Cost</div><div class="v">&mdash;</div></div></div>
+      <div class="n">Menunggu data biaya</div>
+    </div>
+    <div class="kpi" style="--c:var(--k2)">
+      <div class="hd"><div class="ic">%(ic_ton)s</div><div><div class="l">Cost / Ton</div><div class="v">&mdash;</div></div></div>
+      <div class="n">Menunggu data biaya</div>
+    </div>
+    <div class="kpi" style="--c:var(--k3)">
+      <div class="hd"><div class="ic">%(ic_ops)s</div><div><div class="l">Operational Cost</div><div class="v">&mdash;</div></div></div>
+      <div class="n">Menunggu data biaya</div>
+    </div>
+    <div class="kpi" style="--c:var(--k4)">
+      <div class="hd"><div class="ic">%(ic_jam)s</div><div><div class="l">Cost / Jam</div><div class="v">&mdash;</div></div></div>
+      <div class="n">Menunggu data biaya</div>
+    </div>
+  </section>
+
+  <div class="sec">Rincian biaya</div>
+  <section class="grid">
+    <div class="card c12">
+      <div class="ch"><div><h2>Rincian biaya per kategori</h2><p>Data belum tersedia.</p></div></div>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Kategori</th><th>Keterangan</th><th class="num">Nilai</th></tr></thead>
+          <tbody>
+            <tr><td>Fuel</td><td>&mdash;</td><td class="num">&mdash;</td></tr>
+            <tr><td>Maintenance</td><td>&mdash;</td><td class="num">&mdash;</td></tr>
+            <tr><td>Lain-lain</td><td>&mdash;</td><td class="num">&mdash;</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+''' % {
+    "ic_total": _IC_MONEY,
+    "ic_ton": _IC_ROCK,
+    "ic_ops": _IC_GEAR,
+    "ic_jam": _IC_CLOCK,
+}
+
+# tabel di halaman Cost Control / Data Simper / Data DT (exec.css hanya
+# mengatur ukuran tabel)
+_COST_CSS = '''
+.tw table{border-collapse:collapse}
+.tw th,.tw td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--hair);white-space:nowrap}
+.tw th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.tw tbody tr:last-child td{border-bottom:0}
+.tw th.num,.tw td.num{text-align:right}
+'''
+
+# isi sementara halaman Data Simper & Data DT (menunggu sumber data)
+_HSE_MAIN = '''
+  <header class="top" id="hse-top">
+    <div>
+      <div class="eyebrow">HSE</div>
+      <h1>%(judul)s<span>PT. Musi Mitra Jaya</span></h1>
+      <div class="sub">Data %(nama)s belum tersedia.</div>
+    </div>
+  </header>
+
+  <div class="sec">Data HSE</div>
+  <section class="grid">
+    <div class="card c12">
+      <div class="ch"><div><h2>%(judul)s</h2><p>Halaman ini disiapkan untuk data %(nama)s.</p></div></div>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Keterangan</th><th class="num">Nilai</th></tr></thead>
+          <tbody>
+            <tr><td>Data belum tersedia</td><td class="num">&mdash;</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+'''
+
+
+def _page_template(exec_tpl, tab, judul, main_html):
+    """Turunkan template halaman baru dari template Eksekutif.
+
+    Shell/sidebar tetap sama (tema, menu, tombol user), hanya judul dan isi
+    <main> yang diganti. Halaman ini tidak punya data/aplikasi sendiri, jadi
+    semua <script> dibuang.
+    """
+    t = exec_tpl.replace('<template id="mmjT_exec">',
+                         '<template id="mmjT_%s">' % tab, 1)
+    t = t.replace(
+        '<title data-mmj-head>Dashboard Eksekutif MMJ</title>',
+        '<title data-mmj-head>%s - MMJ</title>\n<style data-mmj-head>%s</style>'
+        % (judul, _COST_CSS))
+    # menu halaman milik Eksekutif (Ringkasan / Coal Hauling / ...) tidak berlaku
+    t = re.sub(r'\s*<nav class="nav" id="enav">.*?</nav>', '', t, flags=re.S)
+    # label "Menu halaman" jadi kosong tanpa menu di atas -> buang
+    t = re.sub(r'<div class="mlbl mhere">Menu halaman</div>', '', t)
+    # isi halaman (tag <main> dipertahankan, hanya isinya yang diganti)
+    t = re.sub(r'(<main\b[^>]*>).*?(</main>)',
+               lambda m: m.group(1) + main_html + m.group(2), t, flags=re.S)
+    t = re.sub(r'<script\b.*?</script>', '', t, flags=re.S)
+    return t
+
+
+def build_cost_template(exec_tpl):
+    """Halaman Cost Control memakai shell/sidebar halaman Eksekutif + isi sendiri."""
+    return _page_template(exec_tpl, "cost", "Cost Control", _COST_MAIN)
+
+
+def build_hse_template(exec_tpl, tab, judul):
+    """Halaman Data Simper / Data DT (isi sementara, tanpa data)."""
+    nama = judul.replace("Data ", "", 1)
+    return _page_template(exec_tpl, tab, judul,
+                          _HSE_MAIN % {"judul": judul, "nama": nama})
+
+
 def patch_shell_js(txt):
     """Daftarkan tab 'he' di shell: map template, mount(), regex hash, fallback."""
     txt = txt.replace('lt: asFrag(document.getElementById("mmjT_lt"))',
@@ -430,7 +570,11 @@ def main():
     if not matches:
         raise SystemExit("blok template tidak ditemukan di " + SRC_SHELL)
     start, end = matches[0].start(), matches[-1].end()
-    block = "\n".join([tpls["exec"], tpls["haul"], tpls["batu"], tpls["lt"], he_tpl])
+    cost_tpl = build_cost_template(tpls["exec"])
+    simper_tpl = build_hse_template(tpls["exec"], "simper", "Data Simper")
+    dt_tpl = build_hse_template(tpls["exec"], "dt", "Data DT")
+    block = "\n".join([tpls["exec"], tpls["haul"], tpls["batu"], tpls["lt"],
+                       he_tpl, cost_tpl, simper_tpl, dt_tpl])
     shell = shell[:start] + block + shell[end:]
 
     # 5) pecah menjadi situs modular: index.html + assets/css + assets/js + assets/data
@@ -484,7 +628,7 @@ def main():
     # daftar bulan yang tersedia (dipakai pemilih bulan di sidebar)
     bulan_ada = sorted(set(bulan_ada))
     print("Bulan   : data HE/WT per bulan untuk %s" % (bulan_ada or "-"))
-    print("Tab     : exec | haul | batu | lt | rf | he")
+    print("Tab     : exec | haul | batu | lt | rf | he | cost")
     print("HE      : %d unit HE, %d unit WT, HM %s jam, MA %s%%, Penyiraman %s rit"
           % (summary["unit"], summary["wtUnit"], summary["hm"], summary["ma"], summary["penyiraman"]))
 

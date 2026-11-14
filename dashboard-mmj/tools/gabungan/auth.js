@@ -8,19 +8,42 @@
    butuh layanan/server di luar repo.
 
    Daftar user & ROLE diisi di bagian `users` (ganti sesuai permintaan).
-   Role dipakai lewat MMJ_AUTH.can("...") - untuk sekarang semua hak akses
-   milik role "admin".
+   Role dipakai lewat MMJ_AUTH.can("...") untuk menyembunyikan menu per role.
    ============================================================================= */
 (function () {
   "use strict";
 
   /* daftar user: ganti nanti sesuai permintaan */
   var users = [
-    { id: "u1", name: "Rizualdi Fadli", username: "admin", pass: "mmj2026", role: "admin" }
+    { id: "u1", name: "Rizualdi Fadli", username: "admin", pass: "mmj2026", role: "admin" },
+    { id: "u2", name: "Admin HSE", username: "hse", pass: "hse2026", role: "hse" },
+    { id: "u3", name: "Admin ECC", username: "ecc", pass: "ecc2026", role: "ecc" }
   ];
 
-  /* hak akses per role - diisi nanti; "admin" selalu boleh semuanya */
-  var CAPS = { admin: { all: true } };
+  /* hak akses per role. Role "admin" (Admin General) selalu boleh semuanya.
+     Kunci capability dipakai pada penanda data-mmj-cap di menu sidebar:
+       public       -> dashboard monitoring (terbuka juga untuk tamu)
+       hse          -> Data Simper + Data DT
+       costcontrol  -> Cost Control */
+  var CAPS = {
+    admin: { all: true },
+    hse: { hse: true },
+    ecc: { costcontrol: true }
+  };
+
+  /* nama role yang ditampilkan di sidebar */
+  var ROLE_LABEL = {
+    admin: "Admin General",
+    hse: "Admin HSE",
+    ecc: "Admin ECC"
+  };
+
+  /* halaman pertama tiap role setelah login (relatif terhadap root situs) */
+  var ROLE_HOME = {
+    admin: "index.html",
+    hse: "Data-Simper/",
+    ecc: "Cost-Control/"
+  };
 
   var sessionKey = "mmjSession";
   var rememberKey = "mmjRemember";
@@ -119,12 +142,24 @@
 
     isLoggedIn: function () { return !!MMJ_AUTH.current(); },
 
-    /* cek hak akses; dipakai nanti untuk menyembunyikan menu per role */
+    /* nama role untuk ditampilkan (mis. "Admin HSE") */
+    roleLabel: function (role) {
+      return ROLE_LABEL[role] || String(role || "").toUpperCase();
+    },
+
+    /* halaman pertama role ini setelah login ("" = halaman utama) */
+    homeOf: function (role) {
+      return ROLE_HOME[role] || "index.html";
+    },
+
+    /* cek hak akses; dipakai untuk menyembunyikan menu per role */
     can: function (cap) {
       var u = MMJ_AUTH.current();
       if (!u) return false;
-      if (u.role === "admin") return true;
-      return !!(CAPS[u.role] && CAPS[u.role][cap]);
+      var c = CAPS[u.role];
+      if (!c) return false;
+      if (c.all) return true;
+      return !!c[cap];
     }
   };
 

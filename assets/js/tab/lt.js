@@ -30,7 +30,7 @@ const monthRange = m => [m+"-01", m+"-"+String(new Date(+m.slice(0,4), +m.slice(
 
 let pref = {}; try{ pref = JSON.parse(localStorage.getItem("ltDashPref")||"{}"); }catch(e){}
 const savePref = () => { try{ localStorage.setItem("ltDashPref", JSON.stringify({hm:st.hm, gv:st.gv, pos:st.pos, av:st.av, view:st.view})); }catch(e){} };
-const st = {bulan:"", dari:"", sampai:"", routes:new Set(ROUTES), type:"", hm:pref.hm||"mm", gv:pref.gv||"mmj", pos:pref.pos||"dash", cb:"all", rh:"all", mc:false, mcv:"t2", kp:"", av:pref.av||"bar", view:pref.view||"lt", dt:new Set(), open:{evt:false, cek:false}, q:""};
+const st = {bulan:"", dari:"", sampai:"", routes:new Set(ROUTES), type:"", hm:pref.hm||"mm", gv:pref.gv||"mmj", pos:pref.pos||"dash", cb:"all", rh:"all", mc:false, mcv:"t2", kp:"", av:pref.av||"bar", view:(window.MMJ_VIEW||pref.view||"lt"), dt:new Set(), open:{evt:false, cek:false}, q:""};
 /* acuan pos: "dash" = ISP68 hanya ISP · "sop" = ISP68 dipakai bersama H1, ISP & H2 (SOP 8.2) */
 const posRoutes = p => (st.pos==="sop" && POSR[p]==="ISP") ? ["H1","ISP","H2"] : [POSR[p]];
 const posIn = (p, r) => posRoutes(p).includes(r);

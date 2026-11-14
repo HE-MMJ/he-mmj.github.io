@@ -3,8 +3,10 @@
 
 /* Elemen ber-label izin (mis. data-mmj-auth="costcontrol") tetap tersembunyi
    sampai user yang punya izin membukanya. Atribut hidden saja tidak cukup
-   karena .nav a { display:flex } mengalahkan aturan UA. */
+   karena .nav a { display:flex } mengalahkan aturan UA. Aturan yang sama
+   dipakai menu ber-capability (data-mmj-cap) yang disaring per role. */
 [data-mmj-auth][hidden]{display:none!important}
+[data-mmj-cap][hidden]{display:none!important}
 
 .mmj-user{
   /* diam di dasar sidebar (sidebar bisa di-scroll, menu user tidak boleh
@@ -51,10 +53,40 @@ html[data-theme="dark"] .mmj-user-in:hover{color:#a5b4fc;border-color:#6366f1;ba
     width:100%;grid-template-columns:auto 1fr;
   }
   .mmj-user-out,.mmj-user-in{width:auto;padding:6px 12px}
+  /* bar mendatar: kaki sidebar tidak lagi menempel di dasar */
+  .side-foot{
+    position:static;margin:0;padding:0;background:transparent;
+    border-top:0;border-radius:0;
+  }
 }
 
-/* ruang di bawah sidebar (desktop) supaya item menu terakhir tidak tertutup
-   menu user yang menempel di dasar sidebar */
+/* ruang di bawah sidebar (desktop): kaki sidebar (menu user + tema) menempel
+   langsung di dasar, jadi tidak perlu padding bawah tambahan */
 @media (min-width:901px){
-  body .side{padding-bottom:64px}
+  body .side{padding-bottom:0}
 }
+
+/* ------------------------------------------- halaman khusus login -------- */
+/* Halaman ber-atribut data-mmj-auth-page="<izin>" (mis. Cost Control) hanya
+   dibuka setelah login. Selama izin belum dipastikan, isi halaman
+   disembunyikan supaya tidak sempat berkedip; kalau tidak berizin, shell.js
+   mengganti isi <main> dengan panel "Perlu masuk". */
+html[data-mmj-auth-page]:not([data-mmj-auth-ok]) main{display:none}
+
+.mmj-wall{display:grid;place-items:center;min-height:60vh;padding:24px 8px}
+.mmj-wall-card{
+  max-width:420px;text-align:center;padding:28px 26px;border-radius:20px;
+  background:var(--surface,rgba(255,255,255,.72));
+  border:1px solid var(--border,rgba(255,255,255,.8));
+  box-shadow:var(--shadow,0 10px 30px rgba(40,60,140,.08));
+}
+.mmj-wall-card h2{margin:0 0 8px;font-size:20px;letter-spacing:-.01em;color:var(--ink,#121833)}
+.mmj-wall-card p{margin:0 0 18px;font-size:13.5px;color:var(--ink-2,#4d5677)}
+.mmj-wall-in{
+  display:inline-block;text-decoration:none;font-size:13.5px;font-weight:600;color:#fff;
+  background:var(--accent,#4f46e5);border-radius:11px;padding:10px 22px;
+}
+.mmj-wall-in:hover{filter:brightness(1.08)}
+html[data-theme="dark"] .mmj-wall-card{background:rgba(24,27,60,.9);border-color:rgba(255,255,255,.12)}
+html[data-theme="dark"] .mmj-wall-card h2{color:#e8ecf7}
+html[data-theme="dark"] .mmj-wall-card p{color:#9aa6c4}

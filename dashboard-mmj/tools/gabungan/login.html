@@ -94,7 +94,15 @@
 
     b.disabled = true;
     b.textContent = "Memproses…";
-    location.replace("index.html");
+
+    /* kembali ke halaman yang tadi meminta login (mis. /Cost-Control/); kalau
+       tidak ada, ke halaman role user (HSE -> Data Simper, ECC -> Cost Control,
+       General -> Dashboard Eksekutif). Hanya alamat internal (diawali "/")
+       yang diterima, supaya ?next= tidak bisa mengalihkan ke situs lain. */
+    var next = "";
+    try { next = new URLSearchParams(location.search).get("next") || ""; } catch (x) { }
+    var home = (window.MMJ_AUTH && window.MMJ_AUTH.homeOf) ? window.MMJ_AUTH.homeOf(user.role) : "index.html";
+    location.replace(next && next.charAt(0) === "/" ? next : (home || "index.html"));
   });
 })();
 </script>
