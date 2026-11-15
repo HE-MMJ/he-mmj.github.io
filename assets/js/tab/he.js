@@ -331,6 +331,129 @@ function renderRunText() {
   });
 }
 
+// ---------- panel detail unit (klik Unit ID di tabel Review Unit) ----------
+// Kunci panel: buang semua non-alfanumerik, karena nama unit di tabel tidak selalu
+// sama dengan nama sheet Excel ("DT 11 GIP" vs "DT-11 GIP", "TRADO 01 GIP").
+// Sengaja bukan unitKey(): itu kunci pencocokan DAILYUNIT.
+function udKey(s) { return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+
+function udDetail(unit) {
+  const u = window.UNITDETAIL;
+  return (u && u[udKey(unit)]) || null;
+}
+
+// Jam per kategori sebulan penuh: dari UNITDETAIL bila ada. Cadangan: hanya total
+// breakdown dari DAILYUNIT, karena idle/ops di sana tidak bisa dipecah per kategori.
+function udCats(unit) {
+  const d = udDetail(unit);
+  if (d && d.c) return d.c;
+  const out = { rain: 0, slip: 0, nowork: 0, meals: 0, p2h: 0, hol: 0, trav: 0,
+                rep: 0, bd: 0, nofuel: 0, waitop: 0, noop: 0, notandem: 0 };
+  const D = DU_MAP[unitKey(unit)] || {};
+  for (const k in D) out.bd += num((D[k] || [])[2]);
+  return out;
+}
+
+// [label, ambil nilai, sub-baris Repair/Break Down]
+const UD_BARIS = [
+  ['Breakdown', c => num(c.rep) + num(c.bd), false],
+  ['Standby \u2013 Rain', c => num(c.rain), false],
+  ['Standby \u2013 Slippery', c => num(c.slip), false],
+  ['No Operator', c => num(c.noop), false],
+  ['No Job (No Work Location)', c => num(c.nowork), false],
+  ['Meals And Rest', c => num(c.meals), false],
+  ['P2H', c => num(c.p2h), false],
+  ['Holiday', c => num(c.hol), false],
+  ['Travelling', c => num(c.trav), false],
+  ['Repair', c => num(c.rep), true],
+  ['Break Down', c => num(c.bd), true],
+  ['No Fuel', c => num(c.nofuel), false],
+  ['Waiting Operator', c => num(c.waitop), false],
+  ['No Tandem', c => num(c.notandem), false]
+];
+
+let UD_WRAP = null;   // overlay panel (dibuat sekali, dipakai ulang)
+let UD_FOKUS = null;  // elemen yang fokusnya dikembalikan saat panel ditutup
+
+function renderUnitPanel(d) {
+  const unit = d.Unit || '-';
+  const det = udDetail(unit);
+  const c = udCats(unit);
+  const bl = BULAN_ID[PERIODE.m - 1];
+  const kartu = [
+    ['Breakdown', num(c.rep) + num(c.bd), '#DC2626'],
+    ['Standby', num(c.rain) + num(c.slip), '#0891B2'],
+    ['No Operator', num(c.noop), '#D97706'],
+    ['No Job', num(c.nowork), '#7C3AED']
+  ];
+  const b = (det && det.b) || [];
+  const totalBd = b.reduce((s, x) => s + num(x.h), 0) || 1;
+  // keterangan breakdown berasal dari teks Excel: selalu lewat escHtml
+  const rincian = b.length ? `
+    <div class="ud-bd">
+      <h4>Rincian breakdown</h4>
+      ${b.map(x => `
+      <div class="ud-bd-row">
+        <div class="ud-bd-top">
+          <span class="ud-bd-l">${escHtml(judulKata(x.l || 'tanpa keterangan'))}</span>
+          <span>${fmt(x.h, 1)} jam</span>
+        </div>
+        <div class="ud-bar"><i style="width:${Math.max(2, num(x.h) / totalBd * 100).toFixed(1)}%"></i></div>
+        <div class="ud-bd-d">${(x.d || []).map(t => t[0] + ' ' + bl).join(', ')}</div>
+      </div>`).join('')}
+    </div>` : '';
+
+  return `
+    <h3 id="udJudul">${escHtml(unit)}</h3>
+    <p class="ud-sub">${escHtml([d.Jenis, d.Area].filter(Boolean).join(' \u00b7 ') || '-')}
+      \u00b7 Total ${bl} ${PERIODE.y} (tidak ikut filter rentang tanggal)</p>
+    <div class="ud-cards">
+      ${kartu.map(([l, v, cl]) => `<div class="ud-card" style="--c:${cl}">
+        <div class="ud-card-l">${l}</div>
+        <div class="ud-card-v">${fmt(v, 1)}</div>
+        <div class="ud-card-s">jam</div>
+      </div>`).join('')}
+    </div>
+    <table class="ud-table">
+      <thead><tr><th>Kategori</th><th class="num">Jam</th></tr></thead>
+      <tbody>${UD_BARIS.map(([l, f, sub]) => {
+        const v = f(c);
+        return `<tr class="${sub ? 'ud-sub ' : ''}${v ? '' : 'ud-nol'}">
+          <td>${escHtml(l)}</td><td class="num">${fmt(v, 1)}</td></tr>`;
+      }).join('')}</tbody>
+    </table>
+    ${det ? '' : '<p class="ud-note">Rincian per kategori belum tersedia untuk bulan ini; angka Breakdown memakai total harian.</p>'}
+    ${rincian}`;
+}
+
+function judulKata(s) {
+  return String(s).replace(/\b\w/g, m => m.toUpperCase());
+}
+
+function openUnitPanel(d) {
+  if (!UD_WRAP) {
+    UD_WRAP = document.createElement('div');
+    UD_WRAP.className = 'ud-wrap';
+    UD_WRAP.addEventListener('click', e => { if (e.target === UD_WRAP) closeUnitPanel(); });
+    document.body.appendChild(UD_WRAP);
+  }
+  UD_FOKUS = document.activeElement;
+  UD_WRAP.innerHTML = '<div class="ud-panel" role="dialog" aria-modal="true" aria-labelledby="udJudul">'
+    + '<button type="button" class="ud-close" aria-label="Tutup detail unit">&times;</button>'
+    + renderUnitPanel(d) + '</div>';
+  UD_WRAP.classList.add('open');
+  const btn = UD_WRAP.querySelector('.ud-close');
+  if (btn) { btn.addEventListener('click', closeUnitPanel); btn.focus(); }
+}
+
+function closeUnitPanel() {
+  if (!UD_WRAP) return;
+  UD_WRAP.classList.remove('open');
+  UD_WRAP.innerHTML = '';
+  if (UD_FOKUS && UD_FOKUS.focus) UD_FOKUS.focus();
+  UD_FOKUS = null;
+}
+
 function render() {
   const hb = hitungBelum();
   BMAP = hb.map;
@@ -410,7 +533,7 @@ function render() {
     // model + kapasitas unit (dari sheet Database List Unit)
     const modelTxt = d.Model ? (d.Capacity && d.Capacity !== '-' ? `${d.Model}/${d.Capacity}` : d.Model) : '-';
     return `<tr>
-    <td><b>${d.Unit || '-'}</b></td>
+    <td><button type="button" class="unit-id" data-unit="${escHtml(d.Unit || '')}"><b>${escHtml(d.Unit || '-')}</b></button></td>
     <td>${d.Jenis || '-'}</td>
     <td>${d.Area || '-'}</td>
     <td class="model-cell">${modelTxt}</td>
@@ -1183,6 +1306,25 @@ function setSort(col) {
 
 document.querySelectorAll('.sortable').forEach(th => {
   th.addEventListener('click', () => setSort(th.dataset.sort));
+});
+
+// klik Unit ID di tabel Review Unit -> panel detail (satu listener untuk seluruh tabel)
+const tbodyEl = document.getElementById('tbody');
+if (tbodyEl) tbodyEl.addEventListener('click', e => {
+  const b = e.target.closest ? e.target.closest('.unit-id') : null;
+  if (!b) return;
+  const d = lastRows.find(x => unitKey(x.Unit) === unitKey(b.dataset.unit));
+  if (d) openUnitPanel(d);
+});
+
+// Esc menutup panel; Tab berputar di dalam panel (satu-satunya tombol = tutup)
+document.addEventListener('keydown', e => {
+  if (!UD_WRAP || !UD_WRAP.classList.contains('open')) return;
+  if (e.key === 'Escape') { closeUnitPanel(); return; }
+  if (e.key !== 'Tab') return;
+  e.preventDefault();
+  const btn = UD_WRAP.querySelector('.ud-close');
+  if (btn) btn.focus();
 });
 
 // ---------- menu perbandingan ----------
