@@ -33,7 +33,8 @@ WT_VENDOR = [("WT TSA", "06", "WT TSA"), ("WT TLK", "07", "WT TLK"),
              ("WT TJP", "10", "TJP"), ("WT PBT", "11", "WT PBT")]
 
 SCRIPTS = ["export_review.ps1", "export_daily.ps1", "export_daily_unit.ps1",
-           "export_belum_review.ps1", "export_wt_penyiraman.ps1"]
+           "export_unit_detail.ps1", "export_belum_review.ps1",
+           "export_wt_penyiraman.ps1"]
 
 
 def pick(folder, bulan, tahun, must=None):
@@ -123,7 +124,12 @@ def patch_script(name, bulan, tahun, base, he_files, wt_files, outdir, fuel):
     text = text.replace('"D:\\Temp\\wa_timesheet\\daily_export.json"',
                         '"%s\\daily_export.json"' % outdir.replace("\\", "\\\\"))
     text = re.sub(r'(?m)^\$tmpDir\s*=\s*".*"$', lambda m: '$tmpDir = "%s"' % outdir, text)
-    text = re.sub(r'(?m)^\$outFile\s*=\s*".*"$', lambda m: '$outFile = "%s\\daily_unit.json"' % outdir, text)
+
+    def _outfile(m):
+        nama = re.split(r'[\\/]', m.group(1))[-1]
+        return '$outFile = "%s\\%s"' % (outdir, nama)
+
+    text = re.sub(r'(?m)^\$outFile\s*=\s*"(.*)"$', _outfile, text)
     text = re.sub(r'(?m)^\$OUTFILE\s*=\s*".*"$', lambda m: m.group(0), text)  # placeholder
     text = text.replace('D:\\Temp\\wa_timesheet\\belum_grid.json',
                         "%s\\belum_grid.json" % outdir)
