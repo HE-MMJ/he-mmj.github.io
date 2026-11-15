@@ -1316,9 +1316,11 @@ table.grid tbody tr:hover { background: var(--accent-soft); }
 
 .ud-wrap.open { display: flex; }
 
+/* --surface-solid, bukan --card: --card tembus pandang (.62) dan membuat tabel di
+   belakang panel ikut terlihat */
 .ud-panel { position: relative; width: 100%; max-width: 560px; max-height: 80vh; overflow: auto;
-  padding: 18px 18px 22px; border-radius: 14px; background: var(--card, #FFF);
-  color: var(--text, #0F172A); border: 1px solid var(--border, #E2E8F0);
+  padding: 18px 18px 22px; border-radius: 14px; background: var(--surface-solid, #FFF);
+  color: var(--text, #0F172A); border: 1px solid var(--hair, #E2E8F0);
   box-shadow: 0 20px 50px rgba(11, 31, 58, .28); }
 
 .ud-panel h3 { margin: 0 0 2px; font-size: 18px; }
@@ -1328,8 +1330,8 @@ table.grid tbody tr:hover { background: var(--accent-soft); }
 
 .ud-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
 
-.ud-card { padding: 8px 10px; border: 1px solid var(--border-soft, #EDF2F7); border-left: 4px solid var(--c, #1D4ED8);
-  border-radius: 10px; background: var(--bg, #F1F5F9); }
+.ud-card { padding: 8px 10px; border: 1px solid var(--hair, #EDF2F7); border-left: 4px solid var(--c, #1D4ED8);
+  border-radius: 10px; background: var(--surface-2, #F1F5F9); }
 
 .ud-card-l { font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted, #64748B); }
 
@@ -1341,9 +1343,9 @@ table.grid tbody tr:hover { background: var(--accent-soft); }
 .ud-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 
 .ud-table th { padding: 4px 6px; text-align: left; font-size: 11px; text-transform: uppercase;
-  color: var(--muted, #64748B); border-bottom: 1px solid var(--border, #E2E8F0); }
+  color: var(--muted, #64748B); border-bottom: 1px solid var(--hair, #E2E8F0); }
 
-.ud-table td { padding: 4px 6px; border-bottom: 1px solid var(--border-soft, #EDF2F7); }
+.ud-table td { padding: 4px 6px; border-bottom: 1px solid var(--hair, #EDF2F7); }
 
 .ud-table .num { text-align: right; font-variant-numeric: tabular-nums; }
 
@@ -1362,7 +1364,7 @@ table.grid tbody tr:hover { background: var(--accent-soft); }
 
 .ud-bd-l { font-weight: 600; }
 
-.ud-bar { height: 6px; margin: 3px 0; border-radius: 3px; overflow: hidden; background: var(--border-soft, #EDF2F7); }
+.ud-bar { height: 6px; margin: 3px 0; border-radius: 3px; overflow: hidden; background: var(--hair, #EDF2F7); }
 
 .ud-bar i { display: block; height: 100%; background: #DC2626; }
 
