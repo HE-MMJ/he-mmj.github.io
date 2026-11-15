@@ -52,6 +52,7 @@ def main():
         daily = read_json(os.path.join(d, "daily_export.json"))
         belum = read_json(os.path.join(d, "belum_grid.json"))
         unit = read_json(os.path.join(d, "daily_unit.json"))
+        detail = read_json(os.path.join(d, "unit_detail.json"))
         wt = read_json(os.path.join(d, "wt_penyiraman.json"))
 
         if not review:
@@ -63,6 +64,7 @@ def main():
             "DAILY": daily or [],
             "BELUM": belum or [],
             "DAILYUNIT": unit or [],
+            "UNITDETAIL": detail or {},
         }
         with open(os.path.join(OUT_HE, "%s.json" % mm), "w", encoding="utf-8") as f:
             json.dump(he, f, ensure_ascii=False, separators=(",", ":"))
@@ -70,9 +72,9 @@ def main():
             wtx = {"PERIODE": {"y": 2026, "m": b, "last": HARI[b - 1]}, "DATA": wt}
             with open(os.path.join(OUT_WT, "%s.json" % mm), "w", encoding="utf-8") as f:
                 json.dump(wtx, f, ensure_ascii=False, separators=(",", ":"))
-        print("  %s: HE %d unit, DAILY %d, BELUM %d, DAILYUNIT %d | WT %d unit" % (
+        print("  %s: HE %d unit, DAILY %d, BELUM %d, DAILYUNIT %d, UNITDETAIL %d | WT %d unit" % (
             mm, len(review), len(daily or []), len(belum or []), len(unit or []),
-            len(wt or [])))
+            len(detail or {}), len(wt or [])))
         ok += 1
     print("\nSelesai: %d bulan siap dipakai" % ok)
     return 0 if ok else 1
