@@ -332,7 +332,8 @@ function renderRunText() {
 function udKey(s) { return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
 
 function udDetail(unit) {
-  const u = window.UNITDETAIL;
+  // jalur lama menulis `const UNITDETAIL` (global leksikal, bukan properti window)
+  const u = (typeof UNITDETAIL !== 'undefined' ? UNITDETAIL : null) || window.UNITDETAIL;
   return (u && u[udKey(unit)]) || null;
 }
 
