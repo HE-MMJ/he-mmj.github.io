@@ -612,14 +612,14 @@ def main():
                      "window.%s = window.%s || {};\n" % (target, target),
                      "window.%s.PERIODE = %s;\n" % (target, json.dumps(d.get("PERIODE") or {})),
                      emitter._decoder_js()]
-            for key in ("DATA", "DAILY", "BELUM", "DAILYUNIT"):
+            for key in ("DATA", "DAILY", "BELUM", "DAILYUNIT", "UNITDETAIL"):
                 if key not in d:
                     continue
                 lit = json.dumps(d[key], ensure_ascii=False, separators=(",", ":"))
                 res = emitter._compact_literal(lit)
                 val = "window.MMJ_INFLATE(%s)" % res[0] if res else lit
-                if key == "DAILYUNIT":
-                    lines.append("window.DAILYUNIT = %s;\n" % val)
+                if key in ("DAILYUNIT", "UNITDETAIL"):
+                    lines.append("window.%s = %s;\n" % (key, val))
                 else:
                     lines.append("window.%s.%s = %s;\n" % (target, key, val))
             emitter._write(os.path.join(ROOT, rel), "".join(lines))
