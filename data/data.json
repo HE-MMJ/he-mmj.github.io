@@ -10,8 +10,8 @@
     "PAPct":  96,
     "PAHours":  17,
     "MOHH":  90,
-    "Fuel":  1190,
-    "FuelRatio":  17.25,
+    "Fuel":  1350,
+    "FuelRatio":  19.57,
     "Capacity":  "14 FT"
 },{
     "Vendor":  "GIP H2",
@@ -25,8 +25,8 @@
     "PAPct":  100,
     "PAHours":  17.3,
     "MOHH":  90,
-    "Fuel":  1245,
-    "FuelRatio":  17.13,
+    "Fuel":  1420,
+    "FuelRatio":  19.53,
     "Capacity":  "14 FT"
 },{
     "Vendor":  "GIP H2",
@@ -40,8 +40,8 @@
     "PAPct":  100,
     "PAHours":  16.1,
     "MOHH":  90,
-    "Fuel":  1320,
-    "FuelRatio":  17.86,
+    "Fuel":  1480,
+    "FuelRatio":  20.03,
     "Capacity":  "14 FT"
 },{
     "Vendor":  "GIP H2",
@@ -55,8 +55,8 @@
     "PAPct":  100,
     "PAHours":  17.3,
     "MOHH":  90,
-    "Fuel":  791,
-    "FuelRatio":  10.88,
+    "Fuel":  891,
+    "FuelRatio":  12.26,
     "Capacity":  "10 Ton"
 },{
     "Vendor":  "GIP H2",
@@ -70,8 +70,8 @@
     "PAPct":  100,
     "PAHours":  18.9,
     "MOHH":  90,
-    "Fuel":  753,
-    "FuelRatio":  10.59,
+    "Fuel":  852.6,
+    "FuelRatio":  11.99,
     "Capacity":  "10 Ton"
 },{
     "Vendor":  "GIP H2",
@@ -85,8 +85,8 @@
     "PAPct":  98,
     "PAHours":  16.1,
     "MOHH":  90,
-    "Fuel":  992.5,
-    "FuelRatio":  13.8,
+    "Fuel":  1122.5,
+    "FuelRatio":  15.61,
     "Capacity":  "20 Ton"
 },{
     "Vendor":  "GIP H2",
@@ -100,8 +100,8 @@
     "PAPct":  68,
     "PAHours":  13.8,
     "MOHH":  88,
-    "Fuel":  547.8,
-    "FuelRatio":  11.86,
+    "Fuel":  617.8,
+    "FuelRatio":  13.37,
     "Capacity":  "10 Ton"
 },{
     "Vendor":  "GIP H2",
@@ -115,8 +115,8 @@
     "PAPct":  100,
     "PAHours":  18.7,
     "MOHH":  90,
-    "Fuel":  765.2,
-    "FuelRatio":  10.73,
+    "Fuel":  860.2,
+    "FuelRatio":  12.06,
     "Capacity":  "10 Ton"
 },{
     "Vendor":  "GIP H2",
@@ -130,8 +130,8 @@
     "PAPct":  96,
     "PAHours":  30,
     "MOHH":  90,
-    "Fuel":  895,
-    "FuelRatio":  15.84,
+    "Fuel":  1020,
+    "FuelRatio":  18.05,
     "Capacity":  "PC 200"
 },{
     "Vendor":  "GIP H2",
@@ -160,8 +160,8 @@
     "PAPct":  100,
     "PAHours":  14.7,
     "MOHH":  90,
-    "Fuel":  1055,
-    "FuelRatio":  14.01,
+    "Fuel":  1195,
+    "FuelRatio":  15.87,
     "Capacity":  "PC 200"
 },{
     "Vendor":  "GIP H2",
@@ -175,8 +175,8 @@
     "PAPct":  88,
     "PAHours":  19.3,
     "MOHH":  88,
-    "Fuel":  448,
-    "FuelRatio":  7.76,
+    "Fuel":  512,
+    "FuelRatio":  8.87,
     "Capacity":  "30 Ton"
 },{
     "Vendor":  "GIP H2",
@@ -190,8 +190,8 @@
     "PAPct":  85,
     "PAHours":  24,
     "MOHH":  88,
-    "Fuel":  408,
-    "FuelRatio":  8,
+    "Fuel":  472,
+    "FuelRatio":  9.25,
     "Capacity":  "30 Ton"
 },{
     "Vendor":  "GIP H2",
@@ -205,8 +205,8 @@
     "PAPct":  100,
     "PAHours":  21.2,
     "MOHH":  90,
-    "Fuel":  512,
-    "FuelRatio":  7.44,
+    "Fuel":  576,
+    "FuelRatio":  8.37,
     "Capacity":  "30 Ton"
 },{
     "Vendor":  "GIP H2",
@@ -220,8 +220,8 @@
     "PAPct":  99,
     "PAHours":  50,
     "MOHH":  90,
-    "Fuel":  395.4,
-    "FuelRatio":  10.14,
+    "Fuel":  481.4,
+    "FuelRatio":  12.34,
     "Capacity":  "-"
 },{
     "Vendor":  "GIP H2",
@@ -250,8 +250,8 @@
     "PAPct":  94,
     "PAHours":  24.4,
     "MOHH":  140.5,
-    "Fuel":  1196.2,
-    "FuelRatio":  11.05,
+    "Fuel":  1916.2,
+    "FuelRatio":  17.69,
     "Capacity":  "14 FT"
 },{
     "Vendor":  "GIP H1",
@@ -265,8 +265,8 @@
     "PAPct":  99,
     "PAHours":  23.9,
     "MOHH":  140,
-    "Fuel":  968.5,
-    "FuelRatio":  8.47,
+    "Fuel":  1643.5,
+    "FuelRatio":  14.37,
     "Capacity":  "12 FT"
 },{
     "Vendor":  "GIP H1",
@@ -280,8 +280,8 @@
     "PAPct":  94,
     "PAHours":  19,
     "MOHH":  141,
-    "Fuel":  1162.3,
-    "FuelRatio":  10.27,
+    "Fuel":  2121.3,
+    "FuelRatio":  18.74,
     "Capacity":  "14 FT"
 },{
     "Vendor":  "GIP H1",
@@ -290,13 +290,13 @@
     "Merek":  "SANY",
     "Jenis":  "Motor Grader",
     "Model":  "SANY STG 230 C-8S",
-    "MA":  "97.31%",
-    "HMTotal":  100.5,
-    "PAPct":  97,
-    "PAHours":  26,
-    "MOHH":  130,
-    "Fuel":  1311.1,
-    "FuelRatio":  13.05,
+    "MA":  "97.50%",
+    "HMTotal":  107.5,
+    "PAPct":  98,
+    "PAHours":  29,
+    "MOHH":  140,
+    "Fuel":  2242.1,
+    "FuelRatio":  20.86,
     "Capacity":  "14 FT"
 },{
     "Vendor":  "GIP H1",
@@ -305,13 +305,13 @@
     "Merek":  "SANY",
     "Jenis":  "Motor Grader",
     "Model":  "SANY STG 230 C-8S",
-    "MA":  "88.53%",
-    "HMTotal":  97.2,
+    "MA":  "89.35%",
+    "HMTotal":  105.2,
     "PAPct":  89,
     "PAHours":  18.3,
-    "MOHH":  130.5,
-    "Fuel":  1153.1,
-    "FuelRatio":  11.86,
+    "MOHH":  138.5,
+    "Fuel":  2121.1,
+    "FuelRatio":  20.16,
     "Capacity":  "14 FT"
 },{
     "Vendor":  "GIP H1",
@@ -320,13 +320,13 @@
     "Merek":  "SANY",
     "Jenis":  "Motor Grader",
     "Model":  "SANY STG 230 C-10S",
-    "MA":  "88.08%",
-    "HMTotal":  95.5,
-    "PAPct":  89,
-    "PAHours":  19.2,
-    "MOHH":  128.2,
-    "Fuel":  1020.3,
-    "FuelRatio":  10.68,
+    "MA":  "88.93%",
+    "HMTotal":  103.6,
+    "PAPct":  90,
+    "PAHours":  21.1,
+    "MOHH":  138.2,
+    "Fuel":  1885.3,
+    "FuelRatio":  18.2,
     "Capacity":  "14 FT"
 },{
     "Vendor":  "GIP H1",
@@ -340,8 +340,8 @@
     "PAPct":  100,
     "PAHours":  36.5,
     "MOHH":  140.3,
-    "Fuel":  770.6,
-    "FuelRatio":  7.42,
+    "Fuel":  1271.6,
+    "FuelRatio":  12.25,
     "Capacity":  "10 Ton"
 },{
     "Vendor":  "GIP H1",
@@ -355,8 +355,8 @@
     "PAPct":  99,
     "PAHours":  28.6,
     "MOHH":  140,
-    "Fuel":  816,
-    "FuelRatio":  7.46,
+    "Fuel":  1284,
+    "FuelRatio":  11.74,
     "Capacity":  "10 Ton"
 },{
     "Vendor":  "GIP H1",
@@ -366,12 +366,12 @@
     "Jenis":  "Compactor",
     "Model":  "SEM 510",
     "MA":  "100.00%",
-    "HMTotal":  115.5,
+    "HMTotal":  112.5,
     "PAPct":  100,
-    "PAHours":  24.5,
+    "PAHours":  27.5,
     "MOHH":  140,
-    "Fuel":  108,
-    "FuelRatio":  0.94,
+    "Fuel":  308,
+    "FuelRatio":  2.74,
     "Capacity":  "10 Ton"
 },{
     "Vendor":  "GIP H1",
@@ -380,13 +380,13 @@
     "Merek":  "SEM",
     "Jenis":  "Compactor",
     "Model":  "SEM 510",
-    "MA":  "91.23%",
-    "HMTotal":  91,
-    "PAPct":  91,
-    "PAHours":  27.6,
-    "MOHH":  130,
-    "Fuel":  638,
-    "FuelRatio":  7.01,
+    "MA":  "91.86%",
+    "HMTotal":  98,
+    "PAPct":  92,
+    "PAHours":  30.6,
+    "MOHH":  140,
+    "Fuel":  1179,
+    "FuelRatio":  12.03,
     "Capacity":  "10 Ton"
 },{
     "Vendor":  "GIP H1",
@@ -400,8 +400,8 @@
     "PAPct":  100,
     "PAHours":  25.3,
     "MOHH":  141,
-    "Fuel":  660,
-    "FuelRatio":  5.7,
+    "Fuel":  1161,
+    "FuelRatio":  10.03,
     "Capacity":  "10 Ton"
 },{
     "Vendor":  "GIP H1",
@@ -410,13 +410,13 @@
     "Merek":  "SAKAI",
     "Jenis":  "Compactor",
     "Model":  "SAKAI SV 526D",
-    "MA":  "92.31%",
+    "MA":  "85.71%",
     "HMTotal":  92,
     "PAPct":  94,
-    "PAHours":  28,
-    "MOHH":  128,
-    "Fuel":  708,
-    "FuelRatio":  7.7,
+    "PAHours":  36,
+    "MOHH":  136,
+    "Fuel":  1053,
+    "FuelRatio":  11.45,
     "Capacity":  "10 Ton"
 },{
     "Vendor":  "GIP H1",
@@ -426,12 +426,12 @@
     "Jenis":  "Compactor",
     "Model":  "SANY SSR 220C-8H",
     "MA":  "100.00%",
-    "HMTotal":  98.2,
+    "HMTotal":  104.8,
     "PAPct":  100,
-    "PAHours":  32.5,
-    "MOHH":  130.7,
-    "Fuel":  1229,
-    "FuelRatio":  12.52,
+    "PAHours":  35.9,
+    "MOHH":  140.7,
+    "Fuel":  1880,
+    "FuelRatio":  17.94,
     "Capacity":  "20 Ton"
 },{
     "Vendor":  "GIP H1",
@@ -440,13 +440,13 @@
     "Merek":  "SEM",
     "Jenis":  "Compactor",
     "Model":  "SEM 510",
-    "MA":  "80.77%",
-    "HMTotal":  80.7,
-    "PAPct":  82,
-    "PAHours":  24.3,
-    "MOHH":  128,
-    "Fuel":  563.2,
-    "FuelRatio":  6.98,
+    "MA":  "82.14%",
+    "HMTotal":  87.8,
+    "PAPct":  83,
+    "PAHours":  27.2,
+    "MOHH":  138,
+    "Fuel":  1081.2,
+    "FuelRatio":  12.31,
     "Capacity":  "10 Ton"
 },{
     "Vendor":  "GIP H1",
@@ -455,13 +455,13 @@
     "Merek":  "SEM",
     "Jenis":  "Compactor",
     "Model":  "SEM 510",
-    "MA":  "99.23%",
-    "HMTotal":  92.5,
+    "MA":  "99.29%",
+    "HMTotal":  99.5,
     "PAPct":  100,
-    "PAHours":  37.5,
-    "MOHH":  130,
-    "Fuel":  765.2,
-    "FuelRatio":  8.27,
+    "PAHours":  40.5,
+    "MOHH":  140,
+    "Fuel":  1266.2,
+    "FuelRatio":  12.73,
     "Capacity":  "10 Ton"
 },{
     "Vendor":  "GIP H1",
@@ -475,8 +475,8 @@
     "PAPct":  100,
     "PAHours":  33.5,
     "MOHH":  140,
-    "Fuel":  780.2,
-    "FuelRatio":  7.33,
+    "Fuel":  1289.2,
+    "FuelRatio":  12.11,
     "Capacity":  "10 Ton"
 },{
     "Vendor":  "GIP H1",
@@ -490,8 +490,8 @@
     "PAPct":  100,
     "PAHours":  31.8,
     "MOHH":  140,
-    "Fuel":  763.8,
-    "FuelRatio":  7.06,
+    "Fuel":  1333.8,
+    "FuelRatio":  12.33,
     "Capacity":  "10 Ton"
 },{
     "Vendor":  "GIP H1",
@@ -500,13 +500,13 @@
     "Merek":  "CAT",
     "Jenis":  "Excavator",
     "Model":  "Cat 320 GX",
-    "MA":  "98.81%",
-    "HMTotal":  104,
+    "MA":  "98.90%",
+    "HMTotal":  112.5,
     "PAPct":  99,
-    "PAHours":  24.3,
-    "MOHH":  132,
-    "Fuel":  1086.3,
-    "FuelRatio":  10.45,
+    "PAHours":  25.8,
+    "MOHH":  142,
+    "Fuel":  1948.3,
+    "FuelRatio":  17.32,
     "Capacity":  "PC 200"
 },{
     "Vendor":  "GIP H1",
@@ -520,8 +520,8 @@
     "PAPct":  86,
     "PAHours":  18.3,
     "MOHH":  140.3,
-    "Fuel":  1439.4,
-    "FuelRatio":  14.04,
+    "Fuel":  2560.4,
+    "FuelRatio":  24.98,
     "Capacity":  "PC 200"
 },{
     "Vendor":  "GIP H1",
@@ -530,13 +530,13 @@
     "Merek":  "HYUNDAI",
     "Jenis":  "Excavator",
     "Model":  "W-EX HYUNDAI 210",
-    "MA":  "90.12%",
-    "HMTotal":  98.3,
-    "PAPct":  98,
-    "PAHours":  26.6,
-    "MOHH":  129.9,
-    "Fuel":  950.7,
-    "FuelRatio":  9.67,
+    "MA":  "88.40%",
+    "HMTotal":  103.9,
+    "PAPct":  95,
+    "PAHours":  27.6,
+    "MOHH":  139.9,
+    "Fuel":  1784.7,
+    "FuelRatio":  17.18,
     "Capacity":  "PC 200"
 },{
     "Vendor":  "GIP H1",
@@ -550,8 +550,8 @@
     "PAPct":  97,
     "PAHours":  20.4,
     "MOHH":  142.6,
-    "Fuel":  607.4,
-    "FuelRatio":  5.14,
+    "Fuel":  887.4,
+    "FuelRatio":  7.51,
     "Capacity":  "PC 200"
 },{
     "Vendor":  "GIP H1",
@@ -565,8 +565,8 @@
     "PAPct":  100,
     "PAHours":  21.1,
     "MOHH":  140.1,
-    "Fuel":  1229.7,
-    "FuelRatio":  10.33,
+    "Fuel":  2187.7,
+    "FuelRatio":  18.38,
     "Capacity":  "PC 200"
 },{
     "Vendor":  "GIP H1",
@@ -580,8 +580,8 @@
     "PAPct":  82,
     "PAHours":  13.5,
     "MOHH":  126,
-    "Fuel":  549,
-    "FuelRatio":  6.1,
+    "Fuel":  1019,
+    "FuelRatio":  11.32,
     "Capacity":  "30 Ton"
 },{
     "Vendor":  "GIP H1",
@@ -590,13 +590,13 @@
     "Merek":  "HINO",
     "Jenis":  "Dump Truck",
     "Model":  "Hino 500",
-    "MA":  "93.33%",
-    "HMTotal":  97,
-    "PAPct":  93,
-    "PAHours":  15,
-    "MOHH":  120,
-    "Fuel":  555,
-    "FuelRatio":  5.72,
+    "MA":  "93.85%",
+    "HMTotal":  106,
+    "PAPct":  94,
+    "PAHours":  16,
+    "MOHH":  130,
+    "Fuel":  1135,
+    "FuelRatio":  10.71,
     "Capacity":  "30 Ton"
 },{
     "Vendor":  "GIP H1",
@@ -605,13 +605,13 @@
     "Merek":  "HINO",
     "Jenis":  "Dump Truck",
     "Model":  "Hino 500",
-    "MA":  "74.44%",
-    "HMTotal":  55,
-    "PAPct":  81,
-    "PAHours":  15,
-    "MOHH":  86,
-    "Fuel":  537,
-    "FuelRatio":  9.76,
+    "MA":  "78.26%",
+    "HMTotal":  72,
+    "PAPct":  84,
+    "PAHours":  18,
+    "MOHH":  107,
+    "Fuel":  853,
+    "FuelRatio":  11.85,
     "Capacity":  "30 Ton"
 },{
     "Vendor":  "GIP H1",
@@ -625,8 +625,8 @@
     "PAPct":  100,
     "PAHours":  29.5,
     "MOHH":  140.5,
-    "Fuel":  626,
-    "FuelRatio":  5.64,
+    "Fuel":  1322,
+    "FuelRatio":  11.91,
     "Capacity":  "30 Ton"
 },{
     "Vendor":  "GIP H1",
@@ -640,8 +640,8 @@
     "PAPct":  91,
     "PAHours":  17.9,
     "MOHH":  142.7,
-    "Fuel":  666,
-    "FuelRatio":  5.93,
+    "Fuel":  1133,
+    "FuelRatio":  10.08,
     "Capacity":  "30 Ton"
 },{
     "Vendor":  "GIP H1",
@@ -655,8 +655,8 @@
     "PAPct":  91,
     "PAHours":  20.1,
     "MOHH":  138,
-    "Fuel":  559,
-    "FuelRatio":  5.33,
+    "Fuel":  1016,
+    "FuelRatio":  9.69,
     "Capacity":  "30 Ton"
 },{
     "Vendor":  "GIP H1",
@@ -670,8 +670,8 @@
     "PAPct":  72,
     "PAHours":  49,
     "MOHH":  140.3,
-    "Fuel":  482.4,
-    "FuelRatio":  10.58,
+    "Fuel":  583.4,
+    "FuelRatio":  12.79,
     "Capacity":  "-"
 },{
     "Vendor":  "GIP H1",
@@ -685,8 +685,8 @@
     "PAPct":  100,
     "PAHours":  28,
     "MOHH":  140,
-    "Fuel":  256,
-    "FuelRatio":  2.29,
+    "Fuel":  448,
+    "FuelRatio":  4,
     "Capacity":  "5 KL"
 },{
     "Vendor":  "GIP H1",
@@ -696,12 +696,12 @@
     "Jenis":  "Fuel Truck",
     "Model":  "Colt Diesel Canter",
     "MA":  "100.00%",
-    "HMTotal":  104,
+    "HMTotal":  112,
     "PAPct":  100,
-    "PAHours":  26,
-    "MOHH":  130,
-    "Fuel":  256,
-    "FuelRatio":  2.46,
+    "PAHours":  28,
+    "MOHH":  140,
+    "Fuel":  448,
+    "FuelRatio":  4,
     "Capacity":  "5 KL"
 },{
     "Vendor":  "JTU",
@@ -715,8 +715,8 @@
     "PAPct":  97,
     "PAHours":  20.3,
     "MOHH":  140,
-    "Fuel":  1074.5,
-    "FuelRatio":  9.35,
+    "Fuel":  1888.2,
+    "FuelRatio":  16.43,
     "Capacity":  "12 FT"
 },{
     "Vendor":  "JTU",
@@ -730,8 +730,8 @@
     "PAPct":  100,
     "PAHours":  25.2,
     "MOHH":  141.6,
-    "Fuel":  840.4,
-    "FuelRatio":  7.22,
+    "Fuel":  1462.4,
+    "FuelRatio":  12.56,
     "Capacity":  "10 Ton"
 },{
     "Vendor":  "JTU",
@@ -745,8 +745,8 @@
     "PAPct":  94,
     "PAHours":  57,
     "MOHH":  122.9,
-    "Fuel":  488.5,
-    "FuelRatio":  8.28,
+    "Fuel":  722.5,
+    "FuelRatio":  12.25,
     "Capacity":  "12 FT"
 },{
     "Vendor":  "JTU",
@@ -760,8 +760,8 @@
     "PAPct":  47,
     "PAHours":  16.3,
     "MOHH":  121.9,
-    "Fuel":  138.4,
-    "FuelRatio":  3.41,
+    "Fuel":  365.2,
+    "FuelRatio":  8.99,
     "Capacity":  "10 Ton"
 },{
     "Vendor":  "JTU",
@@ -770,13 +770,13 @@
     "Merek":  "SEM",
     "Jenis":  "Motor Grader",
     "Model":  "SEM 915",
-    "MA":  "82.42%",
-    "HMTotal":  82.2,
-    "PAPct":  84,
-    "PAHours":  18.3,
-    "MOHH":  120.3,
-    "Fuel":  839.6,
-    "FuelRatio":  10.21,
+    "MA":  "84.93%",
+    "HMTotal":  98.6,
+    "PAPct":  86,
+    "PAHours":  21.9,
+    "MOHH":  140.3,
+    "Fuel":  1556.3,
+    "FuelRatio":  15.78,
     "Capacity":  "12 FT"
 },{
     "Vendor":  "JTU",
@@ -785,13 +785,13 @@
     "Merek":  "SAKAI",
     "Jenis":  "Compactor",
     "Model":  "SAKAI SV 526D",
-    "MA":  "80.50%",
-    "HMTotal":  78,
+    "MA":  "83.29%",
+    "HMTotal":  94.6,
     "PAPct":  100,
-    "PAHours":  42.2,
-    "MOHH":  120.2,
-    "Fuel":  644.9,
-    "FuelRatio":  8.27,
+    "PAHours":  45.6,
+    "MOHH":  140.2,
+    "Fuel":  1048.7,
+    "FuelRatio":  11.09,
     "Capacity":  "10 Ton"
 },{
     "Vendor":  "JTU",
@@ -800,13 +800,13 @@
     "Merek":  "SAKAI",
     "Jenis":  "Compactor",
     "Model":  "SAKAI SF 526D",
-    "MA":  "97.20%",
-    "HMTotal":  89.5,
+    "MA":  "83.71%",
+    "HMTotal":  107.6,
     "PAPct":  100,
-    "PAHours":  14,
-    "MOHH":  103.5,
-    "Fuel":  750.3,
-    "FuelRatio":  8.38,
+    "PAHours":  36.2,
+    "MOHH":  143.8,
+    "Fuel":  1192.4,
+    "FuelRatio":  11.08,
     "Capacity":  "10 Ton"
 },{
     "Vendor":  "JTU",
@@ -820,8 +820,8 @@
     "PAPct":  100,
     "PAHours":  26.1,
     "MOHH":  112.4,
-    "Fuel":  668.1,
-    "FuelRatio":  7.74,
+    "Fuel":  983.2,
+    "FuelRatio":  11.39,
     "Capacity":  "10 Ton"
 },{
     "Vendor":  "JTU",
@@ -831,12 +831,12 @@
     "Jenis":  "Excavator",
     "Model":  "Kobelco SK 210LC-10",
     "MA":  "100.00%",
-    "HMTotal":  113.9,
+    "HMTotal":  112.9,
     "PAPct":  100,
-    "PAHours":  17.3,
+    "PAHours":  18.3,
     "MOHH":  131.2,
-    "Fuel":  1511.6,
-    "FuelRatio":  13.27,
+    "Fuel":  2454.1,
+    "FuelRatio":  21.74,
     "Capacity":  "PC 200"
 },{
     "Vendor":  "JTU",
@@ -850,8 +850,8 @@
     "PAPct":  98,
     "PAHours":  29.4,
     "MOHH":  120.3,
-    "Fuel":  943.7,
-    "FuelRatio":  10.64,
+    "Fuel":  1448.1,
+    "FuelRatio":  16.33,
     "Capacity":  "PC 200"
 },{
     "Vendor":  "JTU",
@@ -861,12 +861,12 @@
     "Jenis":  "Excavator",
     "Model":  "Hitachi 210F",
     "MA":  "100.00%",
-    "HMTotal":  105.4,
+    "HMTotal":  120.8,
     "PAPct":  99,
-    "PAHours":  18.7,
-    "MOHH":  124.9,
-    "Fuel":  1297.4,
-    "FuelRatio":  12.31,
+    "PAHours":  23.4,
+    "MOHH":  145,
+    "Fuel":  2186,
+    "FuelRatio":  18.1,
     "Capacity":  "PC 200"
 },{
     "Vendor":  "BDK",
@@ -875,13 +875,13 @@
     "Merek":  "HINO",
     "Jenis":  "Dump Truck",
     "Model":  "Hino 500",
-    "MA":  "91.67%",
-    "HMTotal":  92.4,
-    "PAPct":  92,
-    "PAHours":  17.6,
-    "MOHH":  120,
-    "Fuel":  568.6,
-    "FuelRatio":  6.15,
+    "MA":  "92.86%",
+    "HMTotal":  108.1,
+    "PAPct":  93,
+    "PAHours":  21.9,
+    "MOHH":  140,
+    "Fuel":  1038.6,
+    "FuelRatio":  9.61,
     "Capacity":  "30 Ton"
 },{
     "Vendor":  "BDK",
@@ -890,13 +890,13 @@
     "Merek":  "HINO",
     "Jenis":  "Dump Truck",
     "Model":  "Hino 500",
-    "MA":  "99.09%",
-    "HMTotal":  87,
-    "PAPct":  99,
-    "PAHours":  22,
-    "MOHH":  110,
-    "Fuel":  519.4,
-    "FuelRatio":  5.97,
+    "MA":  "85.00%",
+    "HMTotal":  94,
+    "PAPct":  85,
+    "PAHours":  25,
+    "MOHH":  140,
+    "Fuel":  831.5,
+    "FuelRatio":  8.85,
     "Capacity":  "30 Ton"
 },{
     "Vendor":  "BDK",
@@ -910,8 +910,8 @@
     "PAPct":  75,
     "PAHours":  12,
     "MOHH":  110,
-    "Fuel":  551.2,
-    "FuelRatio":  7.76,
+    "Fuel":  676,
+    "FuelRatio":  9.52,
     "Capacity":  "30 Ton"
 },{
     "Vendor":  "BDK",
@@ -925,8 +925,8 @@
     "PAPct":  100,
     "PAHours":  22.5,
     "MOHH":  130,
-    "Fuel":  543.5,
-    "FuelRatio":  5.06,
+    "Fuel":  916.2,
+    "FuelRatio":  8.52,
     "Capacity":  "30 Ton"
 },{
     "Vendor":  "BDK",
@@ -940,8 +940,8 @@
     "PAPct":  98,
     "PAHours":  18,
     "MOHH":  120,
-    "Fuel":  503.7,
-    "FuelRatio":  5.09,
+    "Fuel":  859.4,
+    "FuelRatio":  8.68,
     "Capacity":  "30 Ton"
 },{
     "Vendor":  "BDK",
@@ -955,8 +955,8 @@
     "PAPct":  100,
     "PAHours":  36.9,
     "MOHH":  140,
-    "Fuel":  550.6,
-    "FuelRatio":  5.34,
+    "Fuel":  997.8,
+    "FuelRatio":  9.68,
     "Capacity":  "30 Ton"
 },{
     "Vendor":  "SKN",
@@ -970,8 +970,8 @@
     "PAPct":  90,
     "PAHours":  12.8,
     "MOHH":  111.2,
-    "Fuel":  1380.2,
-    "FuelRatio":  15.76,
+    "Fuel":  1855.3,
+    "FuelRatio":  21.18,
     "Capacity":  "14 FT"
 },{
     "Vendor":  "SKN",
@@ -980,13 +980,13 @@
     "Merek":  "SANY",
     "Jenis":  "Motor Grader",
     "Model":  "SANY STG 230 C-10S",
-    "MA":  "96.58%",
-    "HMTotal":  100.1,
+    "MA":  "96.85%",
+    "HMTotal":  108.2,
     "PAPct":  97,
-    "PAHours":  16.2,
-    "MOHH":  120.4,
-    "Fuel":  1242.9,
-    "FuelRatio":  12.42,
+    "PAHours":  18.1,
+    "MOHH":  130.4,
+    "Fuel":  2031.3,
+    "FuelRatio":  18.77,
     "Capacity":  "14 FT"
 },{
     "Vendor":  "SKN",
@@ -1000,8 +1000,8 @@
     "PAPct":  92,
     "PAHours":  17.5,
     "MOHH":  121.5,
-    "Fuel":  758.8,
-    "FuelRatio":  8.07,
+    "Fuel":  1238.2,
+    "FuelRatio":  13.17,
     "Capacity":  "10 Ton"
 },{
     "Vendor":  "SKN",
@@ -1015,8 +1015,8 @@
     "PAPct":  60,
     "PAHours":  8,
     "MOHH":  124.2,
-    "Fuel":  835.2,
-    "FuelRatio":  12.5,
+    "Fuel":  923.6,
+    "FuelRatio":  13.83,
     "Capacity":  "10 Ton"
 },{
     "Vendor":  "SKN",
@@ -1030,8 +1030,8 @@
     "PAPct":  100,
     "PAHours":  22.3,
     "MOHH":  140,
-    "Fuel":  1291.6,
-    "FuelRatio":  10.97,
+    "Fuel":  2420.4,
+    "FuelRatio":  20.56,
     "Capacity":  "PC 200"
 },{
     "Vendor":  "SKN",
@@ -1040,13 +1040,13 @@
     "Merek":  "SHACMAN",
     "Jenis":  "Water Truck",
     "Model":  "SHACMAN 20 KL",
-    "MA":  "97.50%",
-    "HMTotal":  28.9,
-    "PAPct":  99,
-    "PAHours":  89.6,
-    "MOHH":  120,
-    "Fuel":  584,
-    "FuelRatio":  20.21,
+    "MA":  "95.83%",
+    "HMTotal":  76.3,
+    "PAPct":  98,
+    "PAHours":  182.2,
+    "MOHH":  264,
+    "Fuel":  856.6,
+    "FuelRatio":  11.23,
     "Capacity":  "20 KL"
 },{
     "Vendor":  "SKN",
@@ -1055,13 +1055,13 @@
     "Merek":  "SHACMAN",
     "Jenis":  "Water Truck",
     "Model":  "SHACMAN 20 KL",
-    "MA":  "75.00%",
-    "HMTotal":  58.4,
-    "PAPct":  81,
-    "PAHours":  87.5,
-    "MOHH":  180,
-    "Fuel":  722.4,
-    "FuelRatio":  12.37,
+    "MA":  "74.85%",
+    "HMTotal":  84.1,
+    "PAPct":  83,
+    "PAHours":  124.6,
+    "MOHH":  252,
+    "Fuel":  971.9,
+    "FuelRatio":  11.56,
     "Capacity":  "20 KL"
 },{
     "Vendor":  "SKN",
@@ -1070,13 +1070,13 @@
     "Merek":  "SHACMAN",
     "Jenis":  "Water Truck",
     "Model":  "SHACMAN 20 KL",
-    "MA":  "16.67%",
-    "HMTotal":  30.3,
-    "PAPct":  42,
-    "PAHours":  35.1,
-    "MOHH":  155.6,
-    "Fuel":  530.2,
-    "FuelRatio":  17.5,
+    "MA":  "29.79%",
+    "HMTotal":  47.8,
+    "PAPct":  52,
+    "PAHours":  58.2,
+    "MOHH":  203.6,
+    "Fuel":  535.4,
+    "FuelRatio":  11.2,
     "Capacity":  "20 KL"
 },{
     "Vendor":  "SKN",
@@ -1090,7 +1090,7 @@
     "PAPct":  27,
     "PAHours":  16.4,
     "MOHH":  84,
-    "Fuel":  262.4,
-    "FuelRatio":  41,
+    "Fuel":  189.6,
+    "FuelRatio":  29.62,
     "Capacity":  "20 KL"
 }]
