@@ -36,6 +36,60 @@
   var nojsBox = document.getElementById("mmjNojs");
   if (nojsBox) nojsBox.hidden = true;
 
+  /* HP: tombol garis tiga di bar atas membuka/menutup sidebar (menu halaman).
+     Status disimpan di <html> supaya tetap berlaku walau markup tab diganti. */
+  (function () {
+    if (!document.querySelector(".app")) return;
+    var root = document.documentElement;
+
+    /* bar tipis di atas halaman: satu-satunya jalan ke menu saat sidebar
+       tertutup. #mmjNav sendiri tinggal DI DALAM sidebar (dipindah shell.js),
+       jadi tombolnya tidak boleh ikut menumpang di sana. */
+    var bar = document.createElement("div");
+    bar.className = "mmj-mobilebar";
+    var burger = document.createElement("button");
+    burger.type = "button";
+    burger.className = "mmj-burger";
+    burger.setAttribute("aria-label", "Buka menu halaman");
+    burger.setAttribute("aria-expanded", "false");
+    burger.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>';
+    bar.appendChild(burger);
+    document.body.insertBefore(bar, document.body.firstChild);
+
+    var scrim = document.createElement("div");
+    scrim.className = "mmj-scrim";
+    document.body.appendChild(scrim);
+
+    function set(open) {
+      root.classList.toggle("mmj-side-open", open);
+      burger.setAttribute("aria-expanded", open ? "true" : "false");
+      if (!open) return;
+      var side = document.querySelector(".app > .side");
+      if (side && !side.querySelector(".mmj-drawer-x")) {
+        var x = document.createElement("button");
+        x.type = "button";
+        x.className = "mmj-drawer-x";
+        x.setAttribute("aria-label", "Tutup menu");
+        x.innerHTML = "&times;";
+        x.addEventListener("click", function () { set(false); });
+        side.insertBefore(x, side.firstChild);
+      }
+    }
+
+    burger.addEventListener("click", function () {
+      set(!root.classList.contains("mmj-side-open"));
+    });
+    scrim.addEventListener("click", function () { set(false); });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") set(false);
+    });
+    /* menu halaman berupa tautan bagian (#...) - tutup setelah dipilih */
+    document.addEventListener("click", function (e) {
+      if (!root.classList.contains("mmj-side-open")) return;
+      if (e.target && e.target.closest && e.target.closest(".app > .side a")) set(false);
+    });
+  })();
+
   var KEYS = ["exec", "haul", "batu", "lt", "he"];
 
   /* alamat halaman tiap dashboard (dipakai tombol "Buka ..." di halaman
