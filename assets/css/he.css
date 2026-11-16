@@ -659,6 +659,20 @@ th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .grid tbody td.model-cell b { color: var(--navy-900); }
 
 
+/* baris total di tabel rata-rata per capacity (paling bawah, dibedakan) */
+.grid tbody tr.ma-cap-total td {
+  border-top: 2px solid var(--line, #e2e8f0);
+  background: #F8FAFC;
+  font-weight: 600;
+}
+
+.grid tbody tr.ma-cap-total:hover td { background: #F1F5F9; }
+
+:root[data-theme="dark"] .grid tbody tr.ma-cap-total td { background: rgba(255,255,255,.04); }
+
+:root[data-theme="dark"] .grid tbody tr.ma-cap-total:hover td { background: rgba(255,255,255,.07); }
+
+
 /* kolom pertama terkunci */
 .table-wrap thead th:first-child {
   position: sticky;

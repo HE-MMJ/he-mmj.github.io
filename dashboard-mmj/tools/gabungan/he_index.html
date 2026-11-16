@@ -79,6 +79,14 @@
             </select>
           </span>
         </label>
+        <label class="field">
+          <span class="field-cap">Capacity</span>
+          <span class="select-wrap">
+            <select id="fCap">
+              <option value="ALL">Semua Capacity</option>
+            </select>
+          </span>
+        </label>
       </div>
       <div class="filter-meta">
         <span class="live-chip" title="Jumlah unit yang sedang ditampilkan">
@@ -255,6 +263,30 @@
         </table>
       </div>
     </section>
+
+    <!-- ========== rata-rata MA per capacity (hanya role ber-izin ma_capacity) ========== -->
+    <section class="panel" id="heMaCap" data-mmj-auth="ma_capacity" hidden>
+      <div class="panel-head">
+        <h2>Rata-rata MA &amp; Fuel Ratio per Capacity</h2>
+      </div>
+      <div class="table-wrap">
+        <table class="grid">
+          <thead>
+            <tr>
+              <th>Capacity</th>
+              <th class="num">Jumlah Unit</th>
+              <th class="num">Rata-rata MA</th>
+              <th class="num">Rata-rata FR</th>
+              <th class="num" title="Fuel Ratio standar Tabel 1 SOP untuk capacity ini">FR Standar</th>
+              <th class="num">Selisih FR</th>
+            </tr>
+          </thead>
+          <tbody id="maCapTbody"></tbody>
+        </table>
+      </div>
+      <p class="note">Rata-rata dihitung dari unit yang punya nilai pada filter yang sedang aktif. FR dijumlah seluruh unit (L) lalu dibagi total HM (jam), jadi unit dengan jam kerja besar ikut menentukan. Selisih FR = Rata-rata FR &minus; FR Standar (merah = melebihi standar, hijau = di bawah standar).</p>
+    </section>
+
 
     <footer class="app-footer">
       Dashboard internal &mdash; data dari file timesheet HE &amp; WT MMJ November 2026.

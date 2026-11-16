@@ -26,11 +26,12 @@
        public       -> dashboard monitoring (terbuka juga untuk tamu)
        hse          -> Data Simper + Data DT
        external     -> hanya dasbor publik (tanpa data sensitif)
-       costcontrol  -> Cost Control */
+       costcontrol  -> Cost Control
+       ma_capacity  -> rata-rata MA per capacity (halaman HE, Admin ECC) */
   var CAPS = {
     admin: { all: true },
     hse: { hse: true },
-    ecc: { costcontrol: true },
+    ecc: { costcontrol: true, ma_capacity: true },
     external: {}
   };
 
@@ -56,16 +57,27 @@
   function ls() { try { return window.localStorage; } catch (e) { return null; } }
   function ss() { try { return window.sessionStorage; } catch (e) { return null; } }
 
+  /* Versi sesi yang dikenali. Ubah angka ini kalau isi sesi berubah bentuk,
+     supaya sesi lama yang tidak cocok otomatis dianggap belum login. */
+  var SESSION_V = 1;
+
   function readSession() {
-    var raw = null;
-    var a = ls();
+    var raw = null, a = ls();
     if (a) { try { raw = a.getItem(sessionKey); } catch (e) { } }
     if (!raw) {
       var b = ss();
       if (b) { try { raw = b.getItem(sessionKey); } catch (e) { } }
     }
     if (!raw) return null;
-    try { return JSON.parse(raw); } catch (e) { return null; }
+    var s = null;
+    try { s = JSON.parse(raw); } catch (e) { return null; }
+    if (!s || typeof s !== "object") return null;
+    /* sesi yang dikenali: ada id DAN versinya cocok. Sesi tanpa "v" berasal
+       dari versi lama - isinya tidak bisa dipercaya, jadi diabaikan
+       (bukan dipakai apa adanya: dulu sesi tanpa id langsung membuang sesi
+       di storage, sehingga user tiba-tiba terlihat belum login). */
+    if (!s.id || s.v !== SESSION_V) return null;
+    return s;
   }
 
   function writeSession(obj, remember) {
@@ -116,7 +128,7 @@
       var u = findUser(username);
       if (!u) { MMJ_AUTH.lastError = "user"; return null; }
       if (String(u.pass) !== String(pass == null ? "" : pass)) { MMJ_AUTH.lastError = "pass"; return null; }
-      var sess = { id: u.id, name: u.name, role: u.role, ts: Date.now() };
+      var sess = { v: SESSION_V, id: u.id, name: u.name, role: u.role, ts: Date.now() };
       var res = writeSession(sess, !!remember);
       if (!res.ok) { MMJ_AUTH.lastError = "storage"; return null; }   /* storage diblokir */
       MMJ_AUTH.lastRemember = res.remembered;
@@ -131,8 +143,9 @@
       return true;
     },
 
-    /* user yang sedang login, atau null. Sesi milik user yang sudah dihapus
-       dari daftar -> dianggap belum login (dan sesinya dibuang). */
+    /* user yang sedang login, atau null. Sesi rusak / milik user yang sudah
+       dihapus dari daftar -> dianggap belum login. Sesi yang bentuknya tidak
+       dikenali TIDAK dihapus (bisa jadi milik versi lain) - hanya diabaikan. */
     current: function () {
       var s = readSession();
       if (!s || !s.id) return null;

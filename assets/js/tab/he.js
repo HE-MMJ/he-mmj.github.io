@@ -74,15 +74,19 @@ function filtered() {
   const v = document.getElementById('fVendor').value;
   const area = document.getElementById('fArea').value;
   const jenis = document.getElementById('fJenis').value;
+  const capEl = document.getElementById('fCap');
+  const cap = capEl ? capEl.value : 'ALL';
   // Dropdown dipakai bersama HE & WT. Nilai yang hanya ada di data WT
   // (mis. vendor "WT TSA") tidak boleh mengosongkan tabel HE.
   const pakaiV = v !== 'ALL' && DATA.some(d => d.Vendor === v);
   const pakaiA = area !== 'ALL' && DATA.some(d => (d.Area || '') === area);
   const pakaiJ = jenis !== 'ALL' && DATA.some(d => (d.Jenis || '-') === jenis);
+  const pakaiC = cap !== 'ALL' && DATA.some(d => (d.Capacity || '-') === cap || (d.Model || '-') === cap);
   return DATA.filter(d =>
     (!pakaiV || d.Vendor === v) &&
     (!pakaiA || (d.Area || '') === area) &&
-    (!pakaiJ || (d.Jenis || '-') === jenis)
+    (!pakaiJ || (d.Jenis || '-') === jenis) &&
+    (!pakaiC || (d.Capacity || '-') === cap || (d.Model || '-') === cap)
   );
 }
 
@@ -553,6 +557,7 @@ function render() {
   updateChartNote();
   animateChart();
   renderBelum();
+  renderMaCap(rows);
   renderRunText();
 }
 
@@ -818,6 +823,63 @@ function groupByCapacity(list) {
     a.label.localeCompare(b.label, 'id', { numeric: true })
   );
   return groups;
+}
+
+// ---- rata-rata MA + Fuel Ratio per capacity (panel khusus role ber-izin ma_capacity) ----
+// MA dirata-ratakan per unit (sama seperti kartu ringkasan). FR dihitung
+// berbobot: total Fuel : total HM, karena satuan aslinya L/jam - rata-rata
+// biasa akan membuat satu unit berjam kecil menyimpang jauh dari kenyataan.
+function renderMaCap(rows) {
+  const tb = document.getElementById('maCapTbody');
+  if (!tb) return;
+  if (rows.length === 0) {
+    tb.innerHTML = '<tr><td colspan="6" class="note">Tidak ada unit pada filter ini.</td></tr>';
+    return;
+  }
+  const kelompok = groupByCapacity(rows);
+
+  // baris TOTAL semua capacity (warna tetap abu-abu, ditandai <b>)
+  const semuaMa = rows.filter(d => num(d.MA) > 0);
+  const totalMa = semuaMa.length ? (semuaMa.reduce((s, d) => s + num(d.MA), 0) / semuaMa.length).toFixed(1) + '%' : '&mdash;';
+  const totalFuel = rows.reduce((s, d) => s + num(d.Fuel), 0);
+  const totalHM = rows.reduce((s, d) => s + num(d.HMTotal), 0);
+  const totalFr = (totalHM > 0 && totalFuel > 0) ? totalFuel / totalHM : 0;
+  const barisTotal = `<tr class="ma-cap-total"><td>Semua capacity</td><td class="num">${rows.length}</td>` +
+    `<td class="num"><b>${totalMa}</b></td><td class="num"><b>${totalFr > 0 ? fmt(totalFr, 2) : '&mdash;'}</b></td>` +
+    `<td class="num">&mdash;</td><td class="num">&mdash;</td></tr>`;
+
+  tb.innerHTML = kelompok.map(g => {
+      // MA: rata-rata unit yang punya nilai
+      const adaMa = g.items.filter(d => num(d.MA) > 0);
+      const rataMa = adaMa.length ? (adaMa.reduce((s, d) => s + num(d.MA), 0) / adaMa.length).toFixed(1) + '%' : '&mdash;';
+
+      // FR: tertimbang HM
+      const sumFuel = g.items.reduce((s, d) => s + num(d.Fuel), 0);
+      const sumHM = g.items.reduce((s, d) => s + num(d.HMTotal), 0);
+      const rataFr = (sumHM > 0 && sumFuel > 0) ? sumFuel / sumHM : 0;
+
+      // standar FR dari Tabel 1 SOP untuk capacity ini (bila ada)
+      const std = (g.items.map(stdFuel).find(s => s) || null);
+
+      let frTxt, stdTxt = '&mdash;', selTxt = '&mdash;', selCls = '';
+      if (rataFr > 0) {
+        frTxt = fmt(rataFr, 2);
+        if (std) {
+          stdTxt = fmt(std.ratio, 2) + ' ' + (std.satuan === 'Liter/Hari' ? 'L/hari' : 'L/jam');
+          // selisih & warnanya ikut aturan yang sama dengan peringatan FR unit
+          const avgPalsu = { Jenis: g.items[0].Jenis, Capacity: g.items[0].Capacity, FuelRatio: rataFr };
+          const lewat = frMelebihi(avgPalsu) || (std.ratio > 0 && rataFr > std.ratio);
+          selTxt = (lewat ? '+' : '') + fmt(rataFr - std.ratio, 2);
+          selCls = lewat ? ' class="num sisa-over"' : ' class="num sisa-ok"';
+        }
+      } else {
+        frTxt = '&mdash;';
+      }
+
+      return `<tr><td>${escHtml(g.label)}</td><td class="num">${g.items.length}</td>` +
+        `<td class="num"><b>${rataMa}</b></td><td class="num"><b>${frTxt}</b></td>` +
+        `<td class="num">${stdTxt}</td><td${selCls}><b>${selTxt}</b></td></tr>`;
+    }).join('') + barisTotal;
 }
 
 // ---- Grafik gabungan: BAR = HM Total, GARIS = metrik pembanding ----
@@ -1285,6 +1347,38 @@ function fillJenis() {
 
   const semua = jenisList.concat(modelList);
   sel.value = (prev === 'ALL' || semua.includes(prev)) ? prev : 'ALL';
+  fillCap();
+}
+
+// ---------- isi dropdown Capacity sesuai vendor + area + unit type ----------
+// Daftarnya menggabungkan dua kolom yang dipakai di halaman ini:
+//   Capacity (lebar unit, mis. "14 FT") dan Model/Capacity yang tampil di
+//   tabel Review Unit. Tanpa ini dropdown hanya berisi "Semua Capacity".
+function fillCap() {
+  const sel = document.getElementById('fCap');
+  if (!sel) return;
+  const prev = sel.value;
+  const v = document.getElementById('fVendor').value;
+  const area = document.getElementById('fArea').value;
+  const jenis = document.getElementById('fJenis').value;
+
+  const rows = DATA.filter(d =>
+    (v === 'ALL' || d.Vendor === v) &&
+    (area === 'ALL' || (d.Area || '') === area) &&
+    (jenis === 'ALL' || (d.Jenis || '-') === jenis)
+  );
+  const daftar = new Set();
+  rows.forEach(d => {
+    const c = String(d.Capacity == null ? '' : d.Capacity).trim();
+    const m = String(d.Model == null ? '' : d.Model).trim();
+    if (c && c !== '-') daftar.add(c);
+    if (m && m !== '-') daftar.add(m);
+  });
+
+  const list = [...daftar].sort((a, b) => a.localeCompare(b, 'id', { numeric: true }));
+  sel.innerHTML = '<option value="ALL">Semua Capacity</option>' +
+    list.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('');
+  sel.value = (prev === 'ALL' || list.includes(prev)) ? prev : 'ALL';
 }
 
 // ---------- sortir kolom tabel via klik header ----------
@@ -1446,7 +1540,9 @@ document.querySelectorAll('.seg-btn').forEach(b => {
 
 document.getElementById('fVendor').addEventListener('change', () => { fillAreas(); fillJenis(); render(); });
 document.getElementById('fArea').addEventListener('change', () => { fillJenis(); render(); });
-document.getElementById('fJenis').addEventListener('change', () => render());
+document.getElementById('fJenis').addEventListener('change', () => { fillCap(); render(); });
+const fCapEl = document.getElementById('fCap');
+if (fCapEl) fCapEl.addEventListener('change', () => render());
 
 // tombol reset filter
 const btnReset = document.getElementById('btnResetFilter');
@@ -1456,6 +1552,7 @@ if (btnReset) btnReset.addEventListener('click', () => {
   document.getElementById('fArea').value = 'ALL';
   fillJenis();
   document.getElementById('fJenis').value = 'ALL';
+  if (fCapEl) fCapEl.value = 'ALL';
   render();
 });
 

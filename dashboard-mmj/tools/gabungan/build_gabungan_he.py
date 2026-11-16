@@ -178,6 +178,8 @@ def build_he_template(summary):
         '<a href="#heReviewUnit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>Review Unit HE</a>'
         '<a href="#wt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3s6 6.4 6 10.2A6 6 0 0 1 6 13.2C6 9.4 12 3 12 3Z"/></svg>Review Penyiraman WT</a>'
         '<a href="#heBelum"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4h6a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z"/><path d="M9 2h6v4H9z"/><path d="M11 11h4M11 15h3"/></svg>List Timesheet</a>'
+
+        '<a href="#heMaCap" data-mmj-auth="ma_capacity" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>Rata-rata MA &amp; FR</a>'
         '</nav>')
     shell_open = ('<div class="app">'
                   '<aside class="side">'
