@@ -522,6 +522,14 @@ def main():
 .nav a{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;font-weight:500;font-size:13.5px}
 .nav svg{width:18px;height:18px;flex:none}
 .theme{margin-top:auto;border-radius:10px;padding:7px 10px;font-size:12px}
+/* Blok di atas ditulis SESUDAH @media template sehingga menimpa mode HP
+   (sidebar 236px + konten 77px). Kembalikan susunan satu kolom di layar kecil. */
+@media (max-width:1000px){
+  .app{grid-template-columns:minmax(0,1fr);padding:12px}
+  .side{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:12px;border-radius:16px}
+  .logo{flex-direction:row;gap:10px;padding:0;text-align:left}
+  .theme{margin:0 0 0 auto}
+}
 </style>''', 1)
         tpls[key] = tpls[key].replace('.logo .badge{width:auto;padding:6px 12px;border-radius:12px}', '.logo .badge{display:contents}')
         tpls[key] = tpls[key].replace('.logo .badge{width:auto}', '.logo .badge{display:contents}')
