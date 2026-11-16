@@ -145,15 +145,22 @@ table td,table th{font-variant-numeric:tabular-nums}
     padding:6px;background:var(--surface-solid,#fff);
     border-bottom:1px solid var(--border,rgba(15,23,42,.1));
   }
-  /* menu halaman tidak lagi jadi strip mendatar: tertutup, dibuka dari tombol */
-  .app>.side{display:none}
-  html.mmj-side-open{overflow:hidden}
-  html.mmj-side-open .app>.side{
+  /* menu halaman tidak lagi jadi strip mendatar: panel geser dari kiri.
+     Dipakai transform+opacity supaya buka/tutup beranimasi halus (bukan
+     display:none yang tidak bisa dianimasikan). */
+  .app>.side{
     display:flex;flex-direction:column;flex-wrap:nowrap;align-items:stretch;
     position:fixed;left:0;top:0;bottom:0;width:min(86vw,320px);height:auto;margin:0;
     padding:16px 12px 20px;border-radius:0 20px 20px 0;overflow-y:auto;
     background:var(--surface-solid,#fff);color:var(--ink,#121833);
     box-shadow:0 20px 50px rgba(11,31,58,.28);z-index:80;
+    transform:translateX(-100%);visibility:hidden;
+    transition:transform .3s cubic-bezier(.4,0,.2,1),visibility 0s linear .3s;
+  }
+  html.mmj-side-open{overflow:hidden}
+  html.mmj-side-open .app>.side{
+    transform:none;visibility:visible;
+    transition:transform .3s cubic-bezier(.4,0,.2,1),visibility 0s;
   }
   /* di dalam panel, menu pemilih dashboard kembali tegak seperti desktop */
   html.mmj-side-open .side .mmjnav{
@@ -162,13 +169,23 @@ table td,table th{font-variant-numeric:tabular-nums}
   html.mmj-side-open .side .mmjnav .mlbl,
   html.mmj-side-open .side .mmjnav .mmjg{display:block}
   html.mmj-side-open .side .nav{flex-direction:column;flex-wrap:nowrap;overflow:visible}
-  html.mmj-side-open .mmj-drawer-x{
+  /* tombol tutup ikut tergeser bersama panel (tidak berkedip saat menutup) */
+  .mmj-drawer-x{
     display:grid;place-items:center;position:absolute;top:8px;right:8px;width:34px;height:34px;
     border:0;border-radius:10px;background:transparent;color:var(--muted,#64748b);
     font-size:24px;line-height:1;cursor:pointer;
   }
-  .mmj-scrim{display:none}
-  html.mmj-side-open .mmj-scrim{
+  .mmj-scrim{
     display:block;position:fixed;inset:0;z-index:79;background:rgba(11,31,58,.45);
+    opacity:0;visibility:hidden;
+    transition:opacity .3s ease,visibility 0s linear .3s;
   }
+  html.mmj-side-open .mmj-scrim{
+    opacity:1;visibility:visible;
+    transition:opacity .3s ease,visibility 0s;
+  }
+}
+
+@media (max-width:900px) and (prefers-reduced-motion:reduce){
+  .app>.side,.mmj-scrim{transition:none}
 }
