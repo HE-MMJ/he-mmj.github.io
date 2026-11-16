@@ -273,18 +273,17 @@
         <table class="grid">
           <thead>
             <tr>
-              <th>Capacity</th>
+              <th>Model / Capacity</th>
               <th class="num">Jumlah Unit</th>
               <th class="num">Rata-rata MA</th>
               <th class="num">Rata-rata FR</th>
-              <th class="num" title="Fuel Ratio standar Tabel 1 SOP untuk capacity ini">FR Standar</th>
-              <th class="num">Selisih FR</th>
+              <th class="num" title="Rata-rata FR dikurangi Fuel Ratio standar Tabel 1 SOP">Selisih FR</th>
             </tr>
           </thead>
           <tbody id="maCapTbody"></tbody>
         </table>
       </div>
-      <p class="note">Rata-rata dihitung dari unit yang punya nilai pada filter yang sedang aktif. FR dijumlah seluruh unit (L) lalu dibagi total HM (jam), jadi unit dengan jam kerja besar ikut menentukan. Selisih FR = Rata-rata FR &minus; FR Standar (merah = melebihi standar, hijau = di bawah standar).</p>
+      <p class="note">Rata-rata dihitung dari unit yang punya nilai pada filter yang sedang aktif. FR dijumlah seluruh unit (L) lalu dibagi total HM (jam), jadi unit dengan jam kerja besar ikut menentukan. Satu baris = satu kombinasi Model / Capacity (sama seperti kolom di Tabel Review Unit). Selisih FR = Rata-rata FR &minus; FR standar SOP (merah = melebihi standar, hijau = di bawah standar); arahkan kursor ke angkanya untuk melihat FR standarnya.</p>
     </section>
 
 

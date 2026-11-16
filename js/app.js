@@ -819,7 +819,28 @@ function groupByCapacity(list) {
   return groups;
 }
 
-// ---- rata-rata MA + Fuel Ratio per capacity (panel khusus role ber-izin ma_capacity) ----
+// ---- nama model yang ditulis berbeda-beda di file timesheet ----
+// Kunci = nama setelah spasi dirapatkan & huruf besar (jadi "SANY STG 230C-10S"
+// dan "SANY STG230C-10S" kuncinya sama). Nilai = nama yang DITAMPILKAN.
+// Hanya berlaku untuk panel rata-rata per Model/Capacity; Tabel Review Unit
+// tetap menampilkan tulisan asli per unit.
+// "Hyundai ROBEX210W-9S" dianggap sama dengan "W-EX HYUNDAI 210" (keputusan
+// pemilik dashboard) supaya kedua tulisan tidak muncul sebagai dua baris.
+const MODEL_ALIAS = {
+  'HYUNDAIROBEX210W-9S': 'W-EX HYUNDAI 210'
+};
+function aliasModel(s) {
+  const raw = String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+  if (!raw) return raw;
+  const kunci = raw.toUpperCase().replace(/\s+/g, '');
+  return MODEL_ALIAS[kunci] || raw;
+}
+
+// ---- rata-rata MA + Fuel Ratio per "Model / Capacity" (izin ma_capacity) ----
+// Kolom pertama sengaja dibuat sama persis dengan kolom "Model / Capacity" di
+// Tabel Review Unit: Model/Capacity (atau Model saja bila capacity kosong).
+// Satu baris = satu pasangan Model + Capacity; unit dengan pasangan yang sama
+// digabung, lalu dirata-ratakan.
 // MA dirata-ratakan per unit (sama seperti kartu ringkasan). FR dihitung
 // berbobot: total Fuel : total HM, karena satuan aslinya L/jam - rata-rata
 // biasa akan membuat satu unit berjam kecil menyimpang jauh dari kenyataan.
@@ -827,53 +848,84 @@ function renderMaCap(rows) {
   const tb = document.getElementById('maCapTbody');
   if (!tb) return;
   if (rows.length === 0) {
-    tb.innerHTML = '<tr><td colspan="6" class="note">Tidak ada unit pada filter ini.</td></tr>';
+    tb.innerHTML = '<tr><td colspan="5" class="note">Tidak ada unit pada filter ini.</td></tr>';
     return;
   }
-  const kelompok = groupByCapacity(rows);
 
-  // baris TOTAL semua capacity (warna tetap abu-abu, ditandai <b>)
-  const semuaMa = rows.filter(d => num(d.MA) > 0);
-  const totalMa = semuaMa.length ? (semuaMa.reduce((s, d) => s + num(d.MA), 0) / semuaMa.length).toFixed(1) + '%' : '&mdash;';
-  const totalFuel = rows.reduce((s, d) => s + num(d.Fuel), 0);
-  const totalHM = rows.reduce((s, d) => s + num(d.HMTotal), 0);
-  const totalFr = (totalHM > 0 && totalFuel > 0) ? totalFuel / totalHM : 0;
-  const barisTotal = `<tr class="ma-cap-total"><td>Semua capacity</td><td class="num">${rows.length}</td>` +
-    `<td class="num"><b>${totalMa}</b></td><td class="num"><b>${totalFr > 0 ? fmt(totalFr, 2) : '&mdash;'}</b></td>` +
-    `<td class="num">&mdash;</td><td class="num">&mdash;</td></tr>`;
+  // label "Model / Capacity" - aturan yang sama dengan kolom di Tabel Review Unit
+  const labelUnit = d => {
+    const model = String(d.Model == null ? '' : d.Model).trim();
+    const cap = String(d.Capacity == null ? '' : d.Capacity).trim();
+    const adaCap = cap && cap !== '-';
+    // pakai penulisan model yang sudah diseragamkan (lihat aliasModel)
+    const modelTampil = aliasModel(model);
+    return modelTampil ? (adaCap ? `${modelTampil}/${cap}` : modelTampil) : (adaCap ? cap : '-');
+  };
 
-  tb.innerHTML = kelompok.map(g => {
-      // MA: rata-rata unit yang punya nilai
-      const adaMa = g.items.filter(d => num(d.MA) > 0);
-      const rataMa = adaMa.length ? (adaMa.reduce((s, d) => s + num(d.MA), 0) / adaMa.length).toFixed(1) + '%' : '&mdash;';
+  // ringkasan satu baris (dipakai juga untuk baris "Semua")
+  const ringkas = items => {
+    const adaMa = items.filter(d => num(d.MA) > 0);
+    const ma = adaMa.length ? (adaMa.reduce((s, d) => s + num(d.MA), 0) / adaMa.length).toFixed(1) + '%' : '&mdash;';
+    const sumFuel = items.reduce((s, d) => s + num(d.Fuel), 0);
+    const sumHM = items.reduce((s, d) => s + num(d.HMTotal), 0);
+    const fr = (sumHM > 0 && sumFuel > 0) ? sumFuel / sumHM : 0;
+    const std = (items.map(stdFuel).find(s => s) || null);
+    return { ma, fr, std };
+  };
 
-      // FR: tertimbang HM
-      const sumFuel = g.items.reduce((s, d) => s + num(d.Fuel), 0);
-      const sumHM = g.items.reduce((s, d) => s + num(d.HMTotal), 0);
-      const rataFr = (sumHM > 0 && sumFuel > 0) ? sumFuel / sumHM : 0;
+  // kelompokkan per label. Label yang hanya beda huruf besar/kecil dan spasi
+  // digabung (mis. "SANY STG 230 C-10S" = "SANY STG230C-10S", "HINO" = "Hino")
+  // supaya tidak ada baris kembar; yang ditampilkan adalah ejaan terbanyak di
+  // data. Penulisan yang sudah ditetapkan di MODEL_ALIAS dipakai apa adanya.
+  const kunci = s => String(s).toUpperCase().replace(/\s+/g, '');
+  const peta = new Map();
+  rows.forEach(d => {
+    const label = labelUnit(d);
+    const k = kunci(label);
+    if (!peta.has(k)) peta.set(k, { label, variasi: new Map(), items: [] });
+    const g = peta.get(k);
+    g.items.push(d);
+    g.variasi.set(label, (g.variasi.get(label) || 0) + 1);
+  });
+  const kelompok = [...peta.values()].map(g => {
+    // ejaan terbanyak; bila imbang pakai yang paling awal muncul
+    let best = g.label, n = -1;
+    g.variasi.forEach((jml, lbl) => { if (jml > n) { n = jml; best = lbl; } });
+    return { label: best, items: g.items };
+  });
+  kelompok.sort((a, b) =>
+    (capInfo(a.label).cls - capInfo(b.label).cls) ||
+    (capInfo(a.label).num - capInfo(b.label).num) ||
+    a.label.localeCompare(b.label, 'id', { numeric: true })
+  );
 
-      // standar FR dari Tabel 1 SOP untuk capacity ini (bila ada)
-      const std = (g.items.map(stdFuel).find(s => s) || null);
-
-      let frTxt, stdTxt = '&mdash;', selTxt = '&mdash;', selCls = '';
-      if (rataFr > 0) {
-        frTxt = fmt(rataFr, 2);
-        if (std) {
-          stdTxt = fmt(std.ratio, 2) + ' ' + (std.satuan === 'Liter/Hari' ? 'L/hari' : 'L/jam');
-          // selisih & warnanya ikut aturan yang sama dengan peringatan FR unit
-          const avgPalsu = { Jenis: g.items[0].Jenis, Capacity: g.items[0].Capacity, FuelRatio: rataFr };
-          const lewat = frMelebihi(avgPalsu) || (std.ratio > 0 && rataFr > std.ratio);
-          selTxt = (lewat ? '+' : '') + fmt(rataFr - std.ratio, 2);
-          selCls = lewat ? ' class="num sisa-over"' : ' class="num sisa-ok"';
-        }
-      } else {
-        frTxt = '&mdash;';
+  const isi = kelompok.map(g => {
+    const r = ringkas(g.items);
+    let frTxt = '&mdash;', selTxt = '&mdash;', selCls = '', selTitle = '';
+    if (r.fr > 0) {
+      frTxt = fmt(r.fr, 2);
+      if (r.std) {
+        const satuan = r.std.satuan === 'Liter/Hari' ? 'L/hari' : 'L/jam';
+        const stdTxt = fmt(r.std.ratio, 2) + ' ' + satuan;
+        // selisih & warnanya ikut aturan yang sama dengan peringatan FR unit
+        const lewat = r.std.ratio > 0 && r.fr > r.std.ratio;
+        selTxt = (lewat ? '+' : '') + fmt(r.fr - r.std.ratio, 2);
+        selCls = lewat ? ' class="num sisa-over"' : ' class="num sisa-ok"';
+        selTitle = ` title="FR standar ${stdTxt}"`;
       }
+    }
+    return `<tr><td class="model-cell"><b>${escHtml(g.label)}</b></td>` +
+      `<td class="num">${g.items.length}</td><td class="num"><b>${r.ma}</b></td>` +
+      `<td class="num"><b>${frTxt}</b></td><td${selCls}${selTitle}><b>${selTxt}</b></td></tr>`;
+  }).join('');
 
-      return `<tr><td>${escHtml(g.label)}</td><td class="num">${g.items.length}</td>` +
-        `<td class="num"><b>${rataMa}</b></td><td class="num"><b>${frTxt}</b></td>` +
-        `<td class="num">${stdTxt}</td><td${selCls}><b>${selTxt}</b></td></tr>`;
-    }).join('') + barisTotal;
+  // baris TOTAL semua unit yang sedang tampil
+  const tot = ringkas(rows);
+  const barisTotal = `<tr class="ma-cap-total"><td>Semua Model / Capacity</td><td class="num">${rows.length}</td>` +
+    `<td class="num"><b>${tot.ma}</b></td><td class="num"><b>${tot.fr > 0 ? fmt(tot.fr, 2) : '&mdash;'}</b></td>` +
+    `<td class="num">&mdash;</td></tr>`;
+
+  tb.innerHTML = isi + barisTotal;
 }
 
 // ---- Grafik gabungan: BAR = HM Total, GARIS = metrik pembanding ----
