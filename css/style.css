@@ -549,6 +549,7 @@ th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
 
 /* kolom Min Hours & Sisa HM */
 .grid tbody td.min-h { color: var(--muted); }
+.grid tbody td.fr-over { color: #B91C1C; font-weight: 600; }
 .grid tbody td.sisa-ok b { color: var(--ok); }
 .grid tbody td.sisa-warn b { color: #B45309; }
 .grid tbody td.sisa-over b { color: #B91C1C; }

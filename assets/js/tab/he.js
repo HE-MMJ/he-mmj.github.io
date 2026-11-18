@@ -548,7 +548,7 @@ function render() {
     <td class="num">${maTxt}</td>
     <td class="num">${paTxt}</td>
     <td class="num">${fuelTxt}</td>
-    <td class="num">${ratioTxt}</td>
+    <td class="num${frMelebihi(d) ? ' fr-over' : ''}">${ratioTxt}</td>
   </tr>`;
   }).join('');
 

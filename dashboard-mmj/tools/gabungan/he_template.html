@@ -561,6 +561,7 @@ th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .grid tbody td.min-h { color: var(--muted); }
 .grid tbody td.sisa-ok b { color: var(--ok); }
 .grid tbody td.sisa-warn b { color: #B45309; }
+.grid tbody td.fr-over { color: #B91C1C; font-weight: 600; }
 .grid tbody td.sisa-over b { color: #B91C1C; }
 .grid tbody td.sisa-over { background: #FFF6F6; }
 .grid tbody td.model-cell { white-space: nowrap; color: var(--text-2); }
@@ -5431,7 +5432,7 @@ function render() {
     <td class="num">${maTxt}</td>
     <td class="num">${paTxt}</td>
     <td class="num">${fuelTxt}</td>
-    <td class="num">${ratioTxt}</td>
+    <td class="num${frMelebihi(d) ? ' fr-over' : ''}">${ratioTxt}</td>
   </tr>`;
   }).join('');
 
