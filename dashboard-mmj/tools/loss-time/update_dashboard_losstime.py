@@ -8,7 +8,7 @@ R_Adjust bila ada, selain itu revisi R_nn tertinggi), lalu membuat ulang
 Sumber angka:
   - Loss time  : sheet "Input Stop Hauling", kolom "Convert Duration" (sudah direkonsil,
                  duplikat dihapus, angka disesuaikan SOP). Pembagian route dari kolom Route: Jan-Jun H1 & H2 saja, Jul-Des H1 / ISP / H2.
-                 Rincian Mitra Company dari kolom "Desc Type2".
+                 Rincian Mitra Company & Weigh Bridge (WB, khusus ISP Operational) dari kolom "Desc Type2".
   - Curah hujan: sheet "Input TCH", akumulasi per hari per pos (Rainfall mm & Duration Convert jam);
                  PORT SBL dari sheet "RAIN FALL" (kolom rain,hr & rainfall), karena data SBL tidak diinput di Input TCH.
                  KM 124 - KM 75 = H1 · ISP68 = ISP · KM 47 - KM 12 & SBL Port = H2.
@@ -33,7 +33,7 @@ OUTPUT = os.path.join(FOLDER, "Dashboard Loss Time & Curah Hujan 2026.html")
 
 TYPES = [("R", "Rain"), ("S", "Slippery"), ("A", "Accident"), ("E", "Evacuation"), ("M", "Mobilisation"),
          ("T", "Technical"), ("NH", "National Holiday"), ("CP", "Community Party"), ("D", "Dust"),
-         ("SI", "Social Issue"), ("FM", "Force Majeure"), ("MC", "Mitra Company"), ("RG", "Regulation")]
+         ("SI", "Social Issue"), ("WB", "Weigh Bridge Operational"), ("FM", "Force Majeure"), ("MC", "Mitra Company"), ("RG", "Regulation")]
 ROUTES = ["H1", "ISP", "H2"]
 # urutan area per route sesuai sheet REKAP LOSS TIME
 AREA_ORDER = {"H1": ["Area Mekar Sari", "Area Ketapat", "Area Bintialo", "Area Dayung"],
@@ -73,6 +73,25 @@ def find_sources():
 
 
 AREA_ROUTE = {a: rt for rt, lst in AREA_ORDER.items() for a in lst}
+
+# pembagian blok & range KM terbaru (sesuai SOP / data Oktober 2026): [KM awal, KM akhir)
+BLOKS = [(0, 9, "Mendis Blok 1", "Area Mendis"), (9, 19, "Mendis Blok 2", "Area Mendis"),
+         (19, 29, "B 80 Blok 1", "Area B 80"), (29, 38, "Pakerin Blok 1", "Area Pakerin"),
+         (38, 47, "Pakerin Blok 2", "Area Pakerin"), (47, 56, "Selaro Blok 1", "Area Selaro"),
+         (56, 65, "Selaro Blok 2", "Area Selaro"), (65, 70, "ISP", "Area ISP"),
+         (70, 80, "Dayung Blok 1", "Area Dayung"), (80, 90, "Bintialo Blok 1", "Area Bintialo"),
+         (90, 100, "Bintialo Blok 2", "Area Bintialo"), (100, 110, "Ketapat Blok 1", "Area Ketapat"),
+         (110, 120, "Ketapat Blok 2", "Area Ketapat"), (120, 10_000, "Mekar Sari Blok 1", "Area Mekar Sari")]
+
+
+def km_blok(km):
+    """(blok, area) terbaru berdasarkan KM, atau None bila KM kosong."""
+    if km is None:
+        return None
+    for lo, hi, blok, area in BLOKS:
+        if lo <= km < hi:
+            return blok, area
+    return BLOKS[0][2:] if km < 0 else None
 
 
 def km_route(loc):
@@ -179,6 +198,7 @@ def read_file(src, codes, cek, stop, rain, months_info):
     shutil.copy2(src, tmp)                       # aman walau file sedang dibuka di Excel
     wb = openpyxl.load_workbook(tmp, read_only=True, data_only=True)
     info = {"file": name, "ym": ym, "stop": 0, "rain": 0, "h": 0.0}
+    remap = {}
 
     # ---------- Input Stop Hauling ----------
     ws = wb["Input Stop Hauling"]
@@ -195,6 +215,16 @@ def read_file(src, codes, cek, stop, rain, months_info):
         code = txt(g(r, "Code Type")).upper()
         route = txt(g(r, "Route")).upper()
         area = txt(g(r, "Area"))
+        blok = txt(g(r, "Blok"))
+        km0 = num(g(r, "Location (KM)"))
+        if area not in AREA_ROUTE:
+            # nama area lama (mis. Area Bintitapat / Area Tapatmekar) atau kosong -> area & blok terbaru menurut KM
+            nb = km_blok(km0)
+            if nb is None and (route == "ISP" or "ISP" in txt(g(r, "Location (KM)")).upper()):
+                nb = ("ISP", "Area ISP")
+            if nb:
+                remap[(area or "(kosong)", nb[1])] = remap.get((area or "(kosong)", nb[1]), 0) + 1
+                blok, area = nb
         t2 = txt(g(r, "Desc Type2")) or txt(g(r, "Desc Type"))
         base = {"no": no, "d": d.isoformat(), "src": f"Stop Hauling {ym or ''}".strip()}
         if ym and d.isoformat()[:7] != ym:
@@ -227,12 +257,18 @@ def read_file(src, codes, cek, stop, rain, months_info):
             km = num(g(r, "Location (KM)"))
             rt = "H1" if km is not None and km >= 68 else "H2"
             cek.append({**base, "msg": f"Jan-Jun hanya route H1/H2: Route kosong di lokasi ISP (KM {txt(g(r, 'Location (KM)')) or '-'}) -> {rt} - tetap dihitung", "hapus": False})
-        if code == "MC" and t2.lower() in ("isi data", "") and dur:
-            cek.append({**base, "msg": f"Mitra Company: Desc Type2 belum diisi ('{t2 or '-'}') - tetap dihitung", "hapus": False})
+        if code == "WB" and rt != "ISP" and dur:
+            cek.append({**base, "msg": f"Weigh Bridge Operational (WB) tercatat di route {rt} - menurut SOP WB hanya untuk ISP Operational; tetap dihitung", "hapus": False})
+        if code in ("MC", "WB") and t2.lower() in ("isi data", "") and dur:
+            cek.append({**base, "msg": f"{'Mitra Company' if code == 'MC' else 'Weigh Bridge'}: Desc Type2 belum diisi ('{t2 or '-'}') - tetap dihitung", "hapus": False})
         stop.append({"d": d.isoformat(), "r": rt, "c": code, "t2": t2, "h": round(dur, 6),
-                     "km": num(g(r, "Location (KM)")), "area": area, "blok": txt(g(r, "Blok")),
+                     "km": km0, "area": area, "blok": blok,
                      "desc": txt(g(r, "Description")), "f": hhmm(g(r, "From")), "t": hhmm(g(r, "To")), "no": no})
         info["stop"] += 1; info["h"] += dur
+
+    for (old, new), n in sorted(remap.items()):
+        cek.append({"no": "", "d": f"{ym}-01", "src": f"Stop Hauling {ym or ''}".strip(),
+                    "msg": f"Area '{old}' ({n} baris) dipetakan ke {new} berdasarkan KM (pembagian area terbaru) - tetap dihitung", "hapus": False})
 
     # ---------- Input TCH ----------
     ws = wb["Input TCH"]

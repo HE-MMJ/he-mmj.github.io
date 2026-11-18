@@ -45,7 +45,7 @@ const HC = H ? (()=>{
 })() : null;
 
 /* ---------- Loss time H0 (salinan aturan dashboard Loss Time: jam bersamaan antar route dihitung sekali) ---------- */
-const PRI={R:0,S:1,T:2,SI:3,D:4}, ROUTES=["H1","ISP","H2"], MMJ_CODES=new Set(["T","A","E","M","CP","D","SI"]);
+const PRI={R:0,S:1,T:2,SI:3,D:4}, ROUTES=["H1","ISP","H2"], MMJ_CODES=new Set(["T","A","E","M","D","WB"]);
 const tmin=s=>{ const m=/^(\d{1,2}):(\d{2})/.exec(s||""); if(!m) return null; const v=+m[1]*60 + +m[2]; return v<360?v+1440:v; };
 if(L) L.stop.forEach(s=>{ if(s.__x) return; s.__x=1; const a=tmin(s.f); let b=tmin(s.t); if(a==null||b==null||!(s.h>0)){ s.a=null; return; } if(b<=a) b+=1440; s.a=a; s.b=b; s.fr=s.h/((b-a)/60); });
 function calcH0(rows){
@@ -75,6 +75,30 @@ function miniCols(vals,labels,col,unit){ if(!vals.length) return ""; const W=320
   const H0=chip?22:head;
   return `<svg viewBox="0 0 ${W} ${Hh+16+H0}" width="100%" style="height:auto" role="img">${vals.map((v,i)=>{ const h=v/mx*Hh, x=m+i*bw; return `<rect class="mc" data-i="${i}" x="${x+bw*.15}" y="${H0+Hh-h}" width="${bw*.7}" height="${Math.max(h,.5)}" rx="2" fill="${col}"/>`+lab(v,x+bw/2,H0+Hh-h); }).join("")}${labels.map((l,i)=>l?`<text x="${m+i*bw+bw/2}" y="${H0+Hh+13}" text-anchor="middle">${l}</text>`:"").join("")}</svg>`; }
 const mg=items=>`<div class="mg">${items.map(([l,v,e])=>`<div><span>${l}</span><b>${v}</b>${e?`<em title="${String(e).replace(/<[^>]+>/g,"")}">${e}</em>`:""}</div>`).join("")}</div>`;
+
+
+/* --- kinerja jalan hauling: sama dengan dashboard Loss Time (SOP Loss Time butir 6.7) ---
+   PA jam = SH - LT MMJ · PA% = PA jam/SH · UA jam = PA jam - LT Bukan MMJ · UA% = UA jam/PA jam · EU% = UA jam/SH
+   H0 = rata-rata jam loss time route yang tersedia per bulan (Jan-Jun H1 & H2, mulai Juli H1, ISP & H2). */
+const KJ_MMJ = new Set(["T","WB","A","E","M","D"]), KJ_ISP_FROM = "2026-07", KJ_TGT = {pa:.85, ua:.80, eu:.70};
+function kinerjaExec(L, from, to){
+  const days = (a,b) => Math.round((Date.parse(b+"T00:00:00Z")-Date.parse(a+"T00:00:00Z"))/864e5)+1;
+  const months = []; for(let m=from.slice(0,7); m<=to.slice(0,7); ){ months.push(m); let y=+m.slice(0,4), mo=+m.slice(5)+1; if(mo>12){mo=1;y++;} m=`${y}-${String(mo).padStart(2,"0")}`; }
+  const RT = ["H1","ISP","H2"], acc = {H0:{sh:0,m:0,n:0,d:0}}; RT.forEach(r=>acc[r]={sh:0,m:0,n:0,d:0});
+  months.forEach(m=>{
+    const a = m+"-01" < from ? from : m+"-01", e0 = new Date(Date.UTC(+m.slice(0,4), +m.slice(5), 0)).toISOString().slice(0,10), b = e0 > to ? to : e0;
+    const nd = days(a,b), sh = nd*24, rs = RT.filter(r=>!(r==="ISP" && m<KJ_ISP_FROM)), v = {};
+    rs.forEach(r=>{ const x = L.stop.filter(s=>s.r===r && s.d>=a && s.d<=b && s.h>0);
+      v[r] = {m:sum(x.filter(s=>KJ_MMJ.has(s.c)).map(s=>s.h)), n:sum(x.filter(s=>!KJ_MMJ.has(s.c)).map(s=>s.h))};
+      acc[r].sh+=sh; acc[r].m+=v[r].m; acc[r].n+=v[r].n; acc[r].d+=nd; });
+    acc.H0.sh+=sh; acc.H0.d+=nd; acc.H0.m+=sum(rs.map(r=>v[r].m))/rs.length; acc.H0.n+=sum(rs.map(r=>v[r].n))/rs.length;
+  });
+  const out = {};
+  ["H0",...RT].forEach(r=>{ const o=acc[r]; if(!o.sh){ out[r]=null; return; }
+    const paj=Math.max(0,o.sh-o.m), uaj=Math.max(0,paj-o.n);
+    out[r]={days:o.d, sh:o.sh, mmj:o.m, non:o.n, paj, uaj, pa:paj/o.sh, ua:paj?uaj/paj:null, eu:uaj/o.sh}; });
+  return out;
+}
 
 function render(){
   hide();
@@ -136,6 +160,17 @@ function render(){
       +`<div class="ttl2">Per route (jumlah jam route)</div><div id="eLtR"></div><div class="ttl2">Penyebab terbesar (H0)</div><div id="eLtC"></div>`;
     hbars(document.getElementById("eLtR"),ROUTES.map(r=>({n:r,c:"var(--k2)",v:sum(S.filter(s=>s.r===r).map(s=>s.h)),txt:null})).map(o=>({...o,txt:nf1.format(o.v)+" jam"})),"jam");
     hbars(document.getElementById("eLtC"),top.map(([c,v])=>({n:TN[c]||c,c:MMJ_CODES.has(c)?"var(--mmj)":"var(--non)",v,txt:nf1.format(v)+" jam",x:h0.t?nf1.format(v/h0.t*100)+"%":""})),"jam");
+
+    // kinerja jalan
+    const kFrom = P==="mtd" ? last.slice(0,8)+"01" : last.slice(0,4)+"-01-01", KJ = kinerjaExec(L, kFrom < L.meta.first ? L.meta.first : kFrom, last);
+    kl.kj = KJ.H0;
+    const kc = (k,v) => v==null ? "" : (v+1e-9>=KJ_TGT[k] ? "var(--good)" : "var(--bad)"), kp = (k,v) => v==null ? "–" : `<b style="color:${kc(k,v)}">${nf1.format(v*100)}% ${v+1e-9>=KJ_TGT[k]?"✓":"✕"}</b>`;
+    pKj.textContent = `${perTxt(last)} · target PA ≥ 85% · UA ≥ 80% · EU ≥ 70%`;
+    tKj.innerHTML = `<table><thead><tr><th>Route</th><th class="r">Hari</th><th class="r">SH (jam)</th><th class="r">LT MMJ</th><th class="r">LT Bukan MMJ</th><th class="r">PA jam</th><th class="r">UA jam</th><th class="r">PA</th><th class="r">UA</th><th class="r">EU</th></tr></thead><tbody>`
+      + ["H0","H1","ISP","H2"].map(r=>{ const x=KJ[r]; const lab = r==="H0" ? "<b>H0</b> <small style=\"color:var(--muted)\">rata-rata route</small>" : `<b>${r}</b>`;
+          return x ? `<tr><td>${lab}</td><td class="r">${x.days}</td><td class="r">${nf1.format(x.sh)}</td><td class="r">${nf1.format(x.mmj)}</td><td class="r">${nf1.format(x.non)}</td><td class="r">${nf1.format(x.paj)}</td><td class="r">${nf1.format(x.uaj)}</td><td class="r">${kp("pa",x.pa)}</td><td class="r">${kp("ua",x.ua)}</td><td class="r">${kp("eu",x.eu)}</td></tr>`
+                   : `<tr><td>${lab}</td><td colspan="9" style="color:var(--muted);text-align:center">Tidak ada data (route ISP mulai Juli 2026)</td></tr>`; }).join("") + `</tbody></table>`;
+    nKj.innerHTML = `PA jam = SH − LT MMJ · PA = PA jam ÷ SH · UA jam = PA jam − LT Bukan MMJ · UA = UA jam ÷ PA jam · EU = UA jam ÷ SH (= PA × UA). SH = 24 jam × hari kalender s/d data terakhir · LT MMJ = Technical + Weigh Bridge + Traffic + Dust · H0 = rata-rata route yang tersedia (Jan–Jun H1 &amp; H2, mulai Juli H1, ISP &amp; H2) · ISP dihitung mulai Juli 2026.`;
     // hujan
     const R=L.rain.filter(x=>inP(x.d,last)), acc=new Map(); R.forEach(x=>{ const k=x.d+"|"+x.p; const o=acc.get(k)||{mm:0,h:0,p:x.p,d:x.d}; o.mm+=x.mm||0; o.h+=x.h||0; acc.set(k,o); });
     const wet=[...acc.values()].filter(o=>o.mm>0), days=new Set(wet.map(o=>o.d)).size, posN=L.pos.length;
@@ -146,7 +181,7 @@ function render(){
       +`<div class="ttl2">Akumulasi curah hujan per pos</div><div id="eRfP"></div>`
       +(wettest&&wettest.v?`<div style="font-size:11.5px;color:var(--ink-2);margin-top:10px">Pos terbasah: <b>${wettest.n}</b> (${wettest.r}) · ${nf1.format(wettest.v)} mm</div>`:"");
     hbars(document.getElementById("eRfP"),byPos.map(p=>({n:`${p.n} · ${p.r}`,c:"var(--k5)",v:p.v,txt:nf1.format(p.v)+" mm"})),"mm");
-  } else { cLt.innerHTML='<div class="empty">Data Loss Time tidak tersedia</div>'; cRf.innerHTML=""; }
+  } else { cLt.innerHTML='<div class="empty">Data Loss Time tidak tersedia</div>'; cRf.innerHTML=""; tKj.innerHTML='<div class="empty">Data Loss Time tidak tersedia</div>'; }
 
   /* --- KPI --- */
   const kpi=(c,ic,l,v,d,n,bar,t)=>`<div class="kpi" style="--c:${c}" role="button" tabindex="0" data-go="${t}" aria-label="Buka dashboard ${l}"><span class="go">Buka →</span><div class="hd"><div class="ic">${ic}</div><div style="min-width:0"><div class="l">${l}</div><div class="v">${v}${d}</div></div></div>${bar||""}<div class="n">${n}</div></div>`;
@@ -154,9 +189,9 @@ function render(){
   eKpi.innerHTML=(HC?kpi("var(--k1)",ICON.port,"Coal H0+H2 · Port SBL",`${short(k02.a)}<small>t</small>`,dchip(k02.e?k02.a/k02.e*100:null),`target ${P==="mtd"?"s/d hari ini":"RKAP YTD"} ${fmt(k02.e)} t`,bb(k02),"haul")
       +kpi("var(--k4)",ICON.truck,"Coal H1 · CPP → ISP61",`${short(k1.a)}<small>t</small>`,dchip(k1.e?k1.a/k1.e*100:null),`target ${fmt(k1.e)} t (${HC.h1Pct}% RKAP)`,bb(k1),"haul"):"")
     +(kb?kpi("var(--k3)",ICON.rock,"Batu Split",`${short(kb.ton)}<small>t</small>`,"",`${fmt(kb.n)} rit · ${perTxt(B.meta.lastDate)}`,"","batu"):"")
-    +(kl?kpi("var(--k2)",ICON.clock,"Loss Time H0",`${nf1.format(kl.t)}<small>jam</small>`,"",`MMJ ${nf1.format(kl.mmj)} jam (${pct(kl.t?kl.mmj/kl.t*100:null)}) · Bukan MMJ ${nf1.format(kl.t-kl.mmj)} jam`,"","lt"):"");
+    +(kl?kpi("var(--k2)",ICON.clock,"Loss Time H0",`${nf1.format(kl.t)}<small>jam</small>`,"",`MMJ ${nf1.format(kl.mmj)} jam (${pct(kl.t?kl.mmj/kl.t*100:null)}) · Bukan MMJ ${nf1.format(kl.t-kl.mmj)} jam${kl.kj?` · PA ${nf1.format(kl.kj.pa*100)}% · UA ${nf1.format(kl.kj.ua*100)}% · EU ${nf1.format(kl.kj.eu*100)}%`:""}`,"","lt"):"");
   eKpi.querySelectorAll("[data-go]").forEach(k=>{ k.onclick=()=>go(k.dataset.go); k.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); go(k.dataset.go); } }; });
-  eNote.innerHTML=`<b>Catatan:</b> angka direkap otomatis dari dashboard Monitoring dengan aturan yang sama (Coal Hauling: H0+H2 = SBL WB / tabel BA, H1 = Input CH CCP / tabel CPP GPU-ISP68, target RKAP; Loss Time H0 tanpa jam ganda antar route; curah hujan = akumulasi harian per pos). Klik kartu atau tombol <i>Buka</i> untuk melihat rinciannya.`;
+  eNote.innerHTML=`<b>Catatan:</b> angka direkap otomatis dari dashboard Monitoring dengan aturan yang sama (Coal Hauling: H0+H2 = SBL WB / tabel BA, H1 = Input CH CCP / tabel CPP GPU-ISP68, target RKAP; Loss Time H0 tanpa jam ganda antar route; Kinerja Jalan PA/UA/EU sesuai SOP Loss Time butir 6.7 dengan H0 = rata-rata route; curah hujan = akumulasi harian per pos). Klik kartu atau tombol <i>Buka</i> untuk melihat rinciannya.`;
 }
 /* ===== MMJ MOTION v1: grafik dinamis (disalin sama persis ke tiap template; sumber: Tools\mmj_motion_snippet.js) =====
    Setelah render(): batang tumbuh, garis tergambar, donat berputar masuk, bar HTML terisi, angka KPI naik.

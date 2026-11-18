@@ -9,7 +9,23 @@ const HARI = ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
 const ROUTES = DATA.routes;
 const RCOL = {H1:"var(--s1)", ISP:"var(--s2)", H2:"var(--s3)"};
 const TYPES = DATA.types, TN = Object.fromEntries(TYPES.map(t=>[t.c,t.n]));
-const TCOL = {R:"#2a78d6",S:"#5bb8e8",A:"#d03b3b",E:"#e0842a",M:"#8b5cf6",T:"#f2b632",NH:"#94a3b8",CP:"#e2559b",D:"#a47148",SI:"#14b8a6",FM:"#64748b",MC:"#5b4bd6",RG:"#7fb13a"};
+const TCOL = {R:"#2a78d6",S:"#5bb8e8",A:"#d03b3b",E:"#e0842a",M:"#8b5cf6",T:"#f2b632",NH:"#94a3b8",CP:"#e2559b",D:"#a47148",SI:"#14b8a6",FM:"#64748b",MC:"#5b4bd6",RG:"#7fb13a",WB:"#0891b2"};
+const DN = {MC:"Mitra Company", WB:"Weigh Bridge Operational"};
+const SUBDEF = {
+ MC:{"Ketersediaan HE ISP":"Alat berat di ISP tidak tersedia atau terganggu, pembongkaran terhambat sehingga portal ditutup untuk mengantisipasi penumpukan.",
+  "Manpower":"Keterbatasan tenaga kerja atau operator pada pihak Mitra.",
+  "Stockpile Capacity":"Kapasitas/area stockpile penuh atau sempit sehingga portal ditutup untuk mengantisipasi penumpukan DT.",
+  "Meals and rest":"Penutupan pada waktu makan dan istirahat operator.",
+  "Changed Shift":"Penutupan pada waktu pergantian shift operator.",
+  "Repaired stockpile":"Perbaikan atau perawatan jalan masuk dan keluar stockpile.",
+  "Friday prayers":"Penutupan pada waktu shalat Jumat, misalnya pada area timbangan.",
+  "Repaired WB":"Perbaikan, perawatan, atau kalibrasi jembatan timbang di luar ISP (mis. WB SBL / milik Mitra) sehingga penimbangan terhenti.",
+  "Social Issue":"Penutupan oleh warga/masyarakat atas permasalahan sosial yang berkaitan dengan aktivitas atau kebijakan Mitra.",
+  "Kepadatan Traffic Stockpile":"Kepadatan antrean atau lalu lintas DT di area stockpile."},
+ WB:{"Repaired Genset WB":"Perbaikan atau gangguan genset (sumber listrik) jembatan timbang ISP sehingga timbangan tidak dapat beroperasi.",
+  "WB System Error":"Gangguan sistem timbangan (aplikasi, komputer, indikator, atau koneksi data) sehingga hasil penimbangan tidak dapat direkam.",
+  "WB Breakdown":"Kerusakan fisik/mekanis jembatan timbang (load cell, platform, kabel) yang terjadi di luar rencana.",
+  "Repaired WB":"Perbaikan, perawatan terencana, atau kalibrasi jembatan timbang ISP."}};
 const MCPAL = ["#5b4bd6","#8f7cf0","#2f9e8f","#e0842a","#d9578a","#5bb8e8","#a47148","#94a3b8"];
 const POS = DATA.pos, POSR = Object.fromEntries(POS.map(p=>[p.n,p.r]));
 const nf0 = new Intl.NumberFormat("id-ID",{maximumFractionDigits:0});
@@ -30,7 +46,7 @@ const monthRange = m => [m+"-01", m+"-"+String(new Date(+m.slice(0,4), +m.slice(
 
 let pref = {}; try{ pref = JSON.parse(localStorage.getItem("ltDashPref")||"{}"); }catch(e){}
 const savePref = () => { try{ localStorage.setItem("ltDashPref", JSON.stringify({hm:st.hm, gv:st.gv, pos:st.pos, av:st.av, view:st.view})); }catch(e){} };
-const st = {bulan:"", dari:"", sampai:"", routes:new Set(ROUTES), type:"", hm:pref.hm||"mm", gv:pref.gv||"mmj", pos:pref.pos||"dash", cb:"all", rh:"all", mc:false, mcv:"t2", kp:"", av:pref.av||"bar", view:(window.MMJ_VIEW||pref.view||"lt"), dt:new Set(), open:{evt:false, cek:false}, q:""};
+const st = {bulan:"", dari:"", sampai:"", routes:new Set(ROUTES), type:"", hm:pref.hm||"mm", gv:pref.gv||"mmj", pos:pref.pos||"dash", cb:"all", rh:"all", mc:false, mcv:"t2", dk:"MC", kj:"H0", kp:"", av:pref.av||"bar", view:(window.MMJ_VIEW||pref.view||"lt"), dt:new Set(), open:{evt:false, cek:false}, q:""};
 /* acuan pos: "dash" = ISP68 hanya ISP · "sop" = ISP68 dipakai bersama H1, ISP & H2 (SOP 8.2) */
 const posRoutes = p => (st.pos==="sop" && POSR[p]==="ISP") ? ["H1","ISP","H2"] : [POSR[p]];
 const posIn = (p, r) => posRoutes(p).includes(r);
@@ -54,11 +70,15 @@ $("fRoute").onclick = e => { const b=e.target.closest(".chip"); if(!b) return; c
 $("fBulan").onchange = ()=>setMonth($("fBulan").value);
 $("fType").onchange = ()=>{ st.type=$("fType").value; render(); };
 $("reset").onclick = ()=>{ Object.assign(st,{bulan:"",dari:"",sampai:"",type:"",routes:new Set(ROUTES),cb:"all",rh:"all",q:""}); $("qEvt").value=""; render(); };
-function openMc(v){ st.mc=true; if(typeof v==="string") st.mcv=v; render(); $("mitraSec").scrollIntoView({behavior:"smooth"}); }
+function openDet(k,v){ st.mc=true; st.dk=DN[k]?k:"MC"; if(typeof v==="string") st.mcv=v; render(); $("mitraSec").scrollIntoView({behavior:"smooth"}); }
+function openMc(v){ openDet("MC", v); }
 $("mcClose").onclick = ()=>{ st.mc=false; render(); $("sop").scrollIntoView({behavior:"smooth"}); };
-$("mcBtn2").onclick = ()=>openMc();
-$("navMc").onclick = e => { e.preventDefault(); if(st.mc){ st.mc=false; render(); } else openMc(); };
-$("mcSub").onclick = e => { const a=e.target.closest("[data-mcv]"); if(!a) return; e.preventDefault(); openMc(a.dataset.mcv); };
+$("mcBtn2").onclick = ()=>openDet("MC");
+$("wbBtn2").onclick = ()=>openDet("WB");
+$("navMc").onclick = e => { e.preventDefault(); if(st.mc && st.dk==="MC"){ st.mc=false; render(); } else openDet("MC"); };
+$("mcSub").onclick = e => { const a=e.target.closest("[data-mcv]"); if(!a) return; e.preventDefault(); openDet("MC", a.dataset.mcv); };
+$("navWb").onclick = e => { e.preventDefault(); if(st.mc && st.dk==="WB"){ st.mc=false; render(); } else openDet("WB"); };
+$("wbSub").onclick = e => { const a=e.target.closest("[data-mcv]"); if(!a) return; e.preventDefault(); openDet("WB", a.dataset.mcv); };
 function setView(v){ st.view=v; savePref(); render(); scrollTo({top:0, behavior:"smooth"}); }
 $("viewSw").onclick = e => { const b=e.target.closest("[data-view-btn]"); if(b) setView(b.dataset.viewBtn); };
 $("navDash").onclick = e => { e.preventDefault(); scrollTo({top:0, behavior:"smooth"}); };
@@ -75,6 +95,11 @@ $("segMc").onclick =e => { const b=e.target.closest("button"); if(!b) return; st
 $("ringkasan").onclick = e => { const k=e.target.closest(".kpi.clk"); if(!k) return; st.kp = st.kp===k.dataset.kp ? "" : k.dataset.kp; render(); };
 $("ringkasan").onkeydown = e => { if(e.key!=="Enter" && e.key!==" ") return; const k=e.target.closest(".kpi.clk"); if(!k) return; e.preventDefault(); st.kp = st.kp===k.dataset.kp ? "" : k.dataset.kp; render(); };
 $("segRh").innerHTML = [["all","Semua"],...ROUTES.map(r=>[r,r])].map(([v,t])=>`<button type="button" data-v="${v}">${t}</button>`).join("");
+/* pilihan route kartu (H0 / H1 / ISP / H2) - SATU pilihan, tersambung ke 4 kartu sekaligus */
+st.cr = {gt:"H0", mmj:"H0", c1:"H0", mix:"H0"};
+document.querySelectorAll(".segr").forEach(el=>{
+  el.innerHTML = [["H0","H0"],...ROUTES.map(r=>[r,r])].map(([v,t])=>`<button type="button" data-v="${v}">${t}</button>`).join("");
+  el.onclick = e => { const b=e.target.closest("button"); if(!b||b.disabled) return; for(const k in st.cr) st.cr[k]=b.dataset.v; render(); }; });
 $("segGv").onclick = e => { const b=e.target.closest("button"); if(!b) return; st.gv=b.dataset.v; savePref(); render(); };
 $("segPos").onclick = e => { const b=e.target.closest("button"); if(!b) return; st.pos=b.dataset.v; savePref(); render(); };
 $("segRh").onclick =e => { const b=e.target.closest("button"); if(!b) return; st.rh=b.dataset.v; render(); };
@@ -349,9 +374,98 @@ function calcH0(rows){
   });
   return out;
 }
-const GROUPS = [["Technical",["T"],1],["Traffic",["A","E","M"],1],["Dust & Social",["CP","D","SI"],1],["Idle",["R","S"],0],["National Holiday",["NH"],0],["Force Majeure",["FM"],0],["Regulation",["RG"],0],["Mitra Company",["MC"],0]];
-const MMJ_CODES = new Set(["T","A","E","M","CP","D","SI"]);
+const GROUPS = [["Technical",["T"],1],["Traffic",["A","E","M"],1],["Dust",["D"],1],["Weigh Bridge",["WB"],1],["Idle",["R","S"],0],["Social Issue",["SI"],0],["Community Party",["CP"],0],["National Holiday",["NH"],0],["Force Majeure",["FM"],0],["Regulation",["RG"],0],["Mitra Company",["MC"],0]];
+const NM = GROUPS.filter(g=>g[2]).length;
+const MMJ_CODES = new Set(GROUPS.filter(g=>g[2]).flatMap(g=>g[1]));
 const AREA_SOP = new Set(["Area Mekar Sari","Area Ketapat","Area Bintialo","Area Dayung","Area ISP","Area Selaro","Area Pakerin","Area B 80","Area Mendis"]);
+
+
+/* ---------- kinerja jalan hauling (PA / MA / UA / EU) ----------
+   SH = 24 jam x hari operasional · R = Technical + WB · D = Traffic (A,E,M) + Dust · I = Loss Time Bukan MMJ
+   PA jam = SH - LT MMJ (R+D) · PA% = PA jam/SH · UA jam = PA jam - LT Bukan MMJ (I) · UA% = UA jam/PA jam · EU jam = SH - semua LT · EU% = EU jam/SH
+   Tidak ikut filter tanggal / route / tipe: selalu Januari s/d data terakhir pada tahun yang dipilih. */
+const KJ_R = ["T","WB"], KJ_D = ["A","E","M","D"], KJ_ISP_FROM = "2026-07";
+const KJ_IND = [["pa","PA","#7c5cff"],["ua","UA","#e0842a"],["eu","EU","#14b8a6"]];
+const KJ_TGT = {pa:0.85, ua:0.80, eu:0.70};
+const kjOk = (k,v) => v==null || KJ_TGT[k]==null ? "" : (v + 1e-9 >= KJ_TGT[k] ? "var(--good)" : "var(--bad)");
+const kjCls = c => KJ_R.includes(c) ? "R" : KJ_D.includes(c) ? "D" : "I";
+const fpc = v => v==null ? "–" : nf1.format(v*100)+"%";
+function kinerjaData(){
+  const yr = (st.sampai||LAST).slice(0,4);
+  const y0 = yr+"-01-01", y1 = (yr+"-12-31") < LAST ? yr+"-12-31" : LAST;
+  const start = FIRST > y0 ? FIRST : y0;
+  if(start > y1) return null;
+  const rows = DATA.stop.filter(s=>s.d>=start && s.d<=y1 && s.h>0);
+  const months = []; for(let m=start.slice(0,7); m<=y1.slice(0,7); m=addMonths(m,1)) months.push(m);
+  const RK = ["H0",...ROUTES], agg = {};
+  RK.forEach(r=>{ agg[r]={}; months.forEach(m=>agg[r][m]={R:0,D:0,I:0}); });
+  rows.forEach(s=>{ const a=agg[s.r]&&agg[s.r][s.d.slice(0,7)]; if(a) a[kjCls(s.c)]+=s.h; });
+  /* H0 kinerja = rata-rata jam loss time route yang tersedia (Jan-Jun H1 & H2, mulai Juli H1, ISP & H2) */
+  months.forEach(m=>{ const rs=ROUTES.filter(r=>!(r==="ISP" && m<KJ_ISP_FROM)); ["R","D","I"].forEach(k=>agg.H0[m][k]=rs.reduce((a,r)=>a+agg[r][m][k],0)/rs.length); });
+  const days = (a,b) => Math.round((Date.parse(b+"T00:00:00Z")-Date.parse(a+"T00:00:00Z"))/864e5)+1;
+  const calc = (x, sh) => { const lt=Math.min(sh, x.R+x.D+x.I), wh=sh-lt;
+    return {sh, R:x.R, D:x.D, I:x.I, lt, wh, ma:(wh+x.R)>0?wh/(wh+x.R):null, pa:sh?Math.max(0,sh-x.R-x.D)/sh:null, paj:Math.max(0,sh-x.R-x.D), uaj:wh, ua:(sh-x.R-x.D)>0?wh/(sh-x.R-x.D):null, eu:sh?wh/sh:null, pam:sh?Math.max(0,sh-x.R-x.D)/sh:null}; };
+  const out = {yr, months, start, end:y1, data:{}};
+  RK.forEach(r=>{
+    const list = months.map(m=>{ if(r==="ISP" && m<KJ_ISP_FROM) return {m, na:true};
+      const [a,b]=monthRange(m), s0=a<start?start:a, e0=b>y1?y1:b, n=days(s0,e0);
+      return {m, days:n, ...calc(agg[r][m], n*24)}; });
+    const ok = list.filter(x=>!x.na), t = ok.reduce((t,x)=>({R:t.R+x.R, D:t.D+x.D, I:t.I+x.I, n:t.n+x.days}), {R:0,D:0,I:0,n:0});
+    out.data[r] = {rows:list, ytd: ok.length ? {days:t.n, from:ok[0].m, ...calc(t, t.n*24)} : null};
+  });
+  return out;
+}
+function kjChart(el, labels, series){
+  const W = Math.max(el.clientWidth, 260), H = 250, m = {l:40, r:46, t:16, b:26}, iw = W-m.l-m.r, ih = H-m.t-m.b;
+  const vals = series.flatMap(s=>s.vals).filter(v=>v!=null);
+  const lo = vals.length ? Math.max(0, Math.floor((Math.min(...vals, ...series.map(s=>s.tgt).filter(v=>v!=null))*100-5)/10)*10) : 0;
+  const y = v => m.t + ih - (v*100-lo)/(100-lo)*ih, band = iw/labels.length;
+  let g = "";
+  for(let k=lo; k<=100; k+=10){ const yy=y(k/100); g+=`<line x1="${m.l}" x2="${W-m.r}" y1="${yy}" y2="${yy}" stroke="${k===lo?"var(--axis)":"var(--grid)"}" ${k===lo?"":'stroke-dasharray="3 4"'}/><text x="${m.l-8}" y="${yy+4}" text-anchor="end">${k}</text>`; }
+  g += `<text x="${m.l-32}" y="10" style="font-size:10px">%</text>`;
+  labels.forEach((l,i)=>{ g+=`<text x="${m.l+band*i+band/2}" y="${H-7}" text-anchor="middle">${l}</text>`; });
+  const ends = [];
+  series.forEach(s=>{ if(s.tgt==null || s.tgt*100<lo) return; const yy=y(s.tgt).toFixed(1); g+=`<line x1="${m.l}" x2="${W-m.r}" y1="${yy}" y2="${yy}" stroke="${s.c}" stroke-width="1" stroke-dasharray="2 3" opacity=".7"/><text x="${W-m.r+4}" y="${(+yy+3).toFixed(1)}" style="font-size:9.5px;fill:${s.c}">${s.tgt*100}</text>`; });
+  series.forEach(s=>{ let d="", pen=false;
+    s.vals.forEach((v,i)=>{ if(v==null){ pen=false; return; } const x=m.l+band*i+band/2; d+=(pen?"L":"M")+x.toFixed(1)+","+y(v).toFixed(1)+" "; pen=true; });
+    g += `<path d="${d}" fill="none" stroke="${s.c}" stroke-width="2.2" ${s.dash?'stroke-dasharray="5 4"':""} stroke-linejoin="round"/>`;
+    s.vals.forEach((v,i)=>{ if(v!=null) g+=`<circle cx="${(m.l+band*i+band/2).toFixed(1)}" cy="${y(v).toFixed(1)}" r="3" fill="var(--surface-solid)" stroke="${s.c}" stroke-width="2"/>`; });
+    const li = s.vals.map((v,i)=>v!=null?i:-1).filter(i=>i>=0).pop();
+    if(li!=null) ends.push({x:m.l+band*li+band/2+7, y:y(s.vals[li])+4, c:s.c, t:nf1.format(s.vals[li]*100)}); });
+  ends.sort((a,b)=>a.y-b.y).forEach((e,i,arr)=>{ if(i && e.y-arr[i-1].y<11) e.y=arr[i-1].y+11; g += `<text x="${e.x.toFixed(1)}" y="${e.y.toFixed(1)}" style="font-size:10.5px;font-weight:700;fill:${e.c}">${e.t}</text>`; });
+  labels.forEach((l,i)=>{ g+=`<rect class="hit" data-i="${i}" x="${m.l+band*i}" y="${m.t}" width="${band}" height="${ih}" fill="transparent"/>`; });
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;height:auto" role="img" aria-label="Grafik kinerja jalan per bulan">${g}</svg>`;
+  el.querySelectorAll(".hit").forEach(r=>{ const i=+r.dataset.i;
+    r.onmousemove=e=>tip(e, labels[i], series.map(s=>({n:s.n, c:s.c, v:fpc(s.vals[i])})));
+    r.onmouseleave=hide; });
+}
+function renderKinerja(){
+  const K = kinerjaData(); if(!K){ $("kjCards").innerHTML='<div class="empty">Tidak ada data</div>'; return null; }
+  const RK = ["H0",...ROUTES], RC = {H0:"var(--k1)", ...RCOL};
+  if(!RK.includes(st.kj)) st.kj = "H0";
+  const per = `${BLNF[+K.start.slice(5,7)-1]} – ${dLabel(K.end)}`;
+  $("pKj").textContent = `Per bulan & kumulatif ${K.yr} (${per}) · tidak terpengaruh filter tanggal, route & tipe`;
+  $("segKj").innerHTML = RK.map(r=>`<button type="button" data-v="${r}" aria-pressed="${st.kj===r}">${r}</button>`).join("");
+  $("kjCards").innerHTML = RK.map(r=>{ const y=K.data[r].ytd;
+    return `<button type="button" class="kjc${st.kj===r?" sel":""}" data-kj="${r}" aria-pressed="${st.kj===r}"><div class="kh"><i style="background:${RC[r]}"></i>${r==="H0"?"H0 (rata-rata route)":"Route "+r}</div>`
+      + `<div class="ks">${y?`Kumulatif ${y.from!==K.months[0]?"mulai "+mLabel(y.from)+" · ":""}${y.days} hari`:"Belum ada data"}</div>`
+      + `<div class="kv">${KJ_IND.map(([k,n])=>`<div>${n} <small style="color:var(--muted)">≥ ${KJ_TGT[k]*100}%</small><b style="color:${y?kjOk(k,y[k]):""}">${y?fpc(y[k]):"–"}${y&&KJ_TGT[k]!=null?(y[k]+1e-9>=KJ_TGT[k]?" ✓":" ✕"):""}</b></div>`).join("")}</div></button>`; }).join("");
+  const D = K.data[st.kj];
+  $("lgKj").innerHTML = KJ_IND.map(([k,n,c])=>`<span><i style="background:${c}"></i>${n} (target ≥ ${KJ_TGT[k]*100}%)</span>`).join("") + `<span style="color:var(--muted)">garis putus-putus = target · <b style="color:var(--good)">hijau</b> tercapai · <b style="color:var(--bad)">merah</b> belum</span>`;
+  kjChart($("cKj"), K.months.map(mLabel), KJ_IND.map(([k,n,c])=>({n, c, tgt:KJ_TGT[k], vals:D.rows.map(x=>x.na?null:x[k])})));
+  const th = ["Bulan","Hari","SH (jam)","LT MMJ","LT Bukan MMJ","PA jam","UA jam = EU jam","PA","UA","EU"];
+  const tr = (lab,x,cls) => x.na ? `<tr><td>${lab}</td><td class="na" colspan="${th.length-1}">Tidak ada data (route ISP mulai Juli 2026)</td></tr>`
+    : `<tr class="${cls||""}"><td>${lab}</td><td class="v">${x.days}</td><td class="v">${fh(x.sh)}</td><td class="v" title="R ${fh(x.R)} + D ${fh(x.D)}">${fh(x.R+x.D)}</td><td class="v">${fh(x.I)}</td><td class="v">${fh(x.paj)}</td><td class="v">${fh(x.uaj)}</td>${KJ_IND.map(([k])=>`<td class="v" style="color:${kjOk(k,x[k])};font-weight:600">${fpc(x[k])}</td>`).join("")}</tr>`;
+  const tbl = `<table><thead><tr>${th.map((h,i)=>`<th class="${i?"r":""}">${h}</th>`).join("")}</tr></thead><tbody>`
+    + D.rows.map(x=>tr(BLNF[+x.m.slice(5)-1]+" "+x.m.slice(0,4), x)).join("")
+    + (D.ytd ? tr(`Kumulatif ${K.yr}`, D.ytd, "tot") : "") + `</tbody></table>`;
+  $("tKj").innerHTML = tbl;
+  $("nKj").innerHTML = `SH = 24 jam × hari kalender (bulan berjalan sampai tanggal data terakhir) · LT MMJ = R (Technical + Weigh Bridge) + D (Traffic + Dust) · LT Bukan MMJ = Idle, Social Issue, Community Party, NH, FM, RG, Mitra Company.<br>`
+    + `PA jam = SH − LT MMJ · PA% = PA jam ÷ SH · UA jam = PA jam − LT Bukan MMJ · UA% = UA jam ÷ PA jam · EU jam = SH − semua LT · EU% = EU jam ÷ SH (= PA% × UA%). H0 = rata-rata jam loss time route yang tersedia (Jan–Jun H1 &amp; H2, mulai Juli H1, ISP &amp; H2). Kumulatif = jumlah jam seluruh bulan lalu dihitung ulang (bukan rata-rata persen bulanan).`;
+  return K;
+}
+$("segKj").onclick = e => { const b=e.target.closest("button"); if(!b) return; st.kj=b.dataset.v; render(); };
+$("kjCards").onclick = e => { const b=e.target.closest("[data-kj]"); if(!b) return; st.kj=b.dataset.kj; render(); };
 
 /* ---------- render ---------- */
 /* ---------- running text info penting ---------- */
@@ -415,6 +529,13 @@ function render(){
   const typeTxt = st.type ? ` · tipe ${TN[st.type]}` : "";
   const byRoute = Object.fromEntries(ROUTES.map(r=>[r, S.filter(s=>s.r===r)]));
   const rTot = Object.fromEntries(ROUTES.map(r=>[r, sum(byRoute[r],s=>s.h)]));
+  /* route per kartu: H0 = gabungan tanpa jam ganda, H1/ISP/H2 = data route itu saja */
+  const crOk = k => k==="H0" || st.routes.has(k);
+  if(!crOk(st.cr.c1)) for(const k in st.cr) st.cr[k]="H0";            // route dimatikan di filter atas -> kembali ke H0
+  document.querySelectorAll(".segr").forEach(el=>{ const k=el.dataset.cr;
+    el.querySelectorAll("button").forEach(b=>{ const v=b.dataset.v; b.disabled = !crOk(v); b.title = b.disabled?"Route tidak dipilih di filter":""; b.setAttribute("aria-pressed", v===st.cr[k]); }); });
+  const RDESC = r => (DATA.areas[r]||[]).filter(x=>AREA_SOP.has(x)).map(x=>x.replace("Area ","")).join(", ");
+  const rTypeTot = (arr) => { const o={}; arr.forEach(x=>{ o[x.c]=(o[x.c]||0)+x.h; }); return o; };
 
   /* header */
   $("periodTxt").textContent = `${dLabel(a).replace(a.slice(0,4)===b.slice(0,4)?/ \d{4}$/:/$^/,"")} – ${dLabel(b)}`;
@@ -460,22 +581,28 @@ function render(){
     const col = isH0 ? "var(--k1)" : RCOL[r];
     mEl.hidden = false; mEl.style.gridTemplateColumns = "repeat(3,minmax(0,1fr))";
     mEl.innerHTML = `<div class="mhd"><i style="background:${col}"></i>Rincian ${isH0?"H0 (total tanpa overlap)":"route "+r}<button type="button" id="kpClose">Tutup ✕</button></div>` + [
-      ['<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4Z"/></svg>',"Loss Time MMJ (T + Traffic + Dust & Social)", fh(mmj), `jam · ${pct(mmj,tot)}% ${st.kp}`],
-      ['<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 15a5 5 0 1 1 .9-9.9A6 6 0 0 1 19 9a4 4 0 0 1-1 7.9"/><path d="M12 13v8"/></svg>',"Loss Time Bukan MMJ (Idle + NH + FM + RG + MC)", fh(tot-mmj), `jam · ${pct(tot-mmj,tot)}% ${st.kp} · Idle ${fh(idle)} j`],
+      ['<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4Z"/></svg>',"Loss Time MMJ (T + Traffic + Dust + WB)", fh(mmj), `jam · ${pct(mmj,tot)}% ${st.kp}`],
+      ['<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 15a5 5 0 1 1 .9-9.9A6 6 0 0 1 19 9a4 4 0 0 1-1 7.9"/><path d="M12 13v8"/></svg>',"Loss Time Bukan MMJ (Idle + SI + CP + NH + FM + RG + MC)", fh(tot-mmj), `jam · ${pct(tot-mmj,tot)}% ${st.kp} · Idle ${fh(idle)} j`],
       [ICON.drop,`Curah hujan rata-rata per hari hujan (${ra.pos} pos)`, fmm(ra.mm), `mm/hari · ${fh(ra.h)} jam hujan/hari · ${ra.days} hari hujan`],
     ].map(m=>`<div class="mini"><div class="dot" style="color:${col}">${m[0]}</div><div style="min-width:0"><div class="l">${m[1]}</div><div class="v">${m[2]}<small>${m[3]}</small></div></div></div>`).join("");
     $("kpClose").onclick = ()=>{ st.kp=""; render(); };
   }
 
   /* C1: H0 per tipe */
-  const typesH0 = TYPES.filter(t=>tf(t.c) && (h0Type[t.c]||0)>0);
-  const series = typesH0.map(t=>({n:t.n, c:TCOL[t.c], vals:h0B([t.c])}));
+  const k1 = st.cr.c1, isH0c1 = k1==="H0";
+  const c1Arr = isH0c1 ? null : byRoute[k1];
+  const c1Type = isH0c1 ? h0Type : rTypeTot(c1Arr);
+  const typesH0 = TYPES.filter(t=>tf(t.c) && (c1Type[t.c]||0)>0);
+  const series = typesH0.map(t=>({n:t.n, c:TCOL[t.c], vals: isH0c1 ? h0B([t.c]) : (m=>B.keys.map(x=>m.get(x)||0))(groupBy(c1Arr.filter(s=>s.c===t.c), s=>B.key(s.d), s=>s.h))}));
   $("lg1").innerHTML = series.map(s=>`<span><i style="background:${s.c}"></i>${s.n}</span>`).join("");
-  $("t1").textContent = `Total loss time (H0) ${B.daily?"harian":"bulanan"}`;
+  $("t1").textContent = `Total loss time (${k1}) ${B.daily?"harian":"bulanan"}`;
+  $("p1").textContent = isH0c1 ? "Gabungan H1 + ISP + H2, jam yang terjadi bersamaan di beberapa route dihitung sekali" : `Loss time route ${k1} saja${RDESC(k1)?" · "+RDESC(k1):""} · warna = tipe`;
   const t1 = cols($("c1"), {cats:B.keys, labels:B.keys.map(B.label), series, tipTitle:i=>B.title(B.keys[i]), onClick:B.daily?null:(m=>setMonth(m))});
   if(showTable.c1) $("c1").innerHTML = tableHTML(t1);
   const peak = [...H0m.entries()].map(([d,o])=>[d,h0DayVal(o)]).sort((x,y)=>y[1]-x[1])[0];
-  $("big1").innerHTML = `<b>${fh(H0)} jam</b><span class="vs">${hm(H0)} · jumlah route ${fh(sumR)} − tumpang tindih ${fh(ovl)} = H0 · ${ltDays} hari ada stop hauling${peak&&peak[1]>0?` · tertinggi ${dLabel(peak[0])} (${fh(peak[1])} jam)`:""}${B.daily?"":" · klik batang untuk lihat harian"}</span>`;
+  if(!isH0c1){ const byD=groupBy(c1Arr.filter(x=>x.h>0), x=>x.d, x=>x.h), pk1=[...byD.entries()].sort((x,y)=>y[1]-x[1])[0];
+    $("big1").innerHTML = `<b>${fh(rTot[k1])} jam</b><span class="vs">${hm(rTot[k1])} · route ${k1} · ${c1Arr.filter(x=>x.h>0).length} kejadian · ${byD.size} hari ada stop hauling · ${pct(rTot[k1],H0)}% dari H0${pk1?` · tertinggi ${dLabel(pk1[0])} (${fh(pk1[1])} jam)`:""}${B.daily?"":" · klik batang untuk lihat harian"}</span>`; }
+  else $("big1").innerHTML = `<b>${fh(H0)} jam</b><span class="vs">${hm(H0)} · jumlah route ${fh(sumR)} − tumpang tindih ${fh(ovl)} = H0 · ${ltDays} hari ada stop hauling${peak&&peak[1]>0?` · tertinggi ${dLabel(peak[0])} (${fh(peak[1])} jam)`:""}${B.daily?"":" · klik batang untuk lihat harian"}</span>`;
 
   /* grafik per route (satu grafik per route, skala sama) */
   const rSeries = {}; let rMax = 0;
@@ -540,21 +667,25 @@ function render(){
   }
 
   /* donut H0 + route vs H0 */
-  donut($("cMix"), TYPES.map(t=>({n:t.n, c:TCOL[t.c], code:t.c, v:tf(t.c)?(h0Type[t.c]||0):0})), "jam H0", {can:p=>p.code==="MC", go:openMc});
+  { const km = st.cr.mix, mixType = km==="H0" ? h0Type : rTypeTot(byRoute[km]);
+    $("tMix").textContent = `Komposisi tipe (${km})`;
+    $("pMix").textContent = `Porsi jam ${km==="H0"?"H0":"route "+km} · klik Mitra Company / WB untuk detail`;
+    donut($("cMix"), TYPES.map(t=>({n:t.n, c:TCOL[t.c], code:t.c, v:tf(t.c)?(mixType[t.c]||0):0})), "jam "+km, {can:p=>!!DN[p.code], go:p=>openDet(p&&p.code||"MC")}); }
   $("cSplit").innerHTML = !sumR ? '<div class="empty">Tidak ada data</div>' :
     `<div class="split">${ROUTES.filter(r=>rTot[r]>0).map(r=>`<div style="flex:${rTot[r]};background:${RCOL[r]}" title="${r}"></div>`).join("")}</div>
      <div class="dl-list" style="max-height:none">${ROUTES.map(r=>`<div><span><i style="background:${RCOL[r]}"></i>${r}<small style="color:var(--muted);font-size:11px">${DATA.areas[r].filter(x=>AREA_SOP.has(x)).map(s=>s.replace("Area ","")).join(", ")}</small></span><b>${fh(rTot[r])} j<small>${pct(rTot[r],sumR)}%</small></b></div>`).join("")}</div>
      <div class="h0box"><div><span>Jumlah 3 route</span><b>${fh(sumR)}</b></div><div><span>Tumpang tindih</span><b style="color:var(--bad)">− ${fh(ovl)}</b></div><div style="background:var(--accent-soft)"><span>H0</span><b style="color:var(--accent)">${fh(H0)}</b></div></div>`;
 
   /* kelompok SOP (Tabel 6) — abaikan filter tipe */
-  const grpRow = (getC) => { const g=GROUPS.map(([n,cs])=>sum(cs,c=>getC(c))); const mmj=g[0]+g[1]+g[2], non=g.slice(3).reduce((x,y)=>x+y,0); return {g, mmj, non, tot:mmj+non}; };
+  const grpRow = (getC) => { const g=GROUPS.map(([n,cs])=>sum(cs,c=>getC(c))); const mmj=g.slice(0,NM).reduce((x,y)=>x+y,0), non=g.slice(NM).reduce((x,y)=>x+y,0); return {g, mmj, non, tot:mmj+non}; };
   const cellR = (r,c) => sum(SA.filter(s=>s.r===r && s.c===c), s=>s.h);
   const grpRows = [...routesSel.map(r=>({lab:r, c:RCOL[r], ...grpRow(c=>cellR(r,c))})), {lab:"H0", h0:true, ...grpRow(c=>h0Type[c]||0)}];
   const gv = v => v>0.004 ? fh(v) : '<span style="color:var(--muted)">–</span>';
-  $("cGrp").innerHTML = `<table><thead><tr><th>Route</th>${GROUPS.slice(0,3).map(g=>`<th class="r">${g[0]}</th>`).join("")}<th class="r" style="color:var(--accent)">Loss Time MMJ</th>${GROUPS.slice(3).map(g=>`<th class="r${g[0]==="Idle"?" sep":""}">${g[0]}</th>`).join("")}<th class="r">Bukan MMJ</th><th class="r sep">Total</th><th class="r">% MMJ</th></tr></thead><tbody>`
-    + grpRows.map(o=>`<tr class="${o.h0?"h0":""}"><td>${o.h0?'<b>H0</b> <small style="color:var(--muted)">tanpa overlap</small>':`<span class="tag"><i style="background:${o.c}"></i>${o.lab}</span>`}</td>${o.g.slice(0,3).map(v=>`<td class="v">${gv(v)}</td>`).join("")}<td class="v" style="font-weight:700;color:var(--accent)">${gv(o.mmj)}</td>${o.g.slice(3).map((v,i)=>`<td class="v${i===0?" sep":""}"${i===4&&v>0?' style="cursor:pointer;text-decoration:underline dotted" data-mc="1" title="Detail Mitra Company"':""}>${gv(v)}</td>`).join("")}<td class="v" style="font-weight:700">${gv(o.non)}</td><td class="v sep" style="font-weight:700">${gv(o.tot)}</td><td class="v">${o.tot?pct(o.mmj,o.tot)+"%":""}</td></tr>`).join("")
-    + `</tbody></table><div class="sopnote">Technical = T · Traffic = Accident + Evacuation + Mobilisation · Dust &amp; Social = Community Party + Dust + Social Issue · Idle = Rain + Slippery. Baris H0 = total setelah jam yang bersamaan antar route dihitung sekali.</div>`;
-  $("cGrp").querySelectorAll("[data-mc]").forEach(td=>td.onclick=openMc);
+  const dkAttr = (cs,v) => (cs.length===1 && DN[cs[0]] && v>0) ? ` style="cursor:pointer;text-decoration:underline dotted" data-dk="${cs[0]}" title="Detail ${DN[cs[0]]}"` : "";
+  $("cGrp").innerHTML = `<table><thead><tr><th>Route</th>${GROUPS.slice(0,NM).map(g=>`<th class="r">${g[0]}</th>`).join("")}<th class="r" style="color:var(--accent)">Loss Time MMJ</th>${GROUPS.slice(NM).map(g=>`<th class="r${g[0]==="Idle"?" sep":""}">${g[0]}</th>`).join("")}<th class="r">Bukan MMJ</th><th class="r sep">Total</th><th class="r">% MMJ</th></tr></thead><tbody>`
+    + grpRows.map(o=>`<tr class="${o.h0?"h0":""}"><td>${o.h0?'<b>H0</b> <small style="color:var(--muted)">tanpa overlap</small>':`<span class="tag"><i style="background:${o.c}"></i>${o.lab}</span>`}</td>${o.g.slice(0,NM).map((v,i)=>`<td class="v"${dkAttr(GROUPS[i][1],v)}>${gv(v)}</td>`).join("")}<td class="v" style="font-weight:700;color:var(--accent)">${gv(o.mmj)}</td>${o.g.slice(NM).map((v,i)=>`<td class="v${i===0?" sep":""}"${dkAttr(GROUPS[NM+i][1],v)}>${gv(v)}</td>`).join("")}<td class="v" style="font-weight:700">${gv(o.non)}</td><td class="v sep" style="font-weight:700">${gv(o.tot)}</td><td class="v">${o.tot?pct(o.mmj,o.tot)+"%":""}</td></tr>`).join("")
+    + `</tbody></table><div class="sopnote">Technical = T · Traffic = Accident + Evacuation + Mobilisation · Dust = D · Weigh Bridge = WB (khusus ISP Operational) · Idle = Rain + Slippery · Social Issue &amp; Community Party masuk Bukan MMJ. Baris H0 = total setelah jam yang bersamaan antar route dihitung sekali.</div>`;
+  $("cGrp").querySelectorAll("[data-dk]").forEach(td=>td.onclick=()=>openDet(td.dataset.dk));
 
   /* matrix route x tipe */
   const mxVals = TYPES.map(t=>routesSel.map(r=>cellR(r,t.c)));
@@ -563,9 +694,9 @@ function render(){
   const colTot = routesSel.map((r,j)=>sum(mxVals,row=>row[j])), grand = sum(colTot,x=>x);
   const h0All = sum(TYPES, t=>h0Type[t.c]||0);
   $("cMx").innerHTML = `<table class="mx"><thead><tr><th>Kode</th><th>Tipe</th>${routesSel.map(r=>`<th class="rt"><span class="tag"><i style="background:${RCOL[r]}"></i>${r}</span></th>`).join("")}<th class="r">Jumlah route</th><th class="r" style="color:var(--accent)">H0</th><th class="r">Porsi H0</th></tr></thead><tbody>`
-    + TYPES.map((t,i)=>{ const rt=sum(mxVals[i],x=>x), h=h0Type[t.c]||0; return `<tr data-c="${t.c}" class="${st.type===t.c?"sel":""}" style="cursor:pointer" title="${t.c==="MC"?"Klik untuk detail Mitra Company":"Klik untuk filter tipe"}"><td><span class="badge" style="background:${TCOL[t.c]}">${t.c}</span></td><td>${t.n}${t.c==="MC"?' <small style="color:var(--accent);font-weight:600">detail ›</small>':""}</td>${mxVals[i].map(v=>`<td class="v${v?"":" z"}" style="${shade(v)}">${v?fh(v):"–"}</td>`).join("")}<td class="r">${rt?fh(rt):"–"}</td><td class="r" style="font-weight:700">${h>0.004?fh(h):"–"}</td><td class="r">${h>0.004?pct(h,h0All)+"%":""}</td></tr>`; }).join("")
+    + TYPES.map((t,i)=>{ const rt=sum(mxVals[i],x=>x), h=h0Type[t.c]||0; return `<tr data-c="${t.c}" class="${st.type===t.c?"sel":""}" style="cursor:pointer" title="${DN[t.c]?"Klik untuk detail "+DN[t.c]:"Klik untuk filter tipe"}"><td><span class="badge" style="background:${TCOL[t.c]}">${t.c}</span></td><td>${t.n}${DN[t.c]?' <small style="color:var(--accent);font-weight:600">detail ›</small>':""}</td>${mxVals[i].map(v=>`<td class="v${v?"":" z"}" style="${shade(v)}">${v?fh(v):"–"}</td>`).join("")}<td class="r">${rt?fh(rt):"–"}</td><td class="r" style="font-weight:700">${h>0.004?fh(h):"–"}</td><td class="r">${h>0.004?pct(h,h0All)+"%":""}</td></tr>`; }).join("")
     + `<tr class="tot"><td></td><td>Total</td>${colTot.map(v=>`<td class="r">${fh(v)}</td>`).join("")}<td class="r">${fh(grand)}</td><td class="r">${fh(h0All)}</td><td class="r">100%</td></tr></tbody></table>`;
-  $("cMx").querySelectorAll("tr[data-c]").forEach(tr=>tr.onclick=()=>{ if(tr.dataset.c==="MC"){ openMc(); return; } st.type = st.type===tr.dataset.c ? "" : tr.dataset.c; render(); });
+  $("cMx").querySelectorAll("tr[data-c]").forEach(tr=>tr.onclick=()=>{ if(DN[tr.dataset.c]){ openDet(tr.dataset.c); return; } st.type = st.type===tr.dataset.c ? "" : tr.dataset.c; render(); });
 
   /* area */
   const typesUsed = TYPES.filter(t=>S.some(s=>s.c===t.c && s.h>0));
@@ -582,21 +713,25 @@ function render(){
 
   /* Mitra Company — tampil hanya saat diklik */
   $("mitraSec").hidden = !st.mc;
-  $("mcSub").hidden = !st.mc; $("navMc").setAttribute("aria-expanded", st.mc);
-  $("mcSub").querySelectorAll("[data-mcv]").forEach(a=>a.classList.toggle("on", st.mc && a.dataset.mcv===st.mcv));
+  const DK = st.dk, DNm = DN[DK];
+  $("mcSub").hidden = !(st.mc && DK==="MC"); $("navMc").setAttribute("aria-expanded", st.mc && DK==="MC");
+  $("wbSub").hidden = !(st.mc && DK==="WB"); $("navWb").setAttribute("aria-expanded", st.mc && DK==="WB");
+  [$("mcSub"),$("wbSub")].forEach(sb=>sb.querySelectorAll("[data-mcv]").forEach(a=>a.classList.toggle("on", st.mc && a.dataset.mcv===st.mcv)));
+  $("hMc").textContent = "Detail " + DNm + (DK==="WB" ? " (khusus ISP Operational)" : "");
+  $("segMc").setAttribute("aria-label", "Sub menu " + DNm);
   $("segMc").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.v===st.mcv));
   document.querySelectorAll("[data-mcp]").forEach(el=>el.hidden = el.dataset.mcp!==st.mcv);
-  const MCr = SA.filter(s=>s.c==="MC");
+  const MCr = SA.filter(s=>s.c===DK);
   const t2s = [...groupBy(MCr, s=>s.t2, s=>s.h).entries()].sort((x,y)=>y[1]-x[1]).map(x=>x[0]);
   const t2c = Object.fromEntries(t2s.map((t,i)=>[t, MCPAL[i%MCPAL.length]]));
   const mcTot = sum(MCr,s=>s.h);
   let descRows = [];
   if(st.mc){
-    $("pMc").textContent = `${fh(mcTot)} jam (jumlah route) · H0 ${fh(h0Type.MC||0)} jam · ${MCr.filter(s=>s.h>0).length} kejadian · warna = route`;
+    $("pMc").textContent = `${fh(mcTot)} jam (jumlah route) · H0 ${fh(h0Type[DK]||0)} jam · ${MCr.filter(s=>s.h>0).length} kejadian · warna = route`;
     $("lgMc").innerHTML = routesSel.map(r=>`<span><i style="background:${RCOL[r]}"></i>${r}</span>`).join("");
     hbars($("cMc"), t2s.map(t=>{ const x=MCr.filter(s=>s.t2===t); return {label:t, total:sum(x,s=>s.h), segs:routesSel.map(r=>({n:r,c:RCOL[r],v:sum(x.filter(s=>s.r===r),s=>s.h)})), more:[{n:"Kejadian",v:x.filter(s=>s.h>0).length}]}; }),
       {extra:it=>`${it.more[0].v}×`});
-    $("tMc2").textContent = B.daily ? "Mitra Company harian" : "Mitra Company bulanan";
+    $("tMc2").textContent = DNm + (B.daily ? " harian" : " bulanan");
     const mcSeries = t2s.map(t=>{ const m=groupBy(MCr.filter(s=>s.t2===t), s=>B.key(s.d), s=>s.h); return {n:t, c:t2c[t], vals:B.keys.map(k=>m.get(k)||0)}; });
     $("lgMc2").innerHTML = mcSeries.map(s=>`<span><i style="background:${s.c}"></i>${esc(s.n)}</span>`).join("");
     const tM2 = cols($("cMc2"), {cats:B.keys, labels:B.keys.map(B.label), series:mcSeries, h:240, tipTitle:i=>B.title(B.keys[i])});
@@ -604,9 +739,14 @@ function render(){
   }
   const byDesc = new Map(); MCr.forEach(s=>{ const k=s.r+"|"+s.t2+"|"+s.desc; const o=byDesc.get(k)||{r:s.r,t2:s.t2,desc:s.desc,h:0,n:0,days:new Set(),area:s.area}; o.h+=s.h; if(s.h>0) o.n++; o.days.add(s.d); byDesc.set(k,o); });
   descRows = [...byDesc.values()].sort((x,y)=>y.h-x.h);
-  if(st.mc) $("tMc").innerHTML = `<table><thead><tr><th>Route</th><th>Desc Type2</th><th>Keterangan</th><th>Area</th><th class="r">Hari</th><th class="r">Kejadian</th><th class="r">Jam</th><th class="r">Porsi MC</th></tr></thead><tbody>`
+  if(st.mc) $("tMc").innerHTML = `<table><thead><tr><th>Route</th><th>Desc Type2</th><th>Keterangan</th><th>Area</th><th class="r">Hari</th><th class="r">Kejadian</th><th class="r">Jam</th><th class="r">Porsi ${DK}</th></tr></thead><tbody>`
     + (descRows.length ? descRows.slice(0,300).map(o=>`<tr><td><span class="tag"><i style="background:${RCOL[o.r]}"></i>${o.r}</span></td><td><span class="tag"><i style="background:${t2c[o.t2]}"></i>${esc(o.t2)}</span></td><td class="wrap">${esc(o.desc)}</td><td>${esc(o.area)}</td><td class="r">${o.days.size}</td><td class="r">${o.n}</td><td class="r">${fh(o.h)}</td><td class="r">${pct(o.h,mcTot)}%</td></tr>`).join("")
-      : `<tr><td colspan="8" class="empty">Tidak ada loss time Mitra Company</td></tr>`) + `</tbody></table>`;
+      : `<tr><td colspan="8" class="empty">Tidak ada loss time ${DNm} pada periode/filter ini</td></tr>`) + `</tbody></table>`;
+  if(st.mc){ const defs = SUBDEF[DK]||{}; const hT = groupBy(MCr, s=>s.t2, s=>s.h);
+    const names = [...Object.keys(defs), ...t2s.filter(t=>!(t in defs))];
+    $("pDef").textContent = DK==="WB" ? "Weigh Bridge Operational = Loss Time MMJ, hanya dicatat pada ISP Operational · penjelasan tiap sub type" : "Mitra Company = Bukan Loss Time MMJ · penjelasan tiap sub type";
+    $("tDef").innerHTML = `<table><thead><tr><th>Sub type (Desc Type2)</th><th>Penjelasan</th><th class="r">Jam</th><th class="r">Kejadian</th></tr></thead><tbody>`
+      + names.map(t=>{ const x=MCr.filter(s=>s.t2===t); return `<tr><td><span class="tag"><i style="background:${t2c[t]||"var(--muted)"}"></i>${esc(t)}</span></td><td class="wrap">${esc(defs[t]||"Belum ada penjelasan di SOP")}</td><td class="r">${hT.get(t)?fh(hT.get(t)):"–"}</td><td class="r">${x.filter(s=>s.h>0).length||"–"}</td></tr>`; }).join("") + `</tbody></table>`; }
 
   /* heatmap curah hujan */
   const isMm = st.hm==="mm";
@@ -704,37 +844,49 @@ function render(){
     document.querySelectorAll(`.dtb[data-dt="${k}"]`).forEach(b=>{ b.classList.toggle("on",open); b.setAttribute("aria-expanded",open); });
     el.hidden = !open; if(!open){ el.innerHTML=""; return; }
     let rows;
-    if(k==="H0") rows = TYPES.filter(t=>tf(t.c) && (h0Type[t.c]||0)>0.004).map(t=>({c:t.c, h:h0Type[t.c], n:S.filter(s=>s.c===t.c && s.h>0).length}));
+    if(k==="H0" && st.cr.c1==="H0") rows = TYPES.filter(t=>tf(t.c) && (h0Type[t.c]||0)>0.004).map(t=>({c:t.c, h:h0Type[t.c], n:S.filter(s=>s.c===t.c && s.h>0).length}));
+    else if(k==="H0"){ const kr=st.cr.c1; rows = TYPES.map(t=>{ const x=byRoute[kr].filter(s=>s.c===t.c && s.h>0); return {c:t.c, h:sum(x,s=>s.h), n:x.length}; }).filter(x=>x.h>0.004); }
     else rows = TYPES.map(t=>{ const x=byRoute[k].filter(s=>s.c===t.c && s.h>0); return {c:t.c, h:sum(x,s=>s.h), n:x.length}; }).filter(x=>x.h>0.004);
     rows.sort((a,b)=>b.h-a.h);
-    el.innerHTML = dtHTML(rows, sum(rows,x=>x.h), k);
+    el.innerHTML = dtHTML(rows, sum(rows,x=>x.h), k==="H0" ? st.cr.c1 : k);
   });
-  EXP = {S, SA, R, B, H0, sumR, ovl, h0Type, grpRows, lMMJ, lIdle, lMC, evN, ltDays, routesSel, dayRows, descRows, MCr, t2s, mmTot, hTot, nPos, rainDays, RA, ...X};
+  const KJ = renderKinerja();
+  EXP = {KJ, S, SA, R, B, H0, sumR, ovl, h0Type, grpRows, lMMJ, lIdle, lMC, evN, ltDays, routesSel, dayRows, descRows, MCr, t2s, mmTot, hTot, nPos, rainDays, RA, ...X};
   renderEvents();
 }
 
 /* ---------- saran SOP: MMJ vs bukan MMJ, Tabel 5, kontrol Slippery, kelengkapan data ---------- */
-const GCOL = {"Technical":"#f2b632","Traffic":"#e0842a","Dust & Social":"#a47148","Idle":"#2a78d6","National Holiday":"#94a3b8","Force Majeure":"#64748b","Regulation":"#7fb13a","Mitra Company":"#5b4bd6"};
+const GCOL = {"Technical":"#f2b632","Traffic":"#e0842a","Dust":"#a47148","Community Party":"#e2559b","Weigh Bridge":"#0891b2","Social Issue":"#14b8a6","Idle":"#2a78d6","National Holiday":"#94a3b8","Force Majeure":"#64748b","Regulation":"#7fb13a","Mitra Company":"#5b4bd6"};
 const C_MMJ = "#e0842a", C_NON = "#5b7cf5";
 function renderExtra({B, SA, R, H0m, h0Type, routesSel, H0, lMMJ, grpRows}){
   const out = {};
   /* 1+4. tren kelompok (H0, abaikan filter tipe) */
-  const gB = codes => { const m=new Map(); H0m.forEach((o,d)=>{ const k=B.key(d); m.set(k,(m.get(k)||0)+sum(codes,c=>o.c[c]||0)); }); return B.keys.map(k=>m.get(k)||0); };
+  const kg = st.cr.gt, isH0g = kg==="H0", gArr = isH0g ? null : SA.filter(s=>s.r===kg && s.h>0);
+  const gB = codes => { const m=new Map();
+    if(isH0g) H0m.forEach((o,d)=>{ const k=B.key(d); m.set(k,(m.get(k)||0)+sum(codes,c=>o.c[c]||0)); });
+    else { const cs=new Set(codes); gArr.forEach(s=>{ if(!cs.has(s.c)) return; const k=B.key(s.d); m.set(k,(m.get(k)||0)+s.h); }); }
+    return B.keys.map(k=>m.get(k)||0); };
+  const gType = isH0g ? h0Type : (()=>{ const o={}; gArr.forEach(s=>{ o[s.c]=(o[s.c]||0)+s.h; }); return o; })();
   const mmjCodes=[...MMJ_CODES], nonCodes=TYPES.map(t=>t.c).filter(c=>!MMJ_CODES.has(c));
   const series = st.gv==="mmj"
     ? [{n:"Loss Time MMJ", c:C_MMJ, vals:gB(mmjCodes)}, {n:"Bukan MMJ", c:C_NON, vals:gB(nonCodes)}]
     : GROUPS.map(([n,cs])=>({n, c:GCOL[n], vals:gB(cs)})).filter(s=>s.vals.some(v=>v>0));
-  $("tGt").textContent = `Tren ${st.gv==="mmj"?"Loss Time MMJ vs Bukan MMJ":"kelompok loss time"} (H0) ${B.daily?"harian":"bulanan"}`;
+  $("tGt").textContent = `Tren ${st.gv==="mmj"?"Loss Time MMJ vs Bukan MMJ":"kelompok loss time"} (${kg}) ${B.daily?"harian":"bulanan"}`;
+  $("pGt").textContent = `${isH0g?"Gabungan 3 route tanpa jam ganda":"Route "+kg+" saja"} · warna hangat = disebabkan MMJ · biru/abu/ungu = bukan MMJ`;
   $("lgGt").innerHTML = series.map(s=>`<span><i style="background:${s.c}"></i>${s.n}</span>`).join("");
-  const h0All = sum(TYPES,t=>h0Type[t.c]||0), mmjAll = sum(mmjCodes,c=>h0Type[c]||0);
+  const h0All = sum(TYPES,t=>gType[t.c]||0), mmjAll = sum(mmjCodes,c=>gType[c]||0);
   $("bGt").innerHTML = `<b style="color:${C_MMJ}">${fh(mmjAll)} j</b><span style="font-size:13px;font-weight:600;color:var(--ink-2)">MMJ (${pct(mmjAll,h0All)}%) · bukan MMJ ${fh(h0All-mmjAll)} j (${pct(h0All-mmjAll,h0All)}%)</span>`;
   const tG = cols($("cGt"), {cats:B.keys, labels:B.keys.map(B.label), series, h:250, tipTitle:i=>B.title(B.keys[i]), onClick:B.daily?null:(m=>setMonth(m))});
   if(showTable.cGt) $("cGt").innerHTML = tableHTML(tG);
   out.gt = tG;
-  $("cMmj").innerHTML = grpRows.map(o=>{ const t=o.tot||0; return `<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px"><span class="tag">${o.h0?"<b>H0</b>":`<i style="background:${o.c};border-radius:50%"></i><b>${o.lab}</b>`}</span><span style="color:var(--ink-2)">${fh(t)} j</span></div>
+  /* H0 = semua route + baris H0 (dulu "Semua"); H1/ISP/H2 = route itu saja */
+  const km = st.cr.mmj, mRows = km==="H0" ? grpRows : grpRows.filter(o=>o.lab===km);
+  $("tMmj").textContent = km==="H0" ? "MMJ vs Bukan MMJ (H0)" : `MMJ vs Bukan MMJ (${km})`;
+  $("pMmj").innerHTML = km==="H0" ? "Porsi per route &amp; H0 (abaikan filter tipe)" : `Porsi route ${km} · abaikan filter tipe`;
+  $("cMmj").innerHTML = mRows.map(o=>{ const t=o.tot||0; return `<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px"><span class="tag">${o.h0?"<b>H0</b>":`<i style="background:${o.c};border-radius:50%"></i><b>${o.lab}</b>`}</span><span style="color:var(--ink-2)">${fh(t)} j</span></div>
       <div class="split" style="margin:0 0 4px;height:14px">${o.mmj>0?`<div style="flex:${o.mmj};background:${C_MMJ}"></div>`:""}${o.non>0?`<div style="flex:${o.non};background:${C_NON}"></div>`:""}</div>
       <div style="display:flex;justify-content:space-between;font-size:11.5px"><span style="color:${C_MMJ};font-weight:600">MMJ ${pct(o.mmj,t)}% · ${fh(o.mmj)} j</span><span style="color:${C_NON};font-weight:600">Bukan MMJ ${pct(o.non,t)}% · ${fh(o.non)} j</span></div></div>`; }).join("")
-    + `<div class="sopnote">MMJ = Technical + Traffic + Dust &amp; Social. Bukan MMJ = Idle + National Holiday + Force Majeure + Regulation + Mitra Company.</div>`;
+    + `<div class="sopnote">MMJ = Technical + Traffic + Dust + Weigh Bridge. Bukan MMJ = Idle + Social Issue + Community Party + National Holiday + Force Majeure + Regulation + Mitra Company.</div>`;
 
   /* 3. Tabel 5 */
   const codes = TYPES.map(t=>t.c);
@@ -855,14 +1007,14 @@ function buildSheets(){
     ["Total Loss Time (H0) - tanpa jam ganda antar route", r2(E.H0), "jam"],
     ["Jumlah loss time 3 route (H1 + ISP + H2)", r2(E.sumR), "jam"], ["Jam tumpang tindih antar route", r2(E.ovl), "jam"],
     ...ROUTES.map(r=>[`  · Loss time ${r}`, r2(sum(E.S.filter(s=>s.r===r),s=>s.h)), "jam"]),
-    ["Loss Time MMJ (Technical + Traffic + Dust & Social) - H0", r2(E.lMMJ), "jam"], ["Loss Time bukan MMJ - H0", r2(E.H0-E.lMMJ), "jam"],
+    ["Loss Time MMJ (Technical + Traffic + Dust + Weigh Bridge) - H0", r2(E.lMMJ), "jam"], ["Loss Time bukan MMJ - H0", r2(E.H0-E.lMMJ), "jam"],
     ["Idle (Rain + Slippery) - H0", r2(E.lIdle), "jam"], ["Mitra Company - H0", r2(E.lMC), "jam"],
     ["Jumlah kejadian (durasi > 0)", E.evN, "kejadian"], ["Hari ada stop hauling", E.ltDays, "hari"],
     [`Curah hujan rata-rata per hari hujan (${E.RA.pos} pos)`, r2(E.RA.mm), "mm/hari"], ["Durasi hujan rata-rata per hari hujan", r2(E.RA.h), "jam/hari"], ["Hari hujan", E.rainDays, "hari"],
     [], ["H0 = gabungan 3 route; pada jam yang sama di lebih dari satu route hanya dihitung satu route (prioritas: Rain > Slippery > Technical > Social Issue > Dust > lainnya)."],
     ["Sumber: "+(DATA.meta.source||"-")+" · Loss time = Convert Duration (Input Stop Hauling) · Curah hujan = Input TCH · diperbarui "+(DATA.meta.generated||"-")]];
-  const grp = [...title("Kelompok Loss Time - jam"), HD(["Route",...GROUPS.slice(0,3).map(g=>g[0]),"Loss Time MMJ",...GROUPS.slice(3).map(g=>g[0]),"Loss Time Bukan MMJ","Total Loss Time"])];
-  E.grpRows.forEach(o=>grp.push([o.h0?"H0 (tanpa overlap)":o.lab, ...o.g.slice(0,3).map(r2), {v:r2(o.mmj),s:5}, ...o.g.slice(3).map(r2), {v:r2(o.non),s:5}, {v:r2(o.tot),s:5}]));
+  const grp = [...title("Kelompok Loss Time - jam"), HD(["Route",...GROUPS.slice(0,NM).map(g=>g[0]),"Loss Time MMJ",...GROUPS.slice(NM).map(g=>g[0]),"Loss Time Bukan MMJ","Total Loss Time"])];
+  E.grpRows.forEach(o=>grp.push([o.h0?"H0 (tanpa overlap)":o.lab, ...o.g.slice(0,NM).map(r2), {v:r2(o.mmj),s:5}, ...o.g.slice(NM).map(r2), {v:r2(o.non),s:5}, {v:r2(o.tot),s:5}]));
   const mx = [...title("Rekap Loss Time Route x Tipe (jam)"), HD(["Kode","Tipe",...RS,"Jumlah route","H0"])];
   const ct = RS.map(()=>0); let h0t=0;
   TYPES.forEach(t=>{ const v=RS.map(r=>sum(E.SA.filter(s=>s.r===r&&s.c===t.c),s=>s.h)); v.forEach((x,i)=>ct[i]+=x); const h=E.h0Type[t.c]||0; h0t+=h; mx.push([t.c,t.n,...v.map(r2),r2(sum(v,x=>x)),r2(h)]); });
@@ -871,10 +1023,14 @@ function buildSheets(){
   E.dayRows.forEach(o=>harian.push([E.B.daily?xdate(o.k):E.B.title(o.k),...RS.map(r=>r2(o[r])),r2(o.sum),r2(o.ovl),r2(o.h0),r2(o.rs),r2(o.mc),...RS.map(r=>r2(o["mm"+r]))]));
   const area = [...title("Loss Time per Area (jam)"), HD(["Route","Area",...TYPES.map(t=>t.c),"Total","Kejadian"])];
   RS.forEach(r=>DATA.areas[r].forEach(ar=>{ const x=E.S.filter(s=>s.r===r&&s.area===ar); if(!x.length && !AREA_SOP.has(ar)) return; area.push([r,ar,...TYPES.map(t=>r2(sum(x.filter(s=>s.c===t.c),s=>s.h))),r2(sum(x,s=>s.h)),x.filter(s=>s.h>0).length]); }));
-  const mcs = [...title("Mitra Company per Desc Type2 (jam)"), HD(["Desc Type2",...RS,"Total","Kejadian"])];
-  E.t2s.forEach(t=>{ const x=E.MCr.filter(s=>s.t2===t); mcs.push([t,...RS.map(r=>r2(sum(x.filter(s=>s.r===r),s=>s.h))),r2(sum(x,s=>s.h)),x.filter(s=>s.h>0).length]); });
-  mcs.push([], HD(["Route","Desc Type2","Keterangan","Area","Hari","Kejadian","Jam"]));
-  E.descRows.forEach(o=>mcs.push([o.r,o.t2,o.desc,o.area,o.days.size,o.n,r2(o.h)]));
+  const detSheet = code => { const X=E.SA.filter(s=>s.c===code); const ts=[...groupBy(X,s=>s.t2,s=>s.h).entries()].sort((a,b)=>b[1]-a[1]).map(a=>a[0]);
+    const out=[...title(DN[code]+" per Desc Type2 (jam)"), HD(["Desc Type2",...RS,"Total","Kejadian","Penjelasan"])];
+    ts.forEach(t=>{ const x=X.filter(s=>s.t2===t); out.push([t,...RS.map(r=>r2(sum(x.filter(s=>s.r===r),s=>s.h))),r2(sum(x,s=>s.h)),x.filter(s=>s.h>0).length,(SUBDEF[code]||{})[t]||""]); });
+    out.push([], HD(["Route","Desc Type2","Keterangan","Area","Hari","Kejadian","Jam"]));
+    const bd=new Map(); X.forEach(s=>{ const k=s.r+"|"+s.t2+"|"+s.desc; const o=bd.get(k)||{r:s.r,t2:s.t2,desc:s.desc,h:0,n:0,days:new Set(),area:s.area}; o.h+=s.h; if(s.h>0) o.n++; o.days.add(s.d); bd.set(k,o); });
+    [...bd.values()].sort((a,b)=>b.h-a.h).forEach(o=>out.push([o.r,o.t2,o.desc,o.area,o.days.size,o.n,r2(o.h)]));
+    return out; };
+  const mcs = detSheet("MC"), wbs = detSheet("WB");
   const posList = POS.filter(p=>RS.includes(p.r));
   const ch = [...title("Curah Hujan Harian per Pos (akumulasi Input TCH)"), HD(["Tanggal",...posList.flatMap(p=>[`${p.n} RF (mm)`,`${p.n} Rain hours (jam)`])])];
   const days=[...new Set(E.R.map(x=>x.d))].sort();
@@ -889,14 +1045,25 @@ function buildSheets(){
   (DATA.cek||[]).forEach(c=>ck.push([c.src,c.no??"",c.d,c.msg,c.hapus?"Tidak dihitung":"Tetap dihitung"]));
   const t5 = [...title("Loss Time per Route, Area Kerja & Tipe - jam"), HD(["Route","Area Kerja",...TYPES.map(t=>t.c),"Total","Grand Total","Cek"])];
   (E.t5rows||[]).forEach(r=>t5.push(r.map(v=>typeof v==="number"?r2(v):v)));
+  const kjs = [...title("Kinerja Jalan Hauling - PA, UA, EU per bulan & kumulatif")];
+  if(E.KJ){ kjs[1] = ["PT. Musi Mitra Jaya · Tahun "+E.KJ.yr+" (Januari s/d "+dLabel(E.KJ.end)+") · tidak terpengaruh filter"]; kjs[2] = ["SH = 24 jam x hari · LT MMJ = R (T+WB) + D (Traffic+Dust) · PA jam = SH - LT MMJ · PA% = PA jam/SH · UA jam = PA jam - LT Bukan MMJ · UA% = UA jam/PA jam · EU jam = SH - semua LT · EU% = EU jam/SH"];
+    kjs[3] = ["Target: PA ≥ 85% · UA ≥ 80% · EU ≥ 70% · H0 = rata-rata jam loss time route yang tersedia (Jan-Jun H1 & H2, mulai Juli H1, ISP & H2)"];
+    kjs.push(HD(["Route","Bulan","Hari","SH (jam)","R = T+WB (jam)","D = Traffic+Dust (jam)","LT MMJ (jam)","LT Bukan MMJ (jam)","PA jam","UA jam = EU jam","PA (%)","UA (%)","EU (%)"]));
+    const p = v => v==null ? "" : r2(v*100);
+    ["H0",...ROUTES].forEach(rt=>{ const D=E.KJ.data[rt];
+      D.rows.forEach(x=>kjs.push(x.na ? [rt, BLNF[+x.m.slice(5)-1]+" "+x.m.slice(0,4), "Tidak ada data"] : [rt, BLNF[+x.m.slice(5)-1]+" "+x.m.slice(0,4), x.days, r2(x.sh), r2(x.R), r2(x.D), r2(x.R+x.D), r2(x.I), r2(x.paj), r2(x.uaj), p(x.pa), p(x.ua), p(x.eu)]));
+      if(D.ytd){ const x=D.ytd; kjs.push([{v:rt,s:6},{v:"Kumulatif "+E.KJ.yr,s:6},{v:x.days,s:5},{v:r2(x.sh),s:5},{v:r2(x.R),s:5},{v:r2(x.D),s:5},{v:r2(x.R+x.D),s:5},{v:r2(x.I),s:5},{v:r2(x.paj),s:5},{v:r2(x.uaj),s:5},{v:p(x.pa),s:5},{v:p(x.ua),s:5},{v:p(x.eu),s:5}]); }
+      kjs.push([]); }); }
   return [
     {name:"Ringkasan", rows:ring, widths:[52,14,10]},
-    {name:"Kelompok Loss Time", rows:grp, widths:[18,...Array(13).fill(13)]},
+    {name:"Kinerja Jalan", rows:kjs, widths:[8,16,7,11,13,16,13,15,11,15,9,9,9]},
+    {name:"Kelompok Loss Time", rows:grp, widths:[18,...Array(16).fill(13)]},
     {name:"Area x Tipe", rows:t5, widths:[8,20,...TYPES.map(()=>7),10,12,8]},
     {name:"Route x Tipe", rows:mx, widths:[8,20,...RS.map(()=>12),14,12]},
     {name:"Rekap Harian", rows:harian, widths:[13,...Array(RS.length*2+5).fill(14)], freeze:5},
     {name:"Per Area", rows:area, widths:[8,18,...TYPES.map(()=>7),10,10], freeze:5},
-    {name:"Mitra Company", rows:mcs, widths:[20,12,60,16,8,10,10]},
+    {name:"Mitra Company", rows:mcs, widths:[24,12,60,16,8,10,10,60]},
+    {name:"Weigh Bridge", rows:wbs, widths:[24,12,60,16,8,10,10,60]},
     {name:"Curah Hujan", rows:ch, widths:[12,...Array(posList.length*2).fill(13)], freeze:5},
     {name:"Detail Stop Hauling", rows:ev, widths:[6,11,7,7,11,7,16,18,7,6,16,18,70], freeze:1, filter:`A1:${colL(evH.length-1)}${ev.length}`},
     {name:"Detail TCH", rows:tch, widths:[6,11,14,7,7,7,13,12], freeze:1, filter:`A1:H${tch.length}`},
