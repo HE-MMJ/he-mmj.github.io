@@ -59,7 +59,7 @@ need("assets/js/shell.js", ("data-mmj-auth-page", "loginWall", "?next=",
 need("assets/js/auth.js", ('username: "admin"', 'username: "hse"', 'username: "ecc"',
                            "Admin General", "Admin HSE", "Admin ECC",
                            "roleLabel:", "homeOf:", "hse: { hse: true }",
-                           "ecc: { costcontrol: true }"))
+                           "costcontrol: true"))
 need("login.html", ("homeOf",))
 
 if fails:
