@@ -1269,6 +1269,10 @@ table.grid tbody tr:hover { background: var(--accent-soft); }
 
 :root[data-theme="dark"] table.grid tbody tr:nth-child(even){ background: rgba(255,255,255,.03); }
 
+
+:root[data-theme="dark"] .ud-table .ud-nol,
+:root[data-theme="dark"] .ud-table .ud-sub td { color: #a6add9; }
+
 :root[data-theme="dark"] table.grid tbody tr:hover{ background: var(--accent-soft); }
 
 :root[data-theme="dark"] table.grid tbody tr:hover td,
@@ -1373,9 +1377,9 @@ table.grid tbody tr:hover { background: var(--accent-soft); }
 
 .ud-table .num { text-align: right; font-variant-numeric: tabular-nums; }
 
-.ud-table .ud-sub td:first-child { padding-left: 18px; color: var(--muted, #64748B); }
+.ud-table .ud-sub td:first-child { padding-left: 18px; color: var(--ink-2, #4d5677); }
 
-.ud-table .ud-nol { opacity: .45; }
+.ud-table .ud-nol { color: #5a6483; }
 
 
 .ud-bd { margin-top: 16px; }
