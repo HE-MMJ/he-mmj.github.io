@@ -386,6 +386,10 @@
 
   function srcData(src) {
     var mb = bulanAktif();
+    if (!mb && pageTab === "he") {
+      var list = window.MMJ_BULAN || [];
+      mb = list.length ? list[list.length - 1] : 0;
+    }
     if (!mb || !src) return src;
     var kode = (mb < 10 ? "0" : "") + mb;
     return src
