@@ -28,9 +28,10 @@ BULAN_NAMA = ["Januari", "Februari", "Maret", "April", "Mei", "Juni",
 
 HE_VENDOR = [("GIP H2", "01"), ("GIP H1", "02"), ("JTU", "03"),
              ("BDK", "04"), ("SKN", "05")]
-WT_VENDOR = [("WT TSA", "06", "WT TSA"), ("WT TLK", "07", "WT TLK"),
-             ("WT ASA", "08", "WT ASA"), ("WT FBS", "09", "WT FBS"),
-             ("WT TJP", "10", "TJP"), ("WT PBT", "11", "WT PBT")]
+WT_VENDOR = [("SKN", "05", "SKN"), ("WT TSA", "06", "WT TSA"),
+             ("WT TLK", "07", "WT TLK"), ("WT ASA", "08", "WT ASA"),
+             ("WT FBS", "09", "WT FBS"), ("WT TJP", "10", "TJP"),
+             ("WT PBT", "11", "WT PBT")]
 
 SCRIPTS = ["export_review.ps1", "export_daily.ps1", "export_daily_unit.ps1",
            "export_unit_detail.ps1", "export_belum_review.ps1",
