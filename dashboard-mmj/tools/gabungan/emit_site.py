@@ -466,13 +466,8 @@ _INPUT_FILES = ("theme.css", "shell_loader.js", "auth.js", "intro.css",
                 "intro.js", "login.css", "login.html", "shell.css")
 
 
-def _content_version(html, here, extra=""):
-    """Versi = hash isi (shell + berkas pendukung + bulan data HE/WT).
-
-    Efeknya: `?v=` di URL hanya berubah kalau isinya benar-benar berubah,
-    jadi build yang tidak mengubah apa pun TIDAK menghasilkan diff (hemat
-    unduhan user & `git status` tetap bersih).
-    """
+def _content_version(html, here, extra="", root=None):
+    """Versi = hash isi shell, pendukung, dan data HE/WT per bulan."""
     h = hashlib.sha1()
     h.update(html.encode("utf-8"))
     if extra:
@@ -482,6 +477,14 @@ def _content_version(html, here, extra=""):
         if os.path.exists(p):
             with open(p, "rb") as f:
                 h.update(f.read())
+    if root:
+        for folder in ("data-bulanan", "wt-bulanan"):
+            d = os.path.join(root, "js", folder)
+            if os.path.isdir(d):
+                for filename in sorted(os.listdir(d)):
+                    if filename.endswith(".json"):
+                        with open(os.path.join(d, filename), "rb") as f:
+                            h.update(f.read())
     return h.hexdigest()[:10]
 
 
@@ -566,7 +569,7 @@ def emit(html, root, version=None):
     """Pecah `html` menjadi index.html + assets/* di folder `root`."""
     here = os.path.dirname(os.path.abspath(__file__))
     bulan = _bulan_tersedia(root)
-    version = version or _content_version(html, here, ",".join(map(str, bulan)))
+    version = version or _content_version(html, here, ",".join(map(str, bulan)), root)
     q = "?v=" + version
 
     tpl_re = re.compile(r'<template id="mmjT_(\w+)">(.*?)</template>', re.S)
