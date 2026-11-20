@@ -14,6 +14,14 @@ if (Array.isArray(DATA)) {
   if (tanpaWT.length !== DATA.length) DATA.splice(0, DATA.length, ...tanpaWT);
 }
 
+// Unit Water Truck (WT SKN-01..04) juga sudah tampil di tabel "Timesheet
+// Belum di Terima" WT dengan shift S/M, jadi dikeluarkan dari tabel HE
+// (yang hanya punya 1 ceklis per hari) supaya tidak dobel.
+if (typeof BELUM !== 'undefined' && Array.isArray(BELUM)) {
+  const tanpaWTB = BELUM.filter(d => (d.Jenis || '') !== 'Water Truck');
+  if (tanpaWTB.length !== BELUM.length) BELUM.splice(0, BELUM.length, ...tanpaWTB);
+}
+
 // ---------- pilihan perbandingan ----------
 let CMP = 'MA'; // 'MA' | 'RATIO' | 'PA'
 
