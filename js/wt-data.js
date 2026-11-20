@@ -1,6 +1,6 @@
 ﻿// Data Water Truck (Penyiraman) - dibuat otomatis oleh rebuild_wt_dashboard.ps1
 // Sumber: sheet unit WT, kolom "Penyiraman" (header-driven) + sheet Review Unit (MA)
-// dibuat: 2026-11-20 15:31
+// dibuat: 2026-11-20 15:36
 const WT_PERIODE = { y: 2026, m: 11, last: 30, label: "November 2026" };
 const WT_DATA = [
 {Unit:"WT SKN-01",Vendor:"SKN",Area:"Area Selaro",Model:"SHACMAN 20 KL",Capacity:"20 KL",MA:93.75,PA:97,FuelRatio:6.58,TotalPenyiraman:64,HariAda:14,Shift2:true,BelumS:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],BelumM:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],Days:{"16":{P:0,HM:0,S:1,M:1},"3":{P:5,HM:7.20000000000005,S:1,M:1},"5":{P:4,HM:5.90000000000009,S:1,M:1},"18":{P:0,HM:0,S:1,M:1},"12":{P:5,HM:5.59999999999991,S:1,M:1},"10":{P:7,HM:6.09999999999991,S:1,M:1},"2":{P:3,HM:6.29999999999995,S:1,M:1},"8":{P:5,HM:7.39999999999986,S:1,M:1},"17":{P:3,HM:4,S:1,M:1},"11":{P:10,HM:8.20000000000005,S:1,M:1},"1":{P:4,HM:5.20000000000005,S:1,M:1},"9":{P:6,HM:10.1000000000001,S:1,M:1},"14":{P:0,HM:0,S:1,M:1},"7":{P:2,HM:7.5,S:1,M:1},"15":{P:0,HM:0,S:1,M:1},"6":{P:5,HM:8.0999999999999,S:1,M:1},"4":{P:3,HM:4.29999999999995,S:1,M:1},"19":{P:0,HM:0,S:1,M:0},"13":{P:2,HM:2.90000000000009,S:1,M:1}}},
