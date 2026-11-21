@@ -83,6 +83,8 @@ PAGES = [
      "judul": "Data Simper - MMJ", "menu": "Data Simper"},
     {"tab": "dt", "dir": "Data-DT", "css": "dt", "auth": "hse",
      "judul": "Data DT - MMJ", "menu": "Data DT"},
+    {"tab": "csr", "dir": "CSR", "css": "csr", "auth": "csr",
+     "judul": "Dashboard CSR - MMJ", "menu": "Dashboard CSR"},
 ]
 
 # tautan menu sidebar: #tab=<tab> -> halaman tujuan (relatif terhadap root situs)
@@ -96,6 +98,7 @@ NAV_URL = {
     "cost": "Cost-Control/",
     "simper": "Data-Simper/",
     "dt": "Data-DT/",
+    "csr": "CSR/",
 }
 
 # ikon menu tambahan (di luar 5 dashboard monitoring)
@@ -108,12 +111,16 @@ _IC_DT = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-wid
           '<path d="M3 17V7h9v10M12 10h4l4 4v3h-8"/>'
           '<circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>')
 
+_IC_CSR = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
+           '<path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z"/></svg>')
+
 # menu tambahan yang disisipkan ke sidebar tiap halaman (urutan tampil)
 #   (tab, capability, folder tujuan, label, ikon)
 _EXTRA_NAV = [
     ("simper", "hse", "Data-Simper/", "Data Simper", _IC_SIMPER),
     ("dt", "hse", "Data-DT/", "Data DT", _IC_DT),
     ("cost", "costcontrol", "Cost-Control/", "Cost Control", _IC_COST),
+    ("csr", "csr", "CSR/", "Dashboard CSR", _IC_CSR),
 ]
 
 
@@ -530,6 +537,7 @@ def _rewrite_nav(markup, prefix):
       public      -> 5 dashboard monitoring + Eksekutif (tamu tetap boleh)
       hse         -> Data Simper, Data DT
       costcontrol -> Cost Control
+      csr         -> Dashboard CSR (Admin General & Admin Eksternal)
     """
     def rep(m):
         url = NAV_URL.get(m.group(1))
