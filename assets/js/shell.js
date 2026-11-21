@@ -97,7 +97,8 @@
      terpisah). Halaman utama = Dashboard Eksekutif di root. */
   var PAGE_URL = { exec: "", he: "Heavy-Equipment/", haul: "Coal-Hauling/",
                    batu: "Batu-Split/", lt: "Loss-Time/", rf: "Rainfall/",
-                   cost: "Cost-Control/", simper: "Data-Simper/", dt: "Data-DT/" };
+                   cost: "Cost-Control/", simper: "Data-Simper/", dt: "Data-DT/",
+                   csr: "CSR/" };
 
   var asFrag = function (t) {
     if (!t) return null;

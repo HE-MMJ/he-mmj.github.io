@@ -28,12 +28,13 @@
        hse          -> Data Simper + Data DT
        external     -> hanya dasbor publik (tanpa data sensitif)
        costcontrol  -> Cost Control
-       ma_capacity  -> rata-rata MA per capacity (halaman HE, Admin ECC) */
+       ma_capacity  -> rata-rata MA per capacity (halaman HE, Admin ECC)
+       csr          -> Dashboard CSR (Admin General & Admin Eksternal) */
   var CAPS = {
     admin: { all: true },
     hse: { hse: true },
     ecc: { costcontrol: true, ma_capacity: true },
-    external: {}
+    external: { csr: true }
   };
 
   /* nama role yang ditampilkan di sidebar */
@@ -49,7 +50,7 @@
     admin: "index.html",
     hse: "Data-Simper/",
     ecc: "Cost-Control/",
-    external: "index.html"
+    external: "CSR/"
   };
 
   var sessionKey = "mmjSession";
