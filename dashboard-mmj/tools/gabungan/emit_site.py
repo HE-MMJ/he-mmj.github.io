@@ -805,6 +805,9 @@ def emit(html, root, version=None):
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 %(head)s
 <meta name="theme-color" content="#6366f1">
 <meta name="description" content="Dashboard MMJ 2026: Eksekutif, Heavy Equipment (Timesheet HE/WT), Coal Hauling, Batu Split, Loss Time &amp; Rainfall.">

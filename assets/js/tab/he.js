@@ -105,6 +105,29 @@ const DU = (typeof DAILYUNIT !== 'undefined' && Array.isArray(DAILYUNIT)) ? DAIL
 // data Water Truck (dipakai bersama: kartu ringkasan + dropdown filter)
 const WTD = (typeof WT_DATA !== 'undefined' && Array.isArray(WT_DATA)) ? WT_DATA : [];
 
+// fuel liter WT sesuai rentang hari WT. Prioritas: Days.*.Fuel harian;
+// fallback FuelRecap/FuelReview (total bulanan Recap Fuel, seperti HE) bila tidak ada data harian.
+function wtFuelRange(unit) {
+  const rsW = (() => {
+    const f = document.getElementById('wtFrom'), t = document.getElementById('wtTo');
+    const fd = f && f.value ? dayOf(f.value) : 1;
+    const td = t && t.value ? dayOf(t.value) : PERIODE.last;
+    return fd > td ? { from: td, to: fd } : { from: fd, to: td };
+  })();
+  const D = (unit && unit.Days) || {};
+  let fuel = 0;
+  for (const k in D) {
+    const n = parseInt(k, 10);
+    if (n >= rsW.from && n <= rsW.to) fuel += num(D[k].Fuel);
+  }
+  if (fuel > 0) return fuel;
+  const recap = num(unit && (unit.FuelRecap || unit.FuelReview));
+  if (recap > 0 && rsW.from <= 1 && rsW.to >= PERIODE.last) return recap;
+  return 0;
+}
+// total fuel WT (semua unit, rentang WT aktif) - kartu Total Fuel
+function wtFuelTotal() { return WTD.reduce((s, d) => s + wtFuelRange(d), 0); }
+
 // helper filter WT (mirror dari js/wt.js) dipakai tabel Belum & dropdown
 const WT_SHIFT1 = ['TLK', 'FBS', 'ASA'];
 const CHK_OK = '<svg class="chk" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.5 L5 9 L9.5 3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -408,7 +431,11 @@ function vendorAgg(kind, heRows, wtRows, allHe, allWt) {
   });
   if (kind === 'units') { add(allHe, null, 'he'); add(allWt, null, 'wt'); }
   else if (kind === 'water') add(wtRows, 'P', 'wt');
-  else add(heRows, ({ hm: 'HMTotal', ma: 'MA', pa: 'PAPct', fuel: 'Fuel', ratio: 'FuelRatio' })[kind], 'he');
+  else if (kind === 'fuel') {
+    // Total Fuel = fuel HE (rentang HE) + fuel WT (rentang WT; semua unit WT di panel)
+    add(heRows, 'Fuel', 'he');
+    add(wtRows, 'Fuel', 'wt');
+  } else add(heRows, ({ hm: 'HMTotal', ma: 'MA', pa: 'PAPct', ratio: 'FuelRatio' })[kind], 'he');
   return [...groups.values()].map(g => ({
     ...g,
     val: ['ma', 'pa', 'ratio'].includes(kind) ? (g.avgN ? g.val / g.avgN : 0) : g.val
@@ -435,6 +462,7 @@ function wtRangeRows() {
 function vendorBreakdown(kind) {
   if (kind === 'units') return vendorAgg(kind, [], [], DATA, WTD);
   if (kind === 'water') return vendorAgg(kind, [], wtRangeRows(), [], []);
+  if (kind === 'fuel') return vendorAgg(kind, applyRange(filtered()), WTD.map(d => ({ ...d, Fuel: wtFuelRange(d) })), [], []);
   // Salin ulang baris aktif dengan rentang HE saat ini; panel boleh dibuka setelah tanggal berubah.
   return vendorAgg(kind, applyRange(filtered()), [], [], []);
 }
@@ -468,25 +496,44 @@ function vdLogoFor(vendor) {
   return '';
 }
 
+// pecahan fuel per tipe Unit ID (urutan diminta user) untuk tabel kartu pop-up
+function fuelTypeRows() {
+  const groups = ['MG', 'VC', 'EX', 'DT', 'TRADO', 'FT'];
+  const sum = Object.fromEntries(groups.map(g => [g, 0]));
+  let other = 0;
+  const add = (uid, v) => {
+    const g = groups.find(x => uid.startsWith(x));
+    if (g) sum[g] += v; else other += v;
+  };
+  applyRange(filtered()).forEach(d => add(String(d.Unit || '').trim().toUpperCase(), num(d.Fuel)));
+  WTD.forEach(d => add(String(d.Unit || '').trim().toUpperCase(), wtFuelRange(d)));
+  const rows = groups.map(g => ({ g, val: sum[g] }));
+  if (other > 0) rows.push({ g: 'WT/Lainnya', val: other });
+  return rows;
+}
+
 // isi modal vendor: judul + sub + grid kartu vendor (tabel unit muncul di bawah grid)
 function renderVendorPanel(kind) {
-  const unitMode = kind === 'units';
-  const average = ['ma', 'pa', 'ratio'].includes(kind);
-  const suffix = kind === 'ma' || kind === 'pa' ? '%' : '';
-  const precision = kind === 'ratio' ? 2 : (kind === 'units' ? 0 : (kind === 'fuel' || kind === 'water' ? 0 : 1));
-  const rows = vendorBreakdown(kind);
   const rs = rangeState();
   const wtRange = document.getElementById('wtRangeVal');
   const period = kind === 'water' && wtRange ? wtRange.textContent.trim()
     : (rs.full ? `${BULAN_ID[PERIODE.m - 1]} ${PERIODE.y}` : rangeLabel());
+
+  const unitMode = kind === 'units';
+  const average = ['ma', 'pa', 'ratio'].includes(kind);
+  const suffix = kind === 'ma' || kind === 'pa' ? '%' : '';
+  const precision = kind === 'ratio' ? 2 : (kind === 'units' ? 0 : (kind === 'fuel' || kind === 'water' ? 2 : 1));
+  const rows = vendorBreakdown(kind);
   const color = KPI_COLOR[kind] || '#1D4ED8';
   const cards = rows.length ? rows.map((r, i) => `
     <div class="vd-card" role="button" tabindex="0" data-vendor="${escHtml(r.vendor)}" aria-expanded="false"
       style="--c:${color};animation-delay:${Math.min(i * 45, 300)}ms">
       <div class="vd-card-head">
         <span class="vd-name">${escHtml(r.vendor)}</span>
-        <b class="vd-val">${unitMode ? r.n : fmt(r.val, precision) + suffix}</b>
-        <span class="vd-sub">${unitMode ? `HE ${r.countHe} &middot; WT ${r.countWt}` : r.n + ' unit'}</span>
+        <div class="vd-val-line">
+          <b class="vd-val">${unitMode ? r.n : fmt(r.val, precision) + suffix}</b>
+          <span class="vd-sub">${unitMode ? `HE ${r.countHe} &middot; WT ${r.countWt}` : r.n + ' unit'}</span>
+        </div>
         <svg class="vd-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
       ${vdLogoFor(r.vendor) ? `<img class="vd-logo" src="${vdLogoFor(r.vendor)}" alt="Logo ${escHtml(r.vendor)}">` : ''}
@@ -494,64 +541,93 @@ function renderVendorPanel(kind) {
     : `<p class="ud-nol">Tidak ada data untuk filter ini.</p>`;
   return `<h3 id="udJudul">${escHtml(VD_LABEL[kind] || 'Ringkasan Vendor')}</h3>
     <p class="ud-sub">Per Vendor &middot; ${escHtml(period)}${average ? ' &middot; rata-rata unit vendor' : ''} &middot; klik kartu vendor untuk rincian unit</p>
-    <div class="vd-cards" data-kind="${kind}">${cards}</div>
-    <div class="vd-table" hidden></div>`;
+    <div class="vd-cards" data-kind="${kind}">${cards}</div>`;
 }
 
 // daftar unit satu vendor sesuai metrik kartu (mis. Total Fuel -> Unit ID + Fuel)
 function vendorUnits(kind, vendor) {
+  const order = ['MG', 'VC', 'EX', 'DT', 'TRADO', 'FT', 'WT'];
+  const rank = u => { const id = String(u || '').trim().toUpperCase(); const i = order.findIndex(x => id.startsWith(x)); return i < 0 ? 99 : i; };
+  const byType = (a, b) => (rank(a.Unit) - rank(b.Unit)) || String(a.Unit).localeCompare(String(b.Unit), undefined, { numeric: true });
   if (kind === 'water') {
     return wtRangeRows()
       .filter(d => wtVendorKey(d.Vendor) === wtVendorKey(vendor))
       .map(d => ({ Unit: d.Unit, val: num(d.P), txt: fmt(d.P, 0), badge: '<span class="vd-badge wt">WT</span>' }))
-      .sort((a, b) => b.val - a.val);
+      .sort(byType);
+  }
+  if (kind === 'fuel') {
+    // Total Fuel per unit: HE (rentang HE) + WT (rentang WT), urut tipe Unit ID
+    const he = applyRange(filtered())
+      .filter(d => String(d.Vendor || '').trim() === vendor)
+      .map(d => ({ Unit: d.Unit, val: num(d.Fuel), txt: fmt(d.Fuel, 2) }));
+    const wt = WTD.filter(d => wtVendorKey(d.Vendor) === wtVendorKey(vendor))
+      .map(d => ({ Unit: d.Unit, val: wtFuelRange(d), txt: fmt(wtFuelRange(d), 2), badge: '<span class="vd-badge wt">WT</span>' }));
+    return he.concat(wt).sort(byType);
   }
   if (kind === 'units') {
     const he = DATA.filter(d => String(d.Vendor || '').trim() === vendor)
       .map(d => ({ Unit: d.Unit, val: 1, txt: 'HE', badge: '<span class="vd-badge">HE</span>' }));
     const wt = WTD.filter(d => wtVendorKey(d.Vendor) === wtVendorKey(vendor))
       .map(d => ({ Unit: d.Unit, val: 1, txt: 'WT', badge: '<span class="vd-badge wt">WT</span>' }));
-    return he.concat(wt);
+    return he.concat(wt).sort(byType);
   }
-  const field = { hm: 'HMTotal', ma: 'MA', pa: 'PAPct', fuel: 'Fuel', ratio: 'FuelRatio' }[kind];
+  const field = { hm: 'HMTotal', ma: 'MA', pa: 'PAPct', ratio: 'FuelRatio' }[kind];
   const pct = kind === 'ma' || kind === 'pa';
-  const dec = kind === 'ratio' ? 2 : (kind === 'fuel' ? 0 : 1);
+  const dec = kind === 'ratio' ? 2 : 1;
   return applyRange(filtered())
     .filter(d => String(d.Vendor || '').trim() === vendor)
     .map(d => ({
       Unit: d.Unit, val: num(d[field]),
       txt: pct ? fmt(num(d[field]), 1) + '%' : fmt(num(d[field]), dec)
     }))
-    .sort((a, b) => b.val - a.val);
+    .sort(byType);
 }
 
-// pilih satu vendor -> tabel unit muncul DI BAWAH grid kartu vendor (satu pilihan)
+// pilih satu vendor -> tabel unit muncul DI BAWAH kartu itu (baris penuh grid), satu tabel
 function pilihVendor(kind, card) {
-  const panel = card.closest ? card.closest('.ud-panel') : null;
-  const tabel = panel ? panel.querySelector('.vd-table') : null;
+  const grid = card.closest ? card.closest('.vd-cards') : null;
   const sama = card.classList.contains('open');
-  if (panel) panel.querySelectorAll('.vd-card.open').forEach(c => {
+  // tutup pilihan lain + buang tabel lama (yang bukan milik kartu ini)
+  if (grid) grid.querySelectorAll('.vd-card.open').forEach(c => {
     c.classList.remove('open');
     c.setAttribute('aria-expanded', 'false');
   });
+  if (grid) {
+    const old = grid.querySelector('.vd-table');
+    if (old && old._card !== card) old.remove();
+  }
   if (sama) {
-    if (tabel) { tabel.hidden = true; tabel.innerHTML = ''; }
+    // klik kartu yang sama lagi -> tutup tabelnya
+    if (grid) {
+      const t = grid.querySelector('.vd-table');
+      if (t && t._card === card) t.remove();
+    }
     return;
   }
   card.classList.add('open');
   card.setAttribute('aria-expanded', 'true');
   const rows = vendorUnits(kind, card.dataset.vendor);
   const label = VD_LABEL[kind] || 'Nilai';
-  if (tabel) {
-    tabel.innerHTML = `<div class="vd-table-head">${escHtml(card.dataset.vendor)} &middot; ${escHtml(label)} (${rows.length} unit)</div>
-      <table class="vd-table-body">
-        <thead><tr><th>Unit</th><th class="vd-tnum">${escHtml(label)}</th></tr></thead>
-        <tbody>${rows.length ? rows.map(r => `
-          <tr><td>${r.badge || ''}${escHtml(r.Unit)}</td><td class="vd-tnum">${r.txt}</td></tr>`).join('')
-          : '<tr><td colspan="2" class="ud-nol">Tidak ada unit untuk vendor ini.</td></tr>'}</tbody>
-      </table>`;
-    tabel.hidden = false;
+  // tabel di dalam grid, baris penuh, setelah kartu TERAKHIR di baris visual kartu ini
+  // (kolom grid responsif -> hitung dari posisi render, bukan urutan DOM)
+  let anchor = card;
+  if (grid) {
+    const top = Math.round(card.getBoundingClientRect().top);
+    [...grid.querySelectorAll('.vd-card')].forEach(c => {
+      if (Math.round(c.getBoundingClientRect().top) === top) anchor = c;
+    });
   }
+  const tabel = document.createElement('div');
+  tabel.className = 'vd-table';
+  tabel._card = card;
+  tabel.innerHTML = `<div class="vd-table-head">${escHtml(card.dataset.vendor)} &middot; ${escHtml(label)} (${rows.length} unit)</div>
+    <table class="vd-table-body">
+      <thead><tr><th>Unit</th><th class="vd-tnum">${escHtml(label)}</th></tr></thead>
+      <tbody>${rows.length ? rows.map(r => `
+        <tr><td>${r.badge || ''}${escHtml(r.Unit)}</td><td class="vd-tnum">${r.txt}</td></tr>`).join('')
+        : '<tr><td colspan="2" class="ud-nol">Tidak ada unit untuk vendor ini.</td></tr>'}</tbody>
+    </table>`;
+  anchor.insertAdjacentElement('afterend', tabel);
 }
 
 // klik kartu KPI -> modal pecahan per vendor (overlay .ud-wrap, satu listener)
@@ -563,7 +639,7 @@ function openVendorPanel(kind) {
     document.body.appendChild(UD_WRAP);
   }
   UD_FOKUS = document.activeElement;
-  UD_WRAP.innerHTML = '<div class="ud-panel" role="dialog" aria-modal="true" aria-labelledby="udJudul">'
+  UD_WRAP.innerHTML = '<div class="ud-panel vd-panel" role="dialog" aria-modal="true" aria-labelledby="udJudul">'
     + '<button type="button" class="ud-close" aria-label="Tutup ringkasan vendor">&times;</button>'
     + renderVendorPanel(kind) + '</div>';
   const grid = UD_WRAP.querySelector('.vd-cards');
@@ -674,7 +750,8 @@ function render() {
 
   // kartu ringkasan
   const sumHM = rows.reduce((s, d) => s + num(d.HMTotal), 0);
-  const sumFuel = rows.reduce((s, d) => s + num(d.Fuel), 0);
+  const sumFuel = rows.reduce((s, d) => s + num(d.Fuel), 0)
+    + (typeof window.WT_summary === 'function' ? wtFuelTotal(WTD) : WTD.reduce((s, d) => s + wtFuelRange(d), 0));
   const sumPA = rows.filter(d => num(d.PAPct) > 0);
   const avgPA = sumPA.length ? sumPA.reduce((s, d) => s + num(d.PAPct), 0) / sumPA.length : 0;
   const avgMA = (() => {
@@ -1926,17 +2003,20 @@ if (lblAwal) lblAwal.textContent = rangeLabel();
 
   function hitung(rows) {
     const rs = rangeState();
+    const full = rs.from <= 1 && rs.to >= PERIODE.last;
     return rows.map(d => {
-      let p = 0, hari = 0;
+      let p = 0, hari = 0, fuel = 0;
       const days = d.Days || {};
       for (const k in days) {
         const day = parseInt(k, 10);
         if (day < rs.from || day > rs.to) continue;
         const v = num(days[k].P);
         p += v;
+        fuel += num(days[k].Fuel);
         if (v > 0) hari++;
       }
-      return Object.assign({}, d, { P: p, Hari: hari });
+      if (fuel <= 0 && full) fuel = num(d.FuelRecap || d.FuelReview);
+      return Object.assign({}, d, { P: p, Hari: hari, Fuel: fuel });
     });
   }
 
@@ -1983,7 +2063,10 @@ if (lblAwal) lblAwal.textContent = rangeLabel();
     wtRows = rows;
 
     const sumP = rows.reduce((s, d) => s + d.P, 0);
+    const sumFuel = rows.reduce((s, d) => s + num(d.Fuel), 0);
     syncHeCards(sumP);
+    const elFuel = $('wtTotalFuel');
+    if (elFuel) elFuel.textContent = fmt0(sumFuel);
 
     const cu = $('wtCountUnit');
     if (cu) cu.textContent = rows.length;
@@ -2007,6 +2090,7 @@ if (lblAwal) lblAwal.textContent = rangeLabel();
       const maTxt = cmpVal > 0 ? (isPct ? fmt(cmpVal, 1) + '%' : fmt(cmpVal, 2)) : '\u2013';
       const rata = d.Hari > 0 ? fmt(d.P / d.Hari, 1) : '\u2013';
       const pCls = d.P > 0 ? '' : ' sisa-over';
+      const fuelTxt = num(d.Fuel) > 0 ? fmt0(d.Fuel) : '\u2013';
       return '<tr>' +
         '<td><b>' + (esc(d.Unit) || '-') + '</b></td>' +
         '<td class="col-optional">' + (esc(d.Vendor) || '-') + '</td>' +
@@ -2015,9 +2099,10 @@ if (lblAwal) lblAwal.textContent = rangeLabel();
         '<td class="num' + pCls + '"><b>' + fmt0(d.P) + '</b></td>' +
         '<td class="num min-h">' + d.Hari + '</td>' +
         '<td class="num">' + rata + '</td>' +
+        '<td class="num">' + fuelTxt + '</td>' +
         '<td class="num">' + maTxt + '</td>' +
       '</tr>';
-    }).join('') : '<tr><td colspan="8" class="wt-empty">Tidak ada unit WT yang cocok dengan filter di atas.</td></tr>';
+    }).join('') : '<tr><td colspan="9" class="wt-empty">Tidak ada unit WT yang cocok dengan filter di atas.</td></tr>';
 
     refreshArrows();
     updateChartNote();

@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Dashboard Timesheet HE - MMJ November 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1007,6 +1010,10 @@ th.wt-sortable:hover { background: #EDF3FC; color: var(--primary); }
               <svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M3 7h13l5 5v5h-3M3 7v10h3M6 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0Zm9 0a2 2 0 1 0 4 0 2 2 0 0 0-4 0Z"/></svg>
               <b id="wtCountUnit">0</b><span>unit WT</span>
             </span>
+            <span class="live-chip" title="Total fuel WT dalam rentang terpilih">
+              <svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M4 20V7a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v13M4 20h10M4 20H2m12 0h2m-4-9h2a2 2 0 0 1 2 2v2a2 2 0 0 0 4 0V9l-3-3M7 9h4"/></svg>
+              <b id="wtTotalFuel">0</b><span>L fuel</span>
+            </span>
           </span>
         </div>
         <div class="table-wrap">
@@ -1020,6 +1027,7 @@ th.wt-sortable:hover { background: #EDF3FC; color: var(--primary); }
                 <th class="wt-sortable num" data-sort="P" title="Klik untuk mengurutkan">Total Penyiraman <span class="wt-arrow" data-arrow="P"></span></th>
                 <th class="num" title="Jumlah hari yang ada penyiraman dalam rentang terpilih">Hari Ada</th>
                 <th class="num">Rata-rata / Hari</th>
+                <th class="wt-sortable num" data-sort="Fuel" title="Klik untuk mengurutkan">Fuel (L) <span class="wt-arrow" data-arrow="Fuel"></span></th>
                 <th class="wt-sortable num" data-sort="CMP" title="Klik untuk mengurutkan"><span id="wtCmpColLabel">MA</span> <span class="wt-arrow" data-arrow="CMP"></span></th>
               </tr>
             </thead>

@@ -77,17 +77,20 @@
 
   function hitung(rows) {
     const rs = rangeState();
+    const full = rs.from <= 1 && rs.to >= PERIODE.last;
     return rows.map(d => {
-      let p = 0, hari = 0;
+      let p = 0, hari = 0, fuel = 0;
       const days = d.Days || {};
       for (const k in days) {
         const day = parseInt(k, 10);
         if (day < rs.from || day > rs.to) continue;
         const v = num(days[k].P);
         p += v;
+        fuel += num(days[k].Fuel);
         if (v > 0) hari++;
       }
-      return Object.assign({}, d, { P: p, Hari: hari });
+      if (fuel <= 0 && full) fuel = num(d.FuelRecap || d.FuelReview);
+      return Object.assign({}, d, { P: p, Hari: hari, Fuel: fuel });
     });
   }
 
@@ -134,7 +137,10 @@
     wtRows = rows;
 
     const sumP = rows.reduce((s, d) => s + d.P, 0);
+    const sumFuel = rows.reduce((s, d) => s + num(d.Fuel), 0);
     syncHeCards(sumP);
+    const elFuel = $('wtTotalFuel');
+    if (elFuel) elFuel.textContent = fmt0(sumFuel);
 
     const cu = $('wtCountUnit');
     if (cu) cu.textContent = rows.length;
@@ -158,6 +164,7 @@
       const maTxt = cmpVal > 0 ? (isPct ? fmt(cmpVal, 1) + '%' : fmt(cmpVal, 2)) : '\u2013';
       const rata = d.Hari > 0 ? fmt(d.P / d.Hari, 1) : '\u2013';
       const pCls = d.P > 0 ? '' : ' sisa-over';
+      const fuelTxt = num(d.Fuel) > 0 ? fmt0(d.Fuel) : '\u2013';
       return '<tr>' +
         '<td><b>' + (esc(d.Unit) || '-') + '</b></td>' +
         '<td class="col-optional">' + (esc(d.Vendor) || '-') + '</td>' +
@@ -166,9 +173,10 @@
         '<td class="num' + pCls + '"><b>' + fmt0(d.P) + '</b></td>' +
         '<td class="num min-h">' + d.Hari + '</td>' +
         '<td class="num">' + rata + '</td>' +
+        '<td class="num">' + fuelTxt + '</td>' +
         '<td class="num">' + maTxt + '</td>' +
       '</tr>';
-    }).join('') : '<tr><td colspan="8" class="wt-empty">Tidak ada unit WT yang cocok dengan filter di atas.</td></tr>';
+    }).join('') : '<tr><td colspan="9" class="wt-empty">Tidak ada unit WT yang cocok dengan filter di atas.</td></tr>';
 
     refreshArrows();
     updateChartNote();

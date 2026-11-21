@@ -26,8 +26,8 @@ OUTROOT = r"D:\Temp\wa_timesheet\bulan"
 BULAN_NAMA = ["Januari", "Februari", "Maret", "April", "Mei", "Juni",
               "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
 
-HE_VENDOR = [("GIP H2", "01"), ("GIP H1", "02"), ("JTU", "03"),
-             ("BDK", "04"), ("SKN", "05")]
+HE_VENDOR = [("GIP H2", "01", None), ("GIP H1", "02", None), ("JTU", "03", None),
+             ("BDK", "04", None), ("SKN", "05", None), ("FBS", "09", "HE FBS")]
 WT_VENDOR = [("SKN", "05", "SKN"), ("WT TSA", "06", "WT TSA"),
              ("WT TLK", "07", "WT TLK"), ("WT ASA", "08", "WT ASA"),
              ("WT FBS", "09", "WT FBS"), ("WT TJP", "10", "TJP"),
@@ -161,9 +161,9 @@ def main():
             continue
         sd = subs(base)
         he_files, wt_files = [], []
-        for vendor, pref in HE_VENDOR:
+        for vendor, pref, must in HE_VENDOR:
             folder = os.path.join(base, sd.get(pref, "")) if pref in sd else None
-            f = pick(folder, bulan, tahun) if folder else None
+            f = pick(folder, bulan, tahun, must=must) if folder else None
             if f:
                 he_files.append((vendor, f))
             else:
