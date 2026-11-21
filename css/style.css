@@ -315,6 +315,11 @@ h2::before {
   border-color: color-mix(in srgb, var(--c, var(--primary)) 32%, var(--border));
   box-shadow: var(--shadow-2);
 }
+.card[data-card] { cursor: pointer; }
+.card[data-card]:focus-visible {
+  outline: 3px solid var(--secondary);
+  outline-offset: 3px;
+}
 .card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .card .label {
   font-family: var(--font-num);

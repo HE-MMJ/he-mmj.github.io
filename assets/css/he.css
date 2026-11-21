@@ -361,6 +361,13 @@ h2::before {
   box-shadow: var(--shadow-2);
 }
 
+.card[data-card] { cursor: pointer; }
+
+.card[data-card]:focus-visible {
+  outline: 3px solid var(--secondary);
+  outline-offset: 3px;
+}
+
 .card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 
 .card .label {
@@ -1347,7 +1354,9 @@ table.grid tbody tr:hover { background: var(--accent-soft); }
 /* --surface-solid, bukan --card: --card tembus pandang (.62) dan membuat tabel di
    belakang panel ikut terlihat */
 .ud-panel { position: relative; width: 100%; max-width: 560px; max-height: 80vh; overflow: auto;
-  padding: 18px 18px 22px; border-radius: 14px; background: var(--surface-solid, #FFF);
+  padding: 18px 18px 22px; border-radius: 14px;
+  background: color-mix(in srgb, var(--surface-solid, #FFF) 78%, transparent);
+  backdrop-filter: var(--blur, blur(18px) saturate(160%)); -webkit-backdrop-filter: var(--blur, blur(18px) saturate(160%));
   color: var(--text, #0F172A); border: 1px solid var(--hair, #E2E8F0);
   box-shadow: 0 20px 50px rgba(11, 31, 58, .28); }
 
@@ -1366,6 +1375,134 @@ table.grid tbody tr:hover { background: var(--accent-soft); }
 .ud-card-v { font-size: 22px; font-weight: 700; }
 
 .ud-card-s { font-size: 11px; color: var(--muted, #64748B); }
+
+
+/* ---------------- panel vendor: kartu per vendor + dropdown unit ---------------- */
+@keyframes udPanelIn {
+  from { opacity: 0; transform: translateY(14px) scale(.98); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes vdPop {
+  from { opacity: 0; transform: translateY(10px) scale(.96); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes vdDrop {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+
+
+.ud-wrap.open .ud-panel { animation: udPanelIn .24s cubic-bezier(.2, .8, .3, 1) both; }
+
+
+.vd-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+
+
+/* tabel unit vendor di bawah grid kartu vendor (dalam modal) */
+.vd-table {
+  margin-top: 12px;
+  border: 1px solid var(--hair, #E2E8F0);
+  border-radius: 10px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--surface-solid, #FFF) 80%, transparent);
+  animation: vdDrop .22s ease both;
+}
+
+.vd-table-head {
+  padding: 8px 12px;
+  font-size: 11px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted, #64748B);
+  background: var(--surface-2, #F1F5F9);
+  border-bottom: 1px solid var(--hair, #E2E8F0);
+}
+
+.vd-table-body { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+.vd-table-body th {
+  padding: 6px 12px; text-align: left; font-size: 11px; text-transform: uppercase;
+  color: var(--muted, #64748B); border-bottom: 1px solid var(--hair, #E2E8F0);
+}
+
+.vd-table-body td { padding: 6px 12px; border-bottom: 1px solid var(--hair, #EDF2F7); }
+
+.vd-table-body tr:last-child td { border-bottom: 0; }
+
+.vd-table-body .vd-tnum { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.vd-card {
+  position: relative;
+  display: block;
+  padding: 10px 30px 10px 12px;
+  text-align: left;
+  color: var(--ink, #0F172A);
+  background: var(--surface-2, #F1F5F9);
+  border: 1px solid var(--hair, #E2E8F0);
+  border-left: 4px solid var(--c, #1D4ED8);
+  border-radius: 10px;
+  cursor: pointer;
+  animation: vdPop .28s cubic-bezier(.2, .8, .3, 1) both;
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+
+.vd-card-head { display: grid; gap: 2px; padding-right: 104px; }
+
+.vd-card:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(11, 31, 58, .12); }
+
+.vd-card:focus-visible { outline: 2px solid var(--primary-600, #1D4ED8); outline-offset: 2px; }
+
+.vd-card.open { border-color: var(--c, #1D4ED8); box-shadow: 0 0 0 2px var(--accent-soft, rgba(99, 102, 241, .13)); }
+
+.vd-name { font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted, #64748B); }
+
+.vd-val { font-size: 20px; font-variant-numeric: tabular-nums; }
+
+.vd-sub { font-size: 11px; color: var(--muted, #64748B); }
+
+.vd-logo {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  max-width: 96px;
+  max-height: 34px;
+  height: auto;
+  object-fit: contain;
+  object-position: right center;
+  opacity: .92;
+}
+
+.vd-chev {
+  position: absolute; bottom: 10px; right: 9px; width: 14px; height: 14px;
+  color: var(--muted, #64748B); transition: transform .18s ease;
+}
+
+.vd-card.open .vd-chev { transform: rotate(180deg); }
+
+
+.vd-badge {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 0 5px;
+  border-radius: 4px;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  color: #fff;
+  background: #1E40AF;
+  vertical-align: 1px;
+}
+
+.vd-badge.wt { background: #0891B2; }
+
+
+@media (prefers-reduced-motion: reduce) {
+  .ud-wrap.open .ud-panel,
+  .vd-card,
+  .vd-table { animation: none; }
+}
 
 
 .ud-table { width: 100%; border-collapse: collapse; font-size: 13px; }
