@@ -80,6 +80,22 @@ if (Test-Path $HEB) {
     if ($LASTEXITCODE -ne 0) { Gagal "build halaman utama (build_gabungan_he.py). Upload dibatalkan." }
 }
 
+# ---------- 4b. Isi halaman Cost-Control/ (role ECC & Admin General) dengan Monitoring Cost Control TERENKRIPSI ----------
+$MCC = 'D:\01. ENGINEERING MMJ\9. MMJ 2026\02. MMJ Report\03. Monthly Report\02. Cost Control\00. Monitoring Cost Control\Tools\publish_github_cc.py'
+if ((Test-Path $MCC) -and (Test-Path "$REPO\Cost-Control\index.html")) {
+    Langkah "Memasang Monitoring Cost Control (terenkripsi) ke halaman Cost-Control..."
+    & python $MCC "$REPO"
+    if ($LASTEXITCODE -ne 0) { Gagal "pasang Monitoring Cost Control (publish_github_cc.py). Upload dibatalkan." }
+}
+
+# ---------- 4c. Isi halaman CSR/ (role Admin General & Admin Eksternal) dengan Dashboard CSR ----------
+$CSR = 'D:\01. ENGINEERING MMJ\9. MMJ 2026\02. MMJ Report\08. Support Divisi\01. External\Dashboard CSR\Tools\publish_github_csr.py'
+if ((Test-Path $CSR) -and (Test-Path "$REPO\CSR\index.html")) {
+    Langkah "Memasang Dashboard CSR ke halaman CSR..."
+    & python $CSR "$REPO"
+    if ($LASTEXITCODE -ne 0) { Gagal "pasang Dashboard CSR (publish_github_csr.py). Upload dibatalkan." }
+}
+
 # ---------- 5. Commit & push ----------
 # semua hasil build (halaman utama, halaman per tab mis. Batu-Split/, assets/, login.html) - struktur bisa
 # berubah sewaktu-waktu oleh collaborator; salinan repo ini hanya cermin & dibersihkan di awal, jadi aman ambil semua

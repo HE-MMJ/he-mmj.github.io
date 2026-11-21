@@ -373,6 +373,25 @@ def build_hse_template(exec_tpl, tab, judul):
                           _HSE_MAIN % {"judul": judul, "nama": nama})
 
 
+# halaman Dashboard CSR (izin "csr" = Admin General & Admin Eksternal). Isinya
+# kerangka saja; dashboard CSR asli dipasang sesudah build oleh
+# publish_github_csr.py (folder Dashboard CSR/Tools, dipanggil upload_github.ps1).
+_CSR_MAIN = """
+  <header class="top" id="csr-top">
+    <div>
+      <div class="eyebrow">CSR</div>
+      <h1>Dashboard CSR<span>PT. Musi Mitra Jaya</span></h1>
+      <div class="sub">Data CSR belum dipasang.</div>
+    </div>
+  </header>
+"""
+
+
+def build_csr_template(exec_tpl):
+    """Halaman Dashboard CSR (isi dipasang publish_github_csr.py)."""
+    return _page_template(exec_tpl, "csr", "Dashboard CSR", _CSR_MAIN)
+
+
 def patch_shell_js(txt):
     """Daftarkan tab 'he' di shell: map template, mount(), regex hash, fallback."""
     txt = txt.replace('lt: asFrag(document.getElementById("mmjT_lt"))',
@@ -583,8 +602,9 @@ def main():
     cost_tpl = build_cost_template(tpls["exec"])
     simper_tpl = build_hse_template(tpls["exec"], "simper", "Data Simper")
     dt_tpl = build_hse_template(tpls["exec"], "dt", "Data DT")
+    csr_tpl = build_csr_template(tpls["exec"])
     block = "\n".join([tpls["exec"], tpls["haul"], tpls["batu"], tpls["lt"],
-                       he_tpl, cost_tpl, simper_tpl, dt_tpl])
+                       he_tpl, cost_tpl, simper_tpl, dt_tpl, csr_tpl])
     shell = shell[:start] + block + shell[end:]
 
     # 5) pecah menjadi situs modular: index.html + assets/css + assets/js + assets/data
