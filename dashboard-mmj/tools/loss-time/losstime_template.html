@@ -564,7 +564,7 @@ section[hidden]{display:none!important}
       <div class="scale" id="scHm"></div>
     </div>
     <div class="card c7" id="rfRh">
-      <div class="ch"><div><h2>Rainfall vs rain hours</h2><p>Batang = rata-rata rainfall pos (mm) · garis = rata-rata durasi hujan pos (jam)</p></div>
+      <div class="ch"><div><h2>Rainfall vs rain hours</h2><p>Batang = rainfall rata-rata pos (mm) · garis = durasi hujan (jam) · arahkan kursor untuk detail</p></div>
         <div class="ctl"><div class="seg" id="segRh" role="group" aria-label="Route"></div><button class="tbtn" data-t="cRh">Tabel</button></div></div>
       <div class="legend" id="lgRh"></div><div id="cRh"></div>
     </div>
@@ -573,7 +573,7 @@ section[hidden]{display:none!important}
       <div id="cPos" class="hb"></div>
     </div>
     <div class="card c12" id="rfCb">
-      <div class="ch"><div><h2>Curah hujan vs loss time hujan</h2><p>Batang = rata-rata rainfall pos (mm) · garis = loss time Idle (Rain + Slippery) dalam jam · "Semua" memakai H0</p></div>
+      <div class="ch"><div><h2>Curah hujan vs loss time hujan</h2><p>Batang = rainfall rata-rata pos (mm) · garis = loss time hujan (Rain + Slippery, jam) · "Semua" memakai H0</p></div>
         <div class="ctl"><div class="seg" id="segCb" role="group" aria-label="Route"></div><button class="tbtn" data-t="cCb">Tabel</button></div></div>
       <div class="legend" id="lgCb"></div><div id="cCb"></div>
     </div>
@@ -838,37 +838,56 @@ function cols(el, {cats, labels, series, h=270, tipTitle, unit="jam", vf=fh, onC
 }
 
 /* ---------- combo: bar (mm) + line (jam) ---------- */
-function combo(el, {cats, labels, bars, line, h=260, tipTitle}){
+const nf1Lab = v => v.toLocaleString("id-ID",{maximumFractionDigits:1});
+function peakNote(bv, lv, ln, B){ let i=-1; bv.forEach((v,k)=>{ if(v>0&&(i<0||v>bv[i])) i=k; });
+  const tb=bv.reduce((a,v)=>a+(v||0),0), tl=lv.reduce((a,v)=>a+(v||0),0);
+  return `<span style="display:block;margin-left:auto;color:var(--ink-2)">Total <b>${fmm(tb)} mm</b> · <b>${fh(tl)} jam</b> ${ln}${i>=0?` · hujan terbesar <b>${(B.daily?B.title:B.label)(B.keys[i])}</b> (${fmm(bv[i])} mm)`:""}</span>`; }
+function combo(el, {cats, labels, bars, line, h=240, tipTitle}){
+  /* versi sederhana: 1 seri batang, label angka di semua periode, posisi dicari agar tidak bertumpuk */
   const LC = line.c || "var(--line)", LU = line.u || "jam";
-  const W0 = Math.max(el.clientWidth, 260), bmax = Math.max(...bars.flatMap(s=>s.vals),0), lmax=Math.max(...line.vals,0);
-  const head = Math.max(0,...bars.flatMap(s=>s.vals).map(v=>v>0?DLF.cmp(v).length*5.7:0))+12;
-  const W = W0, H=h+head, m={l:40,r:40,t:24+head,b:26};
-  const iw=W-m.l-m.r, ih=H-m.t-m.b;
-  const s1=niceStep(bmax/4||1), n1=Math.max(1,Math.ceil(bmax/s1)), s2=niceStep(lmax/4||1), n2=Math.max(1,Math.ceil(lmax/s2));
+  const W = Math.max(el.clientWidth, 260), bv = bars[0] ? bars[0].vals : cats.map(()=>0), BC = bars[0] ? bars[0].c : "var(--rain)";
+  const bmax = Math.max(...bv,0), lmax=Math.max(...line.vals,0);
+  const H=h, m={l:38,r:38,t:30,b:26}, iw=W-m.l-m.r, ih=H-m.t-m.b;
+  const s1=niceStep(bmax/3||1), n1=Math.max(1,Math.ceil(bmax/s1)), s2=niceStep(lmax/3||1), n2=Math.max(1,Math.ceil(lmax/s2));
   const nt=Math.max(n1,n2), M1=s1*nt, M2=s2*nt;
   const y1=v=>m.t+ih-v/M1*ih, y2=v=>m.t+ih-v/M2*ih;
-  const band=iw/cats.length, nb=bars.length, bw=Math.min(nb>1?12:26, band*(nb>1?0.26:0.6));
+  const band=iw/cats.length, bw=Math.max(2, Math.min(22, band*0.62));
   let g="";
   for(let k=0;k<=nt;k++){ const yy=y1(s1*k);
-    g+=`<line x1="${m.l}" x2="${W-m.r}" y1="${yy}" y2="${yy}" stroke="${k?"var(--grid)":"var(--axis)"}" ${k?'stroke-dasharray="3 4"':""}/>`;
-    g+=`<text x="${m.l-8}" y="${yy+4}" text-anchor="end">${axisFmt(s1*k)}</text><text x="${W-m.r+8}" y="${yy+4}" text-anchor="start" style="fill:${LC}">${axisFmt(s2*k)}</text>`; }
-  g+=`<text x="${m.l-32}" y="10" text-anchor="start" style="font-size:10px">mm</text><text x="${W-m.r+8}" y="10" style="font-size:10px;fill:${LC}">${LU}</text>`;
+    g+=`<line x1="${m.l}" x2="${W-m.r}" y1="${yy}" y2="${yy}" stroke="${k?"var(--grid)":"var(--axis)"}" ${k?'stroke-dasharray="2 5" opacity=".7"':""}/>`;
+    g+=`<text x="${m.l-8}" y="${yy+4}" text-anchor="end" style="fill:${BC}">${axisFmt(s1*k)}</text><text x="${W-m.r+8}" y="${yy+4}" text-anchor="start" style="fill:${LC}">${axisFmt(s2*k)}</text>`; }
+  g+=`<text x="${m.l-8}" y="14" text-anchor="end" style="font-size:10px;font-weight:700;fill:${BC}">mm</text><text x="${W-m.r+8}" y="14" style="font-size:10px;font-weight:700;fill:${LC}">${LU}</text>`;
   const lw = Math.max(...labels.map(l=>String(l).length),1)*6.4+10;
   const every = Math.ceil(cats.length / Math.max(1, Math.floor(iw/lw)));
-  const pts=[];
+  const top = new Set(bv.map((v,i)=>[v,i]).filter(a=>a[0]>0).sort((a,b)=>b[0]-a[0]).slice(0,band<50?2:3).map(a=>a[1]));
+  const lTop = line.vals.reduce((b,v,i)=>v>(line.vals[b]||0)?i:b,0);
+  const pts=[], used=[], bLab=[]; let lab="";
+  const TX=(x,y,t,col,rot)=>`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" ${rot?`transform="rotate(-90 ${x.toFixed(1)} ${y.toFixed(1)})"`:""} text-anchor="middle" dominant-baseline="central" pointer-events="none" style="font-size:${rot?9:10}px;font-weight:700;fill:${col};paint-order:stroke;stroke:var(--surface-solid);stroke-width:3px">${t}</text>`;
+  const bt=bv.map(v=>v>0?DLF.cmp(v):""), lt=line.vals.map(v=>v>0?nf1Lab(v):"");
+  const rot=[...bt,...lt].some(t=>t.length*6+4>band);
+  const box=(x,y,t)=>{ const w=rot?10:t.length*6+2, h=rot?t.length*5.3+2:12; return [x-w/2,y-h/2,x+w/2,y+h/2]; };
+  const over=q=>used.reduce((a,u)=>a+Math.max(0,Math.min(q[2],u[2])-Math.max(q[0],u[0]))*Math.max(0,Math.min(q[3],u[3])-Math.max(q[1],u[1])),0);
   cats.forEach((c,i)=>{
-    const cx=m.l+band*i+band/2;
+    const cx=m.l+band*i+band/2, v=bv[i]||0;
     if(i%every===0) g+=`<text x="${cx}" y="${H-7}" text-anchor="middle">${labels[i]}</text>`;
-    bars.forEach((s,si)=>{ const v=s.vals[i]||0; if(v<=0) return; const x=cx-(nb*bw+(nb-1)*2)/2+si*(bw+2), yy=y1(v);
-      g+=`<rect x="${x}" y="${yy}" width="${bw}" height="${Math.max(y1(0)-yy,0.6)}" rx="${Math.min(3,bw/2)}" fill="${s.c}" opacity=".85"/>`;
-      g+=dlRot(x+bw/2-1,yy,DLF.cmp(v),s.c); });
     pts.push([cx, y2(line.vals[i]||0)]);
+    if(v>0){ const yy=y1(v); g+=`<rect x="${cx-bw/2}" y="${yy}" width="${bw}" height="${Math.max(y1(0)-yy,0.8)}" rx="${Math.min(3,bw/2)}" fill="${BC}" opacity="${top.has(i)?.95:.55}"/>`;
+      const y=yy-3-(rot?bt[i].length*5.3+2:12)/2; used.push(box(cx,y,bt[i])); lab+=TX(cx,y,bt[i],BC,rot); }
   });
-  if(pts.length){ g+=`<path d="${pts.map((p,i)=>(i?"L":"M")+p[0]+","+p[1]).join(" ")}" fill="none" stroke="${LC}" stroke-width="2.2" stroke-linejoin="round"/>`;
-    pts.forEach((p,i)=>{ if((line.vals[i]||0)>0) g+=`<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="var(--surface-solid)" stroke="${LC}" stroke-width="2"/>`; });
-    const kk=Math.max(1,Math.ceil(30/band)); pts.forEach((p,i)=>{ const v=line.vals[i]||0; if(v>0 && i%kk===0) g+=dlPt(p[0],p[1],DLF.cmp(v),LC); }); }
+  if(pts.length && lmax>0){ g+=`<path d="${pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ")}" fill="none" stroke="${LC}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    pts.forEach((p,i)=>{ if(lt[i]) used.push([p[0]-3,p[1]-3,p[0]+3,p[1]+3]); });
+    pts.forEach((p,i)=>{ const t=lt[i]; if(!t) return;
+      g+=`<circle cx="${p[0]}" cy="${p[1]}" r="${i===lTop?4:2.8}" fill="var(--surface-solid)" stroke="${LC}" stroke-width="2"/>`;
+      /* cari posisi kosong terdekat: atas, bawah, lalu makin jauh; tetap di dalam area grafik */
+      const hh=(rot?t.length*5.3+2:12)/2; let best=null;
+      for(let d=hh+5; d<ih; d+=3){ for(const y of [p[1]-d,p[1]+d]){
+          if(y-hh<2 || y+hh>y1(0)-1) continue;
+          const q=box(p[0],y,t), o=over(q); if(!best||o<best.o) best={y,q,o}; }
+        if(best&&!best.o) break; }
+      if(best){ used.push(best.q); lab+=TX(p[0],best.y,t,LC,rot); } }); }
+  g+=lab;
   cats.forEach((c,i)=>{ g+=`<rect class="hit" data-i="${i}" x="${m.l+band*i}" y="${m.t}" width="${band}" height="${ih}" fill="transparent"/>`; });
-  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;height:auto" role="img" aria-label="Grafik curah hujan dan loss time">${g}</svg>`;
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;height:auto" role="img" aria-label="Grafik curah hujan dan ${line.n}">${g}</svg>`;
   el.querySelectorAll(".hit").forEach(r=>{ const i=+r.dataset.i;
     r.onmousemove=e=>tip(e, tipTitle?tipTitle(i):labels[i], [...bars.map(s=>({n:s.n,c:s.c,v:fmm(s.vals[i])+" mm"})),{n:line.n,c:LC,v:fh(line.vals[i])+" "+LU}]);
     r.onmouseleave=hide; });
@@ -1384,23 +1403,24 @@ function render(){
 
   /* rainfall vs rain hours */
   const rhRoutes = st.rh==="all" ? routesSel : [st.rh].filter(r=>st.routes.has(r));
-  const rhBars = rhRoutes.map(r=>({n:`Rainfall ${r}`, c:RCOL[r], vals:avgPos(r, x=>x.mm)}));
+  const avgSel = (rs, f) => { const ps=new Set(POS.filter(p=>posRoutes(p.n).some(r=>rs.includes(r)) && DATA.rain.some(x=>x.p===p.n)).map(p=>p.n)); const m=groupBy(R.filter(x=>ps.has(x.p)), x=>B.key(x.d), f); return B.keys.map(k=>(m.get(k)||0)/(ps.size||1)); };
+  const rhBars = [{n:`Rainfall ${st.rh==="all"?"semua route":st.rh}`, c:st.rh==="all"?"var(--rain)":RCOL[st.rh], vals:avgSel(rhRoutes, x=>x.mm)}];
   const rhPos = new Set(POS.filter(p=>posRoutes(p.n).some(r=>rhRoutes.includes(r)) && DATA.rain.some(x=>x.p===p.n)).map(p=>p.n));
   const rhN = rhPos.size || 1;
   const rhM = groupBy(R.filter(x=>rhPos.has(x.p)), x=>B.key(x.d), x=>x.h);
   const rhLine = {n:`Rain hours ${st.rh==="all"?"":st.rh}`.trim(), c:"var(--accent)", u:"jam", vals:B.keys.map(k=>(rhM.get(k)||0)/rhN)};
-  $("lgRh").innerHTML = rhBars.map(s=>`<span><i style="background:${s.c}"></i>${s.n} (rata-rata pos)</span>`).join("") + `<span><i class="ln" style="background:var(--accent)"></i>${rhLine.n} (rata-rata ${rhN} pos)</span>`;
+  $("lgRh").innerHTML = `<span><i style="background:${rhBars[0].c}"></i>${rhBars[0].n} (mm, rata-rata ${rhN} pos)</span><span><i class="ln" style="background:var(--accent)"></i>${rhLine.n} (jam)</span>` + peakNote(rhBars[0].vals, rhLine.vals, "hujan", B);
   const tRh = rhRoutes.length ? combo($("cRh"), {cats:B.keys, labels:B.keys.map(B.label), bars:rhBars, line:rhLine, tipTitle:i=>B.title(B.keys[i])}) : ($("cRh").innerHTML='<div class="empty">Route tidak dipilih</div>', {h:[],r:[]});
   if(showTable.cRh) $("cRh").innerHTML = tableHTML(tRh);
 
   /* curah hujan vs loss time hujan */
   const cbRoutes = st.cb==="all" ? routesSel : [st.cb].filter(r=>st.routes.has(r));
-  const cbBars = cbRoutes.map(r=>({n:`Rainfall ${r}`, c:RCOL[r], vals:avgPos(r, x=>x.mm)}));
+  const cbBars = [{n:`Rainfall ${st.cb==="all"?"semua route":st.cb}`, c:st.cb==="all"?"var(--rain)":RCOL[st.cb], vals:avgSel(cbRoutes, x=>x.mm)}];
   let lineVals;
   if(st.cb==="all"){ const m=new Map(); H0m.forEach((o,d)=>{ const k=B.key(d); m.set(k,(m.get(k)||0)+(o.c.R||0)+(o.c.S||0)); }); lineVals=B.keys.map(k=>m.get(k)||0); }
   else { const m=groupBy(SA.filter(s=>(s.c==="R"||s.c==="S") && s.r===st.cb), s=>B.key(s.d), s=>s.h); lineVals=B.keys.map(k=>m.get(k)||0); }
   const cbLine = {n:`Idle (R+S) ${st.cb==="all"?"H0":st.cb}`, vals:lineVals};
-  $("lgCb").innerHTML = cbBars.map(s=>`<span><i style="background:${s.c}"></i>${s.n} (rata-rata pos)</span>`).join("") + `<span><i class="ln" style="background:var(--line)"></i>Loss time ${cbLine.n}</span>`;
+  $("lgCb").innerHTML = `<span><i style="background:${cbBars[0].c}"></i>${cbBars[0].n} (mm, rata-rata pos)</span><span><i class="ln" style="background:var(--line)"></i>Loss time ${cbLine.n} (jam)</span>` + peakNote(cbBars[0].vals, cbLine.vals, "loss time", B);
   const tCb = cbRoutes.length ? combo($("cCb"), {cats:B.keys, labels:B.keys.map(B.label), bars:cbBars, line:cbLine, tipTitle:i=>B.title(B.keys[i])}) : ($("cCb").innerHTML='<div class="empty">Route tidak dipilih</div>', {h:[],r:[]});
   if(showTable.cCb) $("cCb").innerHTML = tableHTML(tCb);
 
