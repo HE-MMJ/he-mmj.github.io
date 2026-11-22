@@ -181,7 +181,10 @@ def main():
                       txt(g(r, "vendor")), g(r, "Units Code"), g(r, "Time Unload"), ton))
 
     # ---------- bulan berjalan H1 : Input CH CCP - ISP61 ----------
-    ws = wb["Input CH CCP - ISP61"]
+    _h1 = next((n for n in ("Input CH CCP - ISP68", "Input CH CCP - ISP61") if n in wb.sheetnames), None)
+    if _h1 is None:
+        raise KeyError("Sheet Input CH CCP - ISP68 / ISP61 tidak ditemukan")
+    ws = wb[_h1]
     H = header(ws, 3, ["Date Dumping Shift Mode", "Time Unload", "Units Code", "Tonnage", "Company", "Product Origin"])
     rawH1 = []
     for r in ws.iter_rows(min_row=4, values_only=True):
@@ -230,7 +233,7 @@ def main():
             continue
         r1.add(d.day - 1, MITRA.index(comp), block_of(tm), origin, vendor, unit, ton)
     for k, (n, t) in unmappedH1.items():
-        cek.append({"lvl": "warn", "msg": f"Input CH CCP - ISP61: {n} rit ({t:,.2f} t) dengan {k} tidak masuk hitungan."})
+        cek.append({"lvl": "warn", "msg": f"{_h1}: {n} rit ({t:,.2f} t) dengan {k} tidak masuk hitungan."})
 
     # ---------- tahunan : ANNUAL GPU-BKL ----------
     ws = wb["ANNUAL GPU-BKL"]
