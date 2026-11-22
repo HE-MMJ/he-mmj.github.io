@@ -392,6 +392,22 @@ def build_csr_template(exec_tpl):
     return _page_template(exec_tpl, "csr", "Dashboard CSR", _CSR_MAIN)
 
 
+def patch_cmp(tpl, exec_tpl):
+    """Coal Achievement vs Loss Time (opsional): pakai menu, tema & aturan tombol situs."""
+    nav = re.search(r'<div class="mmjnav" id="mmjNav".*?<div class="mlbl mhere">Menu halaman</div></div>',
+                    exec_tpl, re.S)
+    if nav:
+        tpl = tpl.replace('<i data-mmjnav-copy hidden></i>', nav.group(0), 1)
+    # tema satu kunci untuk semua halaman situs; tombol PDF tidak dipakai di situs
+    tpl = tpl.replace('localStorage.getItem("dashTheme3")',
+                      'localStorage.getItem("mmjTheme")||localStorage.getItem("dashTheme3")')
+    tpl = tpl.replace('localStorage.setItem("dashTheme3",theme)', 'localStorage.setItem("mmjTheme",theme)')
+    # common.css dimuat sesudah CSS halaman -> warna grafik tema gelap perlu selector lebih kuat
+    tpl = tpl.replace(':root[data-theme="dark"]{--prod:', 'html:root[data-theme="dark"]{--prod:')
+    tpl = re.sub(r'\s*<button class="qbtn"[^>]*id="cPdf".*?</button>', "", tpl, flags=re.S)
+    return tpl.replace('$("cPdf").onclick=', 'if($("cPdf")) $("cPdf").onclick=')
+
+
 def patch_shell_js(txt):
     """Daftarkan tab 'he' di shell: map template, mount(), regex hash, fallback."""
     txt = txt.replace('lt: asFrag(document.getElementById("mmjT_lt"))',
@@ -516,7 +532,8 @@ def main():
 
     # 2) ambil 4 template lama (verbatim) + patch exec
     tpls = {}
-    for key in ("exec", "haul", "batu", "lt"):
+    has_cmp = '<template id="mmjT_cmp">' in shell       # sub menu Loss Time (opsional)
+    for key in ("exec", "haul", "batu", "lt") + (("cmp",) if has_cmp else ()):
         m = re.search(r'<template id="mmjT_%s">.*?</template>' % key, shell, re.S)
         if not m:
             raise SystemExit("template mmjT_%s tidak ditemukan" % key)
@@ -566,6 +583,9 @@ def main():
             tpls[k] = tpls[k].replace('<div class="mlbl">Monitoring</div>',
                                       '<div class="mlbl">Monitoring</div>' + nav_item)
 
+    if has_cmp:
+        tpls["cmp"] = patch_cmp(tpls["cmp"], tpls["exec"])
+
     # 3) susun template HE dengan format yang sama seperti build_gabungan.py
     he_head = ('<title data-mmj-head>Dashboard Timesheet HE - MMJ November 2026</title>'
                '<style data-mmj-head>%s</style>' % css)
@@ -604,7 +624,8 @@ def main():
     dt_tpl = build_hse_template(tpls["exec"], "dt", "Data DT")
     csr_tpl = build_csr_template(tpls["exec"])
     block = "\n".join([tpls["exec"], tpls["haul"], tpls["batu"], tpls["lt"],
-                       he_tpl, cost_tpl, simper_tpl, dt_tpl, csr_tpl])
+                       he_tpl, cost_tpl, simper_tpl, dt_tpl, csr_tpl]
+                      + ([tpls["cmp"]] if has_cmp else []))
     shell = shell[:start] + block + shell[end:]
 
     # 5) pecah menjadi situs modular: index.html + assets/css + assets/js + assets/data

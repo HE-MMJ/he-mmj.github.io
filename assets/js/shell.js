@@ -97,6 +97,7 @@
      terpisah). Halaman utama = Dashboard Eksekutif di root. */
   var PAGE_URL = { exec: "", he: "Heavy-Equipment/", haul: "Coal-Hauling/",
                    batu: "Batu-Split/", lt: "Loss-Time/", rf: "Rainfall/",
+                   cmp: "Coal-Achievement-vs-Loss-Time/",
                    cost: "Cost-Control/", simper: "Data-Simper/", dt: "Data-DT/",
                    csr: "CSR/" };
 

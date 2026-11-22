@@ -51,7 +51,8 @@ except Exception:            # pragma: no cover - fallback kalau modul hilang
 TABS = ["exec", "haul", "batu", "lt", "he", "cost"]
 
 # Dashboard Eksekutif membaca data dashboard lain lewat window.mmjData()
-DATA_DEPS = {"exec": ["haul", "batu", "lt", "he-summary"]}
+DATA_DEPS = {"exec": ["haul", "batu", "lt", "he-summary"],
+             "cmp": ["haul", "lt"]}
 
 # --------------------------------------------------------------- halaman ----
 # Tiap dashboard dipublikasikan sebagai halaman sendiri (folder + index.html,
@@ -77,6 +78,8 @@ PAGES = [
      "judul": "Loss Time - MMJ", "menu": "Loss Time"},
     {"tab": "rf", "dir": "Rainfall", "css": "lt", "view": "rain", "src": "lt",
      "judul": "Rainfall - MMJ", "menu": "Rainfall"},
+    {"tab": "cmp", "dir": "Coal-Achievement-vs-Loss-Time", "css": "cmp",
+     "judul": "Coal Achievement vs Loss Time - MMJ", "menu": "Coal Achievement vs Loss Time"},
     {"tab": "cost", "dir": "Cost-Control", "css": "cost", "auth": "costcontrol",
      "judul": "Cost Control - MMJ", "menu": "Cost Control"},
     {"tab": "simper", "dir": "Data-Simper", "css": "simper", "auth": "hse",
@@ -95,6 +98,7 @@ NAV_URL = {
     "batu": "Batu-Split/",
     "lt": "Loss-Time/",
     "rf": "Rainfall/",
+    "cmp": "Coal-Achievement-vs-Loss-Time/",
     "cost": "Cost-Control/",
     "simper": "Data-Simper/",
     "dt": "Data-DT/",
@@ -113,6 +117,12 @@ _IC_DT = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-wid
 
 _IC_CSR = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
            '<path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z"/></svg>')
+
+# sub menu Loss Time (hanya bila template mmjT_cmp ada di shell)
+_SUB_CMP = ('<a class="msub" href="#tab=cmp" data-mmjtab="cmp">'
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
+            '<path d="M5 20V10m5 10V4"/><path d="M14 17l3-5 4 3"/></svg>'
+            'Coal Achievement vs Loss Time</a>')
 
 # menu tambahan yang disisipkan ke sidebar tiap halaman (urutan tampil)
 #   (tab, capability, folder tujuan, label, ikon)
@@ -528,7 +538,7 @@ def _prefix_paths(txt, prefix):
     return re.sub(r'(["\'])assets/', lambda m: m.group(1) + prefix + "assets/", txt)
 
 
-def _rewrite_nav(markup, prefix):
+def _rewrite_nav(markup, prefix, subnav=False):
     """Menu sidebar: #tab=<tab> -> halaman tujuan (Heavy-Equipment/ dst).
 
     Cost Control, Data Simper, dan Data DT juga dipindah dari menu dalam-halaman
@@ -545,6 +555,10 @@ def _rewrite_nav(markup, prefix):
             return m.group(0)
         return 'href="%s%s" data-mmj-cap="public"' % (prefix, url or "./")
 
+    if subnav and 'data-mmjtab="cmp"' not in markup:
+        # sub menu di bawah Loss Time (disisipkan di sini supaya sama di semua halaman)
+        markup = re.sub(r'<a href="#tab=lt" data-mmjtab="lt"[^>]*>.*?</a>',
+                        lambda m: m.group(0) + _SUB_CMP, markup, count=1, flags=re.S)
     markup = re.sub(r'href="#tab=(\w+)"', rep, markup)
 
     # 1) bagian Cost Control di dalam halaman Eksekutif sudah tidak dipakai
@@ -793,7 +807,7 @@ def emit(html, root, version=None):
         rel = (folder + "/index.html") if folder else "index.html"
 
         markup, heads = _pull_head(data["markup"])
-        markup = _rewrite_nav(markup, prefix)
+        markup = _rewrite_nav(markup, prefix, "cmp" in page_data)
         markup = _prefix_paths(markup, prefix)
 
         head = "\n".join(heads + ([data["head"]] if data["head"] else []))

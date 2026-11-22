@@ -59,6 +59,10 @@ html[data-theme="dark"] .mmj-user-in:hover{color:#a5b4fc;border-color:#6366f1;ba
   }
 }
 
+/* sub menu (mis. Coal Achievement vs Loss Time di bawah Loss Time) */
+.mmjnav a.msub{margin-left:18px;padding:7px 10px;font-size:12.5px;gap:9px;line-height:1.3}
+@media (min-width:1001px){.mmjnav a.msub{white-space:normal;min-width:0}}
+
 /* ruang di bawah sidebar (desktop): kaki sidebar (menu user + tema) menempel
    langsung di dasar, jadi tidak perlu padding bawah tambahan */
 @media (min-width:901px){
