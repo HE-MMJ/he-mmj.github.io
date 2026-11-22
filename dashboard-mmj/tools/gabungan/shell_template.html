@@ -29,6 +29,7 @@ body{margin:0;background:#edf2fb;color:#121833;font:15px/1.5 system-ui,-apple-sy
   var asFrag = function(t){ if(!t) return null; if(t.content) return t.content;
     var d=document.createElement("div"); d.innerHTML=t.innerHTML; var f=document.createDocumentFragment(); while(d.firstChild) f.appendChild(d.firstChild); return f; };
   var T = {exec: asFrag(document.getElementById("mmjT_exec")), haul: asFrag(document.getElementById("mmjT_haul")), batu: asFrag(document.getElementById("mmjT_batu")), lt: asFrag(document.getElementById("mmjT_lt"))};
+  T.cmp = asFrag(document.getElementById("mmjT_cmp"));   /* sub menu Coal Achievement vs Loss Time; baris lain jangan diubah (dipatch build situs gabungan) */
   /* data mentah tiap dashboard untuk Dashboard Eksekutif (dibaca dari script dashboard aslinya, tidak diduplikasi) */
   var DC = {};
   window.mmjData = function(k){
@@ -51,6 +52,7 @@ body{margin:0;background:#edf2fb;color:#121833;font:15px/1.5 system-ui,-apple-sy
 
   function mount(tab){
     var key = (tab === "batu" || tab === "haul" || tab === "exec") ? tab : "lt";
+    if(tab === "cmp") key = "cmp";
     if(!T[key]){ key = ["exec","haul","batu","lt"].filter(function(k){ return T[k]; })[0]; tab = key; }
     try{ localStorage.setItem("mmjTab", tab); }catch(e){}
     /* bersihkan dashboard sebelumnya */
@@ -64,6 +66,8 @@ body{margin:0;background:#edf2fb;color:#121833;font:15px/1.5 system-ui,-apple-sy
     try{ delete window.setView; }catch(e){ window.setView = undefined; }
     /* pasang dashboard terpilih */
     var frag = T[key].cloneNode(true);
+    var navAt = frag.querySelector("[data-mmjnav-copy]"), navSrc = navAt && T.exec && T.exec.querySelector("#mmjNav");
+    if(navSrc) navAt.parentNode.replaceChild(navSrc.cloneNode(true), navAt);
     var heads = frag.querySelectorAll("[data-mmj-head]");
     for(var h=0;h<heads.length;h++){ var el=heads[h]; el.removeAttribute("data-mmj-head");
       if(el.tagName === "TITLE"){ document.title = el.textContent; el.parentNode.removeChild(el); }
@@ -87,7 +91,9 @@ body{margin:0;background:#edf2fb;color:#121833;font:15px/1.5 system-ui,-apple-sy
   var tab = "", m = /tab=(exec|haul|batu|lt|rf)/.exec(location.hash || "");
   if(m) tab = m[1];
   if(!tab){ try{ tab = localStorage.getItem("mmjTab") || ""; }catch(e){} }
+  var wantCmp = T.cmp && (/tab=cmp/.test(location.hash || "") || (!m && tab === "cmp"));
   if(["exec","haul","batu","lt","rf"].indexOf(tab) < 0) tab = "exec";
+  if(wantCmp) tab = "cmp";
   mount(tab);
 })();
 </script>
