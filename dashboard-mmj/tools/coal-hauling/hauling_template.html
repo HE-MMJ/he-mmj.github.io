@@ -524,7 +524,7 @@ td .z{color:var(--muted)}
     </div>
     <div class="stack c4">
       <div class="card">
-        <div class="ch"><div><h2>Komposisi route 2026</h2><p id="pRoute"></p></div></div>
+        <div class="ch"><div><h2 id="tRouteC">Komposisi route 2026</h2><p id="pRoute"></p></div></div>
         <div class="donut" id="cRoute"></div>
       </div>
       <div class="card">
@@ -1072,9 +1072,11 @@ function render(){
   const yTT=k=>`${BLNF[k]} 2026 · ${STLAB[stOf(k)]}${k===CUR?` (s/d tgl ${LASTD})`:""}`;
   if(showTable.year) cYear.innerHTML=tableHTML(colTable(yMonths,yMonths.map(k=>BLN[k]),ySer,yTT,yTg));
   else cols(cYear,{cats:yMonths,labels:yMonths.map(k=>BLN[k]),series:ySer,marks,tipTitle:yTT,h:280,tgts:yTg});
-  const rs={H0:0,H2:0,X:0,RUN:0,H1:0}; yMonths.forEach(k=>ms.forEach(c=>{ const p=yParts(k,c); for(const q in rs) rs[q]+=p[q]; }));
-  pRoute.textContent=`Jan–${BLN[NMON-1]} 2026 · ${mLab} · H0 Mine–Port, H2 ISP–Port, H1 CPP–ISP (ruas terpisah)`;
-  donut(cRoute,[{n:"H0",c:"var(--rH0)",v:rs.H0},{n:"H2",c:"var(--rH2)",v:rs.H2},{n:"H0+H2 blm pisah",c:"var(--rX)",v:rs.X},{n:`H0+H2 ${BLN[MO-1]}`,c:"var(--rRUN)",v:rs.RUN},{n:"H1",c:"var(--rH1)",v:rs.H1}],"ton 2026");
+  { const cr=(yr==="H0"||yr==="H2")?yr:"H02", cl={H02:"H0+H2",H0:"H0",H2:"H2"}[cr], cc={H02:"var(--rH0)",H0:"var(--rH0)",H2:"var(--rH2)"}[cr];
+    const v02=yMonths.reduce((s,k)=>s+ms.reduce((a,c)=>a+yVal(k,c,cr),0),0), v1=yMonths.reduce((s,k)=>s+ms.reduce((a,c)=>a+yVal(k,c,"H1"),0),0);
+    tRouteC.textContent=`Komposisi ${cl} & H1 2026`;
+    pRoute.textContent=`Jan–${BLN[NMON-1]} 2026 · ${mLab} · ikut filter route & mitra Tonase bulanan · ${cl} ${{H02:"Port SBL",H0:"Mine–Port",H2:"ISP–Port"}[cr]}, H1 CPP–ISP`;
+    donut(cRoute,[{n:cl,c:cc,v:v02},{n:"H1",c:"var(--rH1)",v:v1}],"ton 2026"); }
   pYtdM.textContent=`${YL[yr]} · Jan–${BLN[NMON-1]} 2026 · ton (${hasTg?"capaian vs target YTD":"porsi"})`;
   hbars(cYtdM, ms.map((c,j)=>{ const tg=hasTg?yMonths.reduce((s,k)=>s+tgtM(yr,c,k)*(k===CUR?LASTD/DIM:1),0):0;
       return {label:`${c} · ${MN[c]}`, html:`${logoHTML(c,"lg sm")}${c}`, total:sum(ySer[j].vals), tg, segs:[{n:c,c:MCOL[c],v:sum(ySer[j].vals)}]}; }).sort((a,b)=>b.total-a.total),
