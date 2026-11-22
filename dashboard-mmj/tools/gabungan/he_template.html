@@ -860,7 +860,7 @@ th.wt-sortable:hover { background: #EDF3FC; color: var(--primary); }
           <span class="field-cap">Vendor</span>
           <span class="select-wrap">
             <select id="fVendor">
-              <option value="ALL">Semua Vendor</option>
+              <option value="ALL" selected>Semua Vendor</option>
               <optgroup label="Heavy Equipment">
                 <option value="GIP H1">GIP H1</option>
                 <option value="GIP H2">GIP H2</option>
@@ -949,17 +949,6 @@ th.wt-sortable:hover { background: #EDF3FC; color: var(--primary); }
       <div class="chart-box wt-chart-box">
         <div class="chart-head">
           <div class="chart-head-main">
-            <span class="wt-range-wrap">
-              <button type="button" id="wtRangeBtn" class="range-box" title="Klik untuk memilih rentang tanggal">
-                <svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M7 3v3m10-3v3M4 9h16M5 6h14a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z"/></svg>
-                <span class="range-cap">Rentang Waktu</span>
-                <span id="wtRangeVal">01 Nov &ndash; 30 Nov 2026</span>
-                <span class="range-caret" aria-hidden="true">&#9662;</span>
-              </button>
-              <input type="date" id="wtFrom" min="2026-11-01" max="2026-11-30" value="2026-11-01" hidden>
-              <input type="date" id="wtTo" min="2026-11-01" max="2026-11-30" value="2026-11-30" hidden>
-              <div id="wtCalPop" class="cal-pop" hidden></div>
-            </span>
             <h2 id="wtChartTitle">Grafik Penyiraman (Bar) &amp; MA (Garis) &mdash; Top 15 Water Truck</h2>
           </div>
           <div class="seg" id="wtCmpMenu">
@@ -986,7 +975,6 @@ th.wt-sortable:hover { background: #EDF3FC; color: var(--primary); }
               <th>Area Kerja</th>
               <th>Model / Capacity</th>
               <th class="sortable num" data-sort="HMTotal" title="Klik untuk mengurutkan">HM Total <span class="arrow" data-arrow="HMTotal"></span></th>
-              <th class="num" title="Jatah minimum jam kerja per unit per bulan">Min Hours</th>
               <th class="num" title="Sisa jatah HM = Min Hours - HM Total">Sisa HM</th>
               <th class="sortable num" data-sort="MA" title="Klik untuk mengurutkan">MA <span class="arrow" data-arrow="MA"></span></th>
               <th class="num">PA (%)</th>
@@ -1025,7 +1013,7 @@ th.wt-sortable:hover { background: #EDF3FC; color: var(--primary); }
                 <th class="col-optional">Area Kerja</th>
                 <th class="col-optional">Model / Capacity</th>
                 <th class="wt-sortable num" data-sort="P" title="Klik untuk mengurutkan">Total Penyiraman <span class="wt-arrow" data-arrow="P"></span></th>
-                <th class="num" title="Jumlah hari yang ada penyiraman dalam rentang terpilih">Hari Ada</th>
+                <th class="num" title="Jumlah hari yang ada penyiraman dalam rentang terpilih">Bekerja</th>
                 <th class="num">Rata-rata / Hari</th>
                 <th class="wt-sortable num" data-sort="Fuel" title="Klik untuk mengurutkan">Fuel (L) <span class="wt-arrow" data-arrow="Fuel"></span></th>
                 <th class="wt-sortable num" data-sort="CMP" title="Klik untuk mengurutkan"><span id="wtCmpColLabel">MA</span> <span class="wt-arrow" data-arrow="CMP"></span></th>
@@ -5165,7 +5153,7 @@ const WTD = (typeof WT_DATA !== 'undefined' && Array.isArray(WT_DATA)) ? WT_DATA
 // helper filter WT (mirror dari js/wt.js) dipakai tabel Belum & dropdown
 const WT_SHIFT1 = ['TLK', 'FBS', 'ASA'];
 const CHK_OK = '<svg class="chk" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.5 L5 9 L9.5 3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-function wtVendorKey(s) { return String(s || '').toUpperCase().replace(/^WT\s+/, '').trim(); }
+function wtVendorKey(s) { return String(s || '').toUpperCase().replace(/^\d+\.\s*/, '').replace(/^WT\s+/, '').trim(); }
 function wtNormKey(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, ''); }
 function wtJenisCocok(d, j) {
   if (!j || j === 'ALL') return true;
@@ -5384,7 +5372,7 @@ function render() {
   }, 0);
 
   const cards = [
-    ['Ketersediaan Unit', String(totalUnit), '#1E40AF', 'unit', 'unit HE + WT'],
+    ['Ketersediaan Unit', String(totalUnit), '#1E40AF', 'unit', `${DATA.length} HE + ${WTD.length} WT`],
     ['Total HM (Jam)', sumHM.toFixed(1), '#2563EB', 'clock', 'jam operasi'],
     ['Rata-rata MA', avgMA.toFixed(1) + '%', '#D97706', 'activity', 'Mechanical Availability'],
     ['Rata-rata PA', avgPA.toFixed(1) + '%', '#7C3AED', 'gauge', 'Physical Availability'],
@@ -5435,7 +5423,6 @@ function render() {
     <td>${d.Area || '-'}</td>
     <td class="model-cell">${modelTxt}</td>
     <td class="num"><b>${hmTxt}</b></td>
-    <td class="num min-h">${kosong || MIN_HOURS}</td>
     <td class="num${sisaCls}"><b>${sisaTxt}</b></td>
     <td class="num">${maTxt}</td>
     <td class="num">${paTxt}</td>
@@ -6399,13 +6386,9 @@ if (lblAwal) lblAwal.textContent = rangeLabel();
   let wtHover = -1;
   let wtRows = [];
   let animRAF = null;
-  const CAL = { pick: null };
-
-  // ---------- rentang tanggal ----------
-  function isoOf(day) { return PERIODE.y + '-' + String(PERIODE.m).padStart(2, '0') + '-' + String(day).padStart(2, '0'); }
-
+  // Rentang waktu mengikuti rentang utama HE (fFrom/fTo), bukan kontrol WT sendiri.
   function rangeState() {
-    const f = $('wtFrom'), t = $('wtTo');
+    const f = $('fFrom'), t = $('fTo');
     const from = f && f.value ? parseInt(f.value.slice(8, 10), 10) : 1;
     const to = t && t.value ? parseInt(t.value.slice(8, 10), 10) : PERIODE.last;
     return { from, to, full: from <= 1 && to >= PERIODE.last };
@@ -6978,71 +6961,7 @@ if (lblAwal) lblAwal.textContent = rangeLabel();
     });
   }
 
-  // ---------- kalender rentang ----------
-  function setRange(from, to) {
-    const f = $('wtFrom'), t = $('wtTo');
-    if (f) f.value = isoOf(from);
-    if (t) t.value = isoOf(to);
-    const lbl = $('wtRangeVal');
-    if (lbl) lbl.textContent = rangeLabel();
-    render();
-  }
-
-  function pilihHari(d) {
-    if (CAL.pick === null) { CAL.pick = d; renderKalender(); return; }
-    const a = Math.min(CAL.pick, d), b = Math.max(CAL.pick, d);
-    CAL.pick = null;
-    setRange(a, b);
-    tutupKalender();
-  }
-
-  function renderKalender() {
-    const pop = $('wtCalPop');
-    if (!pop) return;
-    const rs = rangeState();
-    const pk = CAL.pick;
-    const from = pk !== null ? pk : (rs.full ? 0 : rs.from);
-    const to = pk !== null ? pk : (rs.full ? 0 : rs.to);
-    const jml = PERIODE.last;
-    const mulai = new Date(PERIODE.y, PERIODE.m - 1, 1).getDay();
-    const now = new Date();
-    const hariIni = (now.getFullYear() === PERIODE.y && now.getMonth() === PERIODE.m - 1) ? now.getDate() : 0;
-    const dow = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
-
-    let html = '<div class="cal-head"><span>' + PERIODE.label + '</span><span class="cal-hint">' +
-      (CAL.pick ? 'klik tanggal akhir' : 'klik tanggal awal') + '</span></div><div class="cal-grid">';
-    html += dow.map(d => '<div class="cal-dow">' + d + '</div>').join('');
-    for (let i = 0; i < mulai; i++) html += '<div></div>';
-    for (let d = 1; d <= jml; d++) {
-      const dalam = from && to && d > from && d < to;
-      const tepi = !!from && !!to && (d === from || d === to);
-      const cls = ['cal-day'];
-      if (dalam) cls.push('in-range');
-      if (tepi) cls.push('edge', from === to ? 'single' : (d === from ? 'start' : 'end'));
-      if (d === hariIni) cls.push('today');
-      html += '<button type="button" class="' + cls.join(' ') + '" data-day="' + d + '">' + d + '</button>';
-    }
-    html += '</div><div class="cal-foot"><span class="cal-hint">Pilih 2 tanggal (awal &amp; akhir)</span><button type="button" class="btn-reset" id="wtResetCal">Semua</button></div>';
-    pop.innerHTML = html;
-    pop.querySelectorAll('.cal-day').forEach(b => b.addEventListener('click', ev => {
-      ev.stopPropagation();
-      pilihHari(parseInt(b.dataset.day, 10));
-    }));
-    const rst = pop.querySelector('#wtResetCal');
-    if (rst) rst.addEventListener('click', ev => { ev.stopPropagation(); CAL.pick = null; setRange(1, PERIODE.last); tutupKalender(); });
-  }
-
-  function bukaKalender() {
-    const pop = $('wtCalPop');
-    if (!pop) return;
-    CAL.pick = null;
-    renderKalender();
-    pop.hidden = false;
-  }
-  function tutupKalender() {
-    const pop = $('wtCalPop');
-    if (pop) pop.hidden = true;
-  }
+  // Rentang waktu mengikuti rentang utama HE (fFrom/fTo), bukan kontrol WT sendiri.
 
   // ---------- init ----------
   document.addEventListener('DOMContentLoaded', () => {
@@ -7061,28 +6980,9 @@ if (lblAwal) lblAwal.textContent = rangeLabel();
       th.addEventListener('click', () => setSort(th.dataset.sort));
     });
 
-    const rangeBtn = $('wtRangeBtn');
-    if (rangeBtn) rangeBtn.addEventListener('click', ev => {
-      ev.stopPropagation();
-      const pop = $('wtCalPop');
-      if (pop && pop.hidden) bukaKalender(); else tutupKalender();
-    });
-
-    document.addEventListener('click', ev => {
-      const wrap = ev.target.closest ? ev.target.closest('.wt-range-wrap') : null;
-      if (!wrap) tutupKalender();
-    });
-
-    ['wtFrom', 'wtTo'].forEach(id => {
+    ['fFrom', 'fTo'].forEach(id => {
       const inp = $(id);
-      if (!inp) return;
-      inp.addEventListener('change', () => {
-        const f = $('wtFrom'), t = $('wtTo');
-        if (f.value && t.value && f.value > t.value) { const x = f.value; f.value = t.value; t.value = x; }
-        const lbl = $('wtRangeVal');
-        if (lbl) lbl.textContent = rangeLabel();
-        render();
-      });
+      if (inp) inp.addEventListener('change', () => render());
     });
 
     let rz = null;

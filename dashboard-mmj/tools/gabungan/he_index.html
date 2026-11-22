@@ -31,6 +31,7 @@
         <nav class="header-nav" aria-label="Pindah bagian">
           <a href="#he" class="active">Heavy Equipment</a>
           <a href="#wt">Water Truck</a>
+          <a href="#control-he">Control HE</a>
         </nav>
       </div>
       <div class="header-brand">
@@ -46,7 +47,7 @@
           <span class="field-cap">Vendor</span>
           <span class="select-wrap">
             <select id="fVendor">
-              <option value="ALL">Semua Vendor</option>
+              <option value="ALL" selected>Semua Vendor</option>
               <optgroup label="Heavy Equipment">
                 <option value="GIP H1">GIP H1</option>
                 <option value="GIP H2">GIP H2</option>
@@ -91,10 +92,17 @@
           </span>
         </label>
       </div>
-      <div class="filter-meta">
-        <span class="live-chip" title="Jumlah unit yang sedang ditampilkan">
-          <svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M3 7h13l5 5v5h-3M3 7v10h3M6 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0Zm9 0a2 2 0 1 0 4 0 2 2 0 0 0-4 0Z"/></svg>
-          <b id="countUnit">0</b><span>unit tampil</span>
+      <div class="filter-range-row">
+        <span class="range-wrap">
+          <button type="button" id="rangeBtn" class="range-box" title="Klik untuk memilih rentang tanggal">
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M7 3v3m10-3v3M4 9h16M5 6h14a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z"/></svg>
+            <span class="range-cap">Rentang Waktu</span>
+            <span id="rangeVal">01 Nov &ndash; 30 Nov 2026</span>
+            <span class="range-caret" aria-hidden="true">&#9662;</span>
+          </button>
+          <input type="date" id="fFrom" min="2026-11-01" max="2026-11-30" value="2026-11-01" hidden>
+          <input type="date" id="fTo" min="2026-11-01" max="2026-11-30" value="2026-11-30" hidden>
+          <div id="calPop" class="cal-pop" hidden></div>
         </span>
         <button type="button" id="btnResetFilter" class="btn-ghost">Reset filter</button>
       </div>
@@ -114,18 +122,7 @@
       <div class="chart-box">
         <div class="chart-head">
           <div class="chart-head-main">
-            <span class="range-wrap">
-              <button type="button" id="rangeBtn" class="range-box" title="Klik untuk memilih rentang tanggal">
-                <svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M7 3v3m10-3v3M4 9h16M5 6h14a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z"/></svg>
-                <span class="range-cap">Rentang Waktu</span>
-                <span id="rangeVal">01 Nov &ndash; 30 Nov 2026</span>
-                <span class="range-caret" aria-hidden="true">&#9662;</span>
-              </button>
-              <input type="date" id="fFrom" min="2026-11-01" max="2026-11-30" value="2026-11-01" hidden>
-              <input type="date" id="fTo" min="2026-11-01" max="2026-11-30" value="2026-11-30" hidden>
-              <div id="calPop" class="cal-pop" hidden></div>
-            </span>
-            <h2 id="chartTitle">Grafik HM (Bar) &amp; MA (Garis) per Unit &mdash; Top 15</h2>
+            <h2 id="chartTitle">Grafik HM (Bar) &amp; MA (Garis) per Unit per Vendor &middot; per Capacity</h2>
           </div>
           <div class="seg" id="cmpMenu">
             <button type="button" class="seg-btn active" data-cmp="MA">HM vs MA</button>
@@ -143,17 +140,6 @@
       <div class="chart-box wt-chart-box">
         <div class="chart-head">
           <div class="chart-head-main">
-            <span class="wt-range-wrap">
-              <button type="button" id="wtRangeBtn" class="range-box" title="Klik untuk memilih rentang tanggal">
-                <svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M7 3v3m10-3v3M4 9h16M5 6h14a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z"/></svg>
-                <span class="range-cap">Rentang Waktu</span>
-                <span id="wtRangeVal">01 Nov &ndash; 30 Nov 2026</span>
-                <span class="range-caret" aria-hidden="true">&#9662;</span>
-              </button>
-              <input type="date" id="wtFrom" min="2026-11-01" max="2026-11-30" value="2026-11-01" hidden>
-              <input type="date" id="wtTo" min="2026-11-01" max="2026-11-30" value="2026-11-30" hidden>
-              <div id="wtCalPop" class="cal-pop" hidden></div>
-            </span>
             <h2 id="wtChartTitle">Grafik Penyiraman (Bar) &amp; MA (Garis) &mdash; Top 15 Water Truck</h2>
           </div>
           <div class="seg" id="wtCmpMenu">
@@ -180,7 +166,6 @@
               <th>Area Kerja</th>
               <th>Model / Capacity</th>
               <th class="sortable num" data-sort="HMTotal" title="Klik untuk mengurutkan">HM Total <span class="arrow" data-arrow="HMTotal"></span></th>
-              <th class="num" title="Jatah minimum jam kerja per unit per bulan">Min Hours</th>
               <th class="num" title="Sisa jatah HM = Min Hours - HM Total">Sisa HM</th>
               <th class="sortable num" data-sort="MA" title="Klik untuk mengurutkan">MA <span class="arrow" data-arrow="MA"></span></th>
               <th class="num">PA (%)</th>
@@ -219,7 +204,7 @@
                 <th class="col-optional">Area Kerja</th>
                 <th class="col-optional">Model / Capacity</th>
                 <th class="wt-sortable num" data-sort="P" title="Klik untuk mengurutkan">Total Penyiraman <span class="wt-arrow" data-arrow="P"></span></th>
-                <th class="num" title="Jumlah hari yang ada penyiraman dalam rentang terpilih">Hari Ada</th>
+                <th class="num" title="Jumlah hari yang ada penyiraman dalam rentang terpilih">Bekerja</th>
                 <th class="num">Rata-rata / Hari</th>
                 <th class="wt-sortable num" data-sort="Fuel" title="Klik untuk mengurutkan">Fuel (L) <span class="wt-arrow" data-arrow="Fuel"></span></th>
                 <th class="wt-sortable num" data-sort="CMP" title="Klik untuk mengurutkan"><span id="wtCmpColLabel">MA</span> <span class="wt-arrow" data-arrow="CMP"></span></th>
@@ -268,6 +253,71 @@
             </tr>
           </thead>
           <tbody id="belumWtTbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ========== Control HE: fuel di luar standar + timesheet terlambat >1 hari ========== -->
+    <section class="panel" id="control-he">
+      <div class="panel-head">
+        <h2>Control HE</h2>
+        <span class="panel-sub">Fuel di luar standar SOP &middot; Timesheet terlambat &gt;1 hari</span>
+      </div>
+      <p class="legend" id="controlHeSummary">
+        <span class="lg"><span class="lg-chip miss">-</span> Memuat...</span>
+      </p>
+
+      <h3 class="subtable-title">Fuel di Luar Standar SOP</h3>
+      <p class="note">Melebihi standar = FR aktual &gt; FR standar. Terlalu rendah = selisih di bawah standar &gt; 2 L (contoh std 20, aktual 17 =&gt; selisih -3).</p>
+      <div class="table-wrap">
+        <table class="grid">
+          <thead>
+            <tr>
+              <th>Kode Unit</th>
+              <th>Vendor</th>
+              <th>Area</th>
+              <th>Type / Capacity</th>
+              <th class="num">FR Aktual</th>
+              <th class="num">FR Standar</th>
+              <th class="num">Selisih</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="controlFuelTbody"></tbody>
+        </table>
+      </div>
+
+      <h3 class="subtable-title">Timesheet Terlambat &gt;1 Hari &mdash; HE</h3>
+      <p class="note">Unit HE dengan timesheet belum diterima dan sudah lewat jatuh tempo lebih dari 1 hari.</p>
+      <div class="table-wrap">
+        <table class="grid">
+          <thead>
+            <tr>
+              <th>Kode Unit</th>
+              <th>Vendor</th>
+              <th>Area</th>
+              <th>Hari Terlambat</th>
+              <th class="num">Jumlah</th>
+            </tr>
+          </thead>
+          <tbody id="controlLateHeTbody"></tbody>
+        </table>
+      </div>
+
+      <h3 class="subtable-title">Timesheet Terlambat &gt;1 Hari &mdash; WT</h3>
+      <p class="note">Unit WT dengan timesheet belum diterima dan sudah lewat jatuh tempo lebih dari 1 hari.</p>
+      <div class="table-wrap">
+        <table class="grid">
+          <thead>
+            <tr>
+              <th>Kode Unit</th>
+              <th>Vendor</th>
+              <th>Area</th>
+              <th>Hari Terlambat</th>
+              <th class="num">Jumlah</th>
+            </tr>
+          </thead>
+          <tbody id="controlLateWtTbody"></tbody>
         </table>
       </div>
     </section>

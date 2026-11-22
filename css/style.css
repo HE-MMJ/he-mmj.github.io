@@ -161,6 +161,8 @@ body {
   padding: 12px 24px;
 }
 .filter-group { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; }
+.field-stack { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.filter-range-row { display: flex; align-items: center; gap: 12px; flex-basis: 100%; flex-wrap: wrap; }
 .field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .field-cap {
   font-family: var(--font-num);
@@ -555,6 +557,11 @@ th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
 /* kolom Min Hours & Sisa HM */
 .grid tbody td.min-h { color: var(--muted); }
 .grid tbody td.fr-over { color: #B91C1C; font-weight: 600; }
+.grid tbody td.ctrl-bad, .ctrl-bad { color: #B91C1C; font-weight: 600; }
+.grid tbody td.ctrl-warn, .ctrl-warn { color: #B45309; font-weight: 600; }
+.ctrl-status { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.ctrl-status.ctrl-bad { background: #FEE2E2; color: #B91C1C; }
+.ctrl-status.ctrl-warn { background: #FEF3C7; color: #92400E; }
 .grid tbody td.sisa-ok b { color: var(--ok); }
 .grid tbody td.sisa-warn b { color: #B45309; }
 .grid tbody td.sisa-over b { color: #B91C1C; }
@@ -677,7 +684,7 @@ tr.wt-row td:first-child { border-left: 3px solid #0D9488; }
   .app-header { padding: 16px 16px 20px; }
   .header-logo { height: 84px; }
   .filter-group { gap: 10px; }
-  .field, .select-wrap, select { width: 100%; }
+  .field, .select-wrap, select, .field-stack { width: 100%; }
   .filter-group { flex-direction: column; align-items: stretch; width: 100%; }
   .filter-meta { width: 100%; justify-content: space-between; }
   .cards { grid-template-columns: repeat(2, 1fr); }

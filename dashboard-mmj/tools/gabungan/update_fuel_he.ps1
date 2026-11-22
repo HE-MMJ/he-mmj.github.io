@@ -53,9 +53,10 @@ function LatestFuel($bulan) {
     $_.Name -match $NAMA[$bulan] -and $_.Name -notmatch 'copy|backup'
   }
   if (-not $c) { return $null }
+  # terbaru = LastWriteTime terakhir; R hanya tiebreaker jika waktu sama
   return ($c | Sort-Object `
-    @{ Expression = { $m = [regex]::Match($_.Name, 'R(\d+)'); if ($m.Success) { [int]$m.Groups[1].Value } else { -1 } } },
-    @{ Expression = { $_.LastWriteTime } } | Select-Object -Last 1).FullName
+    @{ Expression = { $_.LastWriteTime } },
+    @{ Expression = { $m = [regex]::Match($_.Name, 'R(\d+)'); if ($m.Success) { [int]$m.Groups[1].Value } else { -1 } } } | Select-Object -Last 1).FullName
 }
 
 # unit -> hari -> volume, hanya baris bulan & tahun yang diminta

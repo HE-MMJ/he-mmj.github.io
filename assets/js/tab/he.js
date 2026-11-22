@@ -78,6 +78,8 @@ let GEO = null;      // geometri grafik terakhir (untuk hit-test mouse)
 let animRAF = null;  // requestAnimationFrame animasi
 let TITLE_BASE = 'Grafik HM & MA per Unit'; // judul grafik tanpa info rentang
 
+function matchVendor(dv, sel) { return sel === 'ALL' || dv === sel; }
+function hasVendor(sel, arr) { return sel !== 'ALL' && arr.some(d => d.Vendor === sel); }
 function filtered() {
   const v = document.getElementById('fVendor').value;
   const area = document.getElementById('fArea').value;
@@ -86,12 +88,12 @@ function filtered() {
   const cap = capEl ? capEl.value : 'ALL';
   // Dropdown dipakai bersama HE & WT. Nilai yang hanya ada di data WT
   // (mis. vendor "WT TSA") tidak boleh mengosongkan tabel HE.
-  const pakaiV = v !== 'ALL' && DATA.some(d => d.Vendor === v);
+  const pakaiV = hasVendor(v, DATA);
   const pakaiA = area !== 'ALL' && DATA.some(d => (d.Area || '') === area);
   const pakaiJ = jenis !== 'ALL' && DATA.some(d => (d.Jenis || '-') === jenis);
   const pakaiC = cap !== 'ALL' && DATA.some(d => (d.Capacity || '-') === cap || (d.Model || '-') === cap);
   return DATA.filter(d =>
-    (!pakaiV || d.Vendor === v) &&
+    (!pakaiV || matchVendor(d.Vendor, v)) &&
     (!pakaiA || (d.Area || '') === area) &&
     (!pakaiJ || (d.Jenis || '-') === jenis) &&
     (!pakaiC || (d.Capacity || '-') === cap || (d.Model || '-') === cap)
@@ -131,7 +133,7 @@ function wtFuelTotal() { return WTD.reduce((s, d) => s + wtFuelRange(d), 0); }
 // helper filter WT (mirror dari js/wt.js) dipakai tabel Belum & dropdown
 const WT_SHIFT1 = ['TLK', 'FBS', 'ASA'];
 const CHK_OK = '<svg class="chk" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.5 L5 9 L9.5 3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-function wtVendorKey(s) { return String(s || '').toUpperCase().replace(/^WT\s+/, '').trim(); }
+function wtVendorKey(s) { return String(s || '').toUpperCase().replace(/^\d+\.\s*/, '').replace(/^WT\s+/, '').trim(); }
 function wtNormKey(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, ''); }
 function wtJenisCocok(d, j) {
   if (!j || j === 'ALL') return true;
@@ -442,18 +444,15 @@ function vendorAgg(kind, heRows, wtRows, allHe, allWt) {
   })).sort((a, b) => (b.val - a.val) || a.vendor.localeCompare(b.vendor, 'id'));
 }
 
-// baris WT + penyiraman sesuai rentang WT (sama seperti kartu WT_summary)
+// baris WT + penyiraman mengikuti rentang utama (sama seperti grafik HM HE)
 function wtRangeRows() {
-  const from = document.getElementById('wtFrom');
-  const to = document.getElementById('wtTo');
-  const fromDay = from && from.value ? dayOf(from.value) : 1;
-  const toDay = to && to.value ? dayOf(to.value) : PERIODE.last;
+  const rs = rangeState();
   return wtRunRows().map(d => {
     const days = (WTD.find(x => unitKey(x.Unit) === unitKey(d.Unit)) || {}).Days || {};
     let p = 0;
     for (const day in days) {
       const n = parseInt(day, 10);
-      if (n >= fromDay && n <= toDay) p += num(days[day].P);
+      if (n >= rs.from && n <= rs.to) p += num(days[day].P);
     }
     return { ...d, P: p };
   });
@@ -515,9 +514,7 @@ function fuelTypeRows() {
 // isi modal vendor: judul + sub + grid kartu vendor (tabel unit muncul di bawah grid)
 function renderVendorPanel(kind) {
   const rs = rangeState();
-  const wtRange = document.getElementById('wtRangeVal');
-  const period = kind === 'water' && wtRange ? wtRange.textContent.trim()
-    : (rs.full ? `${BULAN_ID[PERIODE.m - 1]} ${PERIODE.y}` : rangeLabel());
+  const period = rs.full ? `${BULAN_ID[PERIODE.m - 1]} ${PERIODE.y}` : rangeLabel();
 
   const unitMode = kind === 'units';
   const average = ['ma', 'pa', 'ratio'].includes(kind);
@@ -525,19 +522,24 @@ function renderVendorPanel(kind) {
   const precision = kind === 'ratio' ? 2 : (kind === 'units' ? 0 : (kind === 'fuel' || kind === 'water' ? 2 : 1));
   const rows = vendorBreakdown(kind);
   const color = KPI_COLOR[kind] || '#1D4ED8';
-  const cards = rows.length ? rows.map((r, i) => `
+  const ratioOverVendors = new Set();
+  if (kind === 'ratio') applyRange(filtered()).forEach(d => { if (frMelebihi(d)) ratioOverVendors.add(String(d.Vendor || '-').trim() || '-'); });
+  const cards = rows.length ? rows.map((r, i) => {
+    const valRed = (kind === 'ma' && r.val > 0 && r.val < 85) || (kind === 'ratio' && ratioOverVendors.has(r.vendor));
+    return `
     <div class="vd-card" role="button" tabindex="0" data-vendor="${escHtml(r.vendor)}" aria-expanded="false"
       style="--c:${color};animation-delay:${Math.min(i * 45, 300)}ms">
       <div class="vd-card-head">
         <span class="vd-name">${escHtml(r.vendor)}</span>
         <div class="vd-val-line">
-          <b class="vd-val">${unitMode ? r.n : fmt(r.val, precision) + suffix}</b>
+          <b class="vd-val"${valRed ? ' style="color:#DC2626"' : ''}>${unitMode ? r.n : fmt(r.val, precision) + suffix}</b>
           <span class="vd-sub">${unitMode ? `HE ${r.countHe} &middot; WT ${r.countWt}` : r.n + ' unit'}</span>
         </div>
         <svg class="vd-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
       ${vdLogoFor(r.vendor) ? `<img class="vd-logo" src="${vdLogoFor(r.vendor)}" alt="Logo ${escHtml(r.vendor)}">` : ''}
-    </div>`).join('')
+    </div>`;
+  }).join('')
     : `<p class="ud-nol">Tidak ada data untuk filter ini.</p>`;
   return `<h3 id="udJudul">${escHtml(VD_LABEL[kind] || 'Ringkasan Vendor')}</h3>
     <p class="ud-sub">Per Vendor &middot; ${escHtml(period)}${average ? ' &middot; rata-rata unit vendor' : ''} &middot; klik kartu vendor untuk rincian unit</p>
@@ -576,10 +578,15 @@ function vendorUnits(kind, vendor) {
   const dec = kind === 'ratio' ? 2 : 1;
   return applyRange(filtered())
     .filter(d => String(d.Vendor || '').trim() === vendor)
-    .map(d => ({
-      Unit: d.Unit, val: num(d[field]),
-      txt: pct ? fmt(num(d[field]), 1) + '%' : fmt(num(d[field]), dec)
-    }))
+    .map(d => {
+      const val = num(d[field]);
+      const red = (kind === 'ma' && val > 0 && val < 85) || (kind === 'ratio' && frMelebihi(d));
+      return {
+        Unit: d.Unit, val,
+        txt: pct ? fmt(val, 1) + '%' : fmt(val, dec),
+        red
+      };
+    })
     .sort(byType);
 }
 
@@ -624,7 +631,7 @@ function pilihVendor(kind, card) {
     <table class="vd-table-body">
       <thead><tr><th>Unit</th><th class="vd-tnum">${escHtml(label)}</th></tr></thead>
       <tbody>${rows.length ? rows.map(r => `
-        <tr><td>${r.badge || ''}${escHtml(r.Unit)}</td><td class="vd-tnum">${r.txt}</td></tr>`).join('')
+        <tr><td>${r.badge || ''}${escHtml(r.Unit)}</td><td class="vd-tnum"${r.red ? ' style="color:#DC2626;font-weight:700"' : ''}>${r.txt}</td></tr>`).join('')
         : '<tr><td colspan="2" class="ud-nol">Tidak ada unit untuk vendor ini.</td></tr>'}</tbody>
     </table>`;
   anchor.insertAdjacentElement('afterend', tabel);
@@ -770,7 +777,7 @@ function render() {
   }, 0);
 
   const cards = [
-    ['Ketersediaan Unit', String(totalUnit), '#1E40AF', 'unit', 'unit HE + WT', 'units'],
+    ['Ketersediaan Unit', String(totalUnit), '#1E40AF', 'unit', `${DATA.length} HE + ${WTD.length} WT`, 'units'],
     ['Total HM (Jam)', sumHM.toFixed(1), '#2563EB', 'clock', 'jam operasi', 'hm'],
     ['Rata-rata MA', avgMA.toFixed(1) + '%', '#D97706', 'activity', 'Mechanical Availability', 'ma'],
     ['Rata-rata PA', avgPA.toFixed(1) + '%', '#7C3AED', 'gauge', 'Physical Availability', 'pa'],
@@ -796,11 +803,13 @@ function render() {
   if (SORT.col) {
     tabelRows.sort((a, b) => (num(a[SORT.col]) - num(b[SORT.col])) * SORT.dir);
   }
-  document.getElementById('tbody').innerHTML = tabelRows.map(d => {
+  const bodyHtml = tabelRows.map(d => {
     const kosong = d._noharian ? '\u2014' : null;
     const hmNum = num(d.HMTotal);
     const hmTxt = kosong || hmNum.toFixed(1);
-    const maTxt = kosong || num(d.MA).toFixed(1) + '%';
+    const maNum = num(d.MA);
+    const maTxt = kosong || maNum.toFixed(1) + '%';
+    const maStyle = (!kosong && maNum > 0 && maNum < 85) ? ' style="color:#DC2626;font-weight:700"' : '';
     const paTxt = kosong || num(d.PAPct).toFixed(1) + '%';
     const fuelTxt = kosong || fmt(d.Fuel, 1);
     const ratioTxt = kosong || fmt(d.FuelRatio, 2);
@@ -821,20 +830,36 @@ function render() {
     <td>${d.Area || '-'}</td>
     <td class="model-cell">${modelTxt}</td>
     <td class="num"><b>${hmTxt}</b></td>
-    <td class="num min-h">${kosong || MIN_HOURS}</td>
     <td class="num${sisaCls}"><b>${sisaTxt}</b></td>
-    <td class="num">${maTxt}</td>
+    <td class="num"${maStyle}>${maTxt}</td>
     <td class="num">${paTxt}</td>
     <td class="num">${fuelTxt}</td>
     <td class="num${frMelebihi(d) ? ' fr-over' : ''}">${ratioTxt}</td>
   </tr>`;
   }).join('');
+  const totUnit = tabelRows.length;
+  const totHM = tabelRows.reduce((s, d) => s + num(d.HMTotal), 0);
+  const totFuel = tabelRows.reduce((s, d) => s + num(d.Fuel), 0);
+  const totalRow = totUnit ? `<tr style="font-weight:700;background:#f1f5f9">
+    <td><b>Total</b></td>
+    <td><b>${totUnit} unit</b></td>
+    <td></td>
+    <td></td>
+    <td class="num"><b>${totHM.toFixed(1)}</b></td>
+    <td class="num"></td>
+    <td class="num"></td>
+    <td class="num"></td>
+    <td class="num"><b>${fmt(totFuel, 1)}</b></td>
+    <td class="num"></td>
+  </tr>` : '';
+  document.getElementById('tbody').innerHTML = bodyHtml + totalRow;
 
   lastRows = rows;
   hoverIdx = -1;
   updateChartNote();
   animateChart();
   renderBelum();
+  renderControlHE();
   renderMaCap(rows);
   renderRunText();
 }
@@ -895,7 +920,7 @@ const BULAN_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep',
   const cp = document.querySelector('.chip-period');
   if (cp) cp.textContent = nm + ' ' + PERIODE.y;
   const rentang = '01 ' + nm + ' \u2013 ' + PERIODE.last + ' ' + nm + ' ' + PERIODE.y;
-  ['rangeVal', 'wtRangeVal'].forEach(function (id) {
+  ['rangeVal'].forEach(function (id) {
     const el = document.getElementById(id);
     if (el) el.textContent = rentang;
   });
@@ -951,11 +976,11 @@ function renderBelum() {
   const fV = document.getElementById('fVendor').value;
   const fA = document.getElementById('fArea').value;
   const fJ = document.getElementById('fJenis').value;
-  const pakaiV = fV !== 'ALL' && all.some(d => d.Vendor === fV);
+  const pakaiV = hasVendor(fV, all);
   const pakaiA = fA !== 'ALL' && all.some(d => (d.Area || '') === fA);
   const pakaiJ = fJ !== 'ALL' && all.some(d => (d.Jenis || '-') === fJ);
   const list = all.filter(d =>
-    (!pakaiV || d.Vendor === fV) &&
+    (!pakaiV || matchVendor(d.Vendor, fV)) &&
     (!pakaiA || (d.Area || '') === fA) &&
     (!pakaiJ || (d.Jenis || '-') === fJ)
   );
@@ -1025,6 +1050,128 @@ function renderBelum() {
       </tr>`;
     }).join('') || '<tr><td colspan="63" class="wt-empty">Tidak ada unit WT yang cocok dengan filter di atas.</td></tr>';
   }
+}
+
+// ---------- Control HE: fuel di luar standar + timesheet terlambat >1 hari ----------
+function renderControlHE() {
+  const sumEl = document.getElementById('controlHeSummary');
+  const fuelTb = document.getElementById('controlFuelTbody');
+  const lateHeTb = document.getElementById('controlLateHeTbody') || document.getElementById('controlLateTbody');
+  const lateWtTb = document.getElementById('controlLateWtTbody');
+  if (!fuelTb || (!lateHeTb && !lateWtTb)) return;
+
+  // 1) Fuel di luar standar (HE saja, ikut filter aktif)
+  const fuelRows = [];
+  (lastRows || []).forEach(d => {
+    const s = stdFuel(d);
+    const v = num(d.FuelRatio);
+    if (!s || v <= 0) return;
+    const sel = v - s.ratio;
+    let status = '';
+    let cls = '';
+    if (v > s.ratio) { status = 'Melebihi Standar'; cls = 'ctrl-bad'; }
+    else if ((s.ratio - v) > 2) { status = 'Terlalu Rendah'; cls = 'ctrl-warn'; }
+    else return;
+    const satuan = s.satuan === 'Liter/Hari' ? 'L/hari' : 'L/jam';
+    fuelRows.push({
+      unit: d.Unit || '-', vendor: d.Vendor || '-', area: d.Area || '-',
+      cap: (d.Jenis || '-') + (d.Capacity ? ' / ' + d.Capacity : ''),
+      actual: fmt(v, 2) + ' ' + satuan,
+      std: fmt(s.ratio, 2) + ' ' + satuan,
+      sel: (sel > 0 ? '+' : '') + fmt(sel, 2),
+      status, cls, selNum: sel
+    });
+  });
+  for (let i = fuelRows.length - 1; i >= 0; i--) {
+    if (fuelRows[i].status === 'Melebihi Standar' && fuelRows[i].selNum <= 1) fuelRows.splice(i, 1);
+  }
+  fuelRows.sort((a, b) => {
+    const ga = a.status === 'Melebihi Standar' ? 0 : 1;
+    const gb = b.status === 'Melebihi Standar' ? 0 : 1;
+    if (ga !== gb) return ga - gb;
+    return Math.abs(b.selNum) - Math.abs(a.selNum);
+  });
+
+  fuelTb.innerHTML = fuelRows.map(r => `<tr>
+    <td><b>${escHtml(r.unit)}</b></td>
+    <td>${escHtml(String(r.vendor || '-').replace(/^\d+\.\s*/, ''))}</td>
+    <td>${escHtml(r.area)}</td>
+    <td>${escHtml(r.cap)}</td>
+    <td class="num">${r.actual}</td>
+    <td class="num">${r.std}</td>
+    <td class="num ${r.cls}"><b>${r.sel}</b></td>
+    <td><span class="ctrl-status ${r.cls}">${r.status}</span></td>
+  </tr>`).join('') || '<tr><td colspan="8" class="wt-empty">Tidak ada unit fuel di luar standar pada filter ini.</td></tr>';
+
+  // 2) Timesheet terlambat >1 hari (HE + WT, ikut filter aktif, definisi sama tabel Belum Terima)
+  const fV = document.getElementById('fVendor').value;
+  const fA = document.getElementById('fArea').value;
+  const fJ = document.getElementById('fJenis').value;
+  const raw = (typeof BELUM !== 'undefined') ? BELUM : [];
+  const all = Array.isArray(raw) ? raw : (raw ? [raw] : []);
+  const pakaiV = hasVendor(fV, all);
+  const pakaiA = fA !== 'ALL' && all.some(d => (d.Area || '') === fA);
+  const pakaiJ = fJ !== 'ALL' && all.some(d => (d.Jenis || '-') === fJ);
+  const heList = all.filter(d =>
+    (!pakaiV || matchVendor(d.Vendor, fV)) &&
+    (!pakaiA || (d.Area || '') === fA) &&
+    (!pakaiJ || (d.Jenis || '-') === fJ)
+  );
+  const lateHeRows = [];
+  heList.forEach(d => {
+    const hariLate = (BMAP[unitKey(d.Unit)] || []).filter(h => h <= BBATAS - 1);
+    if (!hariLate.length) return;
+    lateHeRows.push({
+      unit: d.Unit || '-', vendor: d.Vendor || '-', area: d.Area || '-',
+      days: hariLate.map(labelHari).join(', '), count: hariLate.length
+    });
+  });
+
+  const wtPakaiV = fV !== 'ALL' && WTD.some(d => wtVendorKey(d.Vendor) === wtVendorKey(fV));
+  const wtPakaiA = fA !== 'ALL' && WTD.some(d => wtNormKey(d.Area) === wtNormKey(fA));
+  const wtPakaiJ = fJ !== 'ALL' && WTD.some(d => wtJenisCocok(d, fJ));
+  const lateWtRows = [];
+  WTD.filter(d =>
+    (!wtPakaiV || wtVendorKey(d.Vendor) === wtVendorKey(fV)) &&
+    (!wtPakaiA || wtNormKey(d.Area) === wtNormKey(fA)) &&
+    (!wtPakaiJ || wtJenisCocok(d, fJ))
+  ).forEach(d => {
+    const single = WT_SHIFT1.indexOf(wtVendorKey(d.Vendor)) >= 0 || (d.Shift2 === false || d.Shift2 === 0);
+    const S = (Array.isArray(d.BelumS) && d.BelumS.length === 30) ? d.BelumS : new Array(30).fill(0);
+    const M = (Array.isArray(d.BelumM) && d.BelumM.length === 30) ? d.BelumM : new Array(30).fill(0);
+    const hariLate = [];
+    for (let h = 1; h <= PERIODE.last; h++) {
+      if (h > BBATAS - 1) continue;
+      const s = !!S[h - 1], m = !!M[h - 1];
+      if (single) { if (!(s || m)) hariLate.push(labelHari(h)); }
+      else {
+        const miss = [];
+        if (!s) miss.push('S');
+        if (!m) miss.push('M');
+        if (miss.length) hariLate.push(h + ' ' + BULAN_ID[PERIODE.m - 1] + ' (' + miss.join('/') + ')');
+      }
+    }
+    if (!hariLate.length) return;
+    lateWtRows.push({
+      unit: d.Unit || '-', vendor: d.Vendor || '-', area: d.Area || '-',
+      days: hariLate.join(', '), count: hariLate.length
+    });
+  });
+
+  const renderLate = rows => rows.map(r => `<tr>
+    <td><b>${escHtml(r.unit)}</b></td>
+    <td>${escHtml(String(r.vendor || '-').replace(/^\d+\.\s*/, ''))}</td>
+    <td>${escHtml(r.area)}</td>
+    <td>${escHtml(r.days)}</td>
+    <td class="num"><b>${r.count}</b></td>
+  </tr>`).join('') || '<tr><td colspan="5" class="wt-empty">Tidak ada timesheet terlambat &gt;1 hari pada filter ini.</td></tr>';
+  lateHeRows.sort((a, b) => b.count - a.count || String(a.unit).localeCompare(String(b.unit)));
+  lateWtRows.sort((a, b) => b.count - a.count || String(a.unit).localeCompare(String(b.unit)));
+  if (lateHeTb) lateHeTb.innerHTML = renderLate(lateHeRows);
+  if (lateWtTb) lateWtTb.innerHTML = renderLate(lateWtRows);
+  if (!lateWtTb && lateHeTb && lateHeTb.id === 'controlLateTbody') lateHeTb.innerHTML = renderLate(lateHeRows.concat(lateWtRows).sort((a,b)=>b.count-a.count||String(a.unit).localeCompare(String(b.unit))));
+
+  if (sumEl) sumEl.innerHTML = '';
 }
 
 // ---------- animasi: batang & garis tumbuh dari 0 ----------
@@ -1220,27 +1367,19 @@ function drawCombo(rows, prog = 1) {
   const ctx = c.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
   const H = 360;
-  c.width = c.clientWidth * dpr;
-  c.height = H * dpr;
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const w = c.clientWidth, h = H;
-  ctx.clearRect(0, 0, w, h);
-  // latar putih di seluruh area grafik
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, w, h);
-
-  const topN = window.innerWidth < 620 ? 8 : 15;
-  const top15 = [...rows].sort((a, b) => num(b.HMTotal) - num(a.HMTotal)).slice(0, topN);
-  // urutkan sesuai nomor unit lalu Unit ID (tidak acak)
   const nomorUnit = u => { const m = String(u || '').match(/(\d+)/); return m ? parseInt(m[1], 10) : 0; };
-  top15.sort((a, b) =>
+  const topAll = [...rows].sort((a, b) =>
     (nomorUnit(a.Unit) - nomorUnit(b.Unit)) ||
     String(a.Unit).localeCompare(String(b.Unit), 'id', { numeric: true })
   );
-  // kelompokkan per capacity, lalu ratakan lagi jadi urutan batang
-  const groups = groupByCapacity(top15);
+  const groups = groupByCapacity(topAll);
   const top = groups.flatMap(g => g.items);
   if (!top.length) {
+    const cw0 = c.clientWidth || 680;
+    c.width = cw0 * dpr; c.height = H * dpr; c.style.width = cw0 + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, cw0, H);
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, cw0, H);
     GEO = null;
     ctx.fillStyle = '#64748B';
     ctx.font = '13px "Fira Sans", Segoe UI, sans-serif';
@@ -1248,11 +1387,23 @@ function drawCombo(rows, prog = 1) {
     return;
   }
 
+  const padL = 64, padR = 74, padT = 54;
+  const slotMin = 56; // lebar minimum per batang agar label terbaca saat scroll
+  const containerW = (c.parentElement && c.parentElement.clientWidth) ? c.parentElement.clientWidth : (c.clientWidth || 680);
+  const needW = padL + padR + (top.length * slotMin) + (Math.max(0, groups.length - 1) * 18);
+  const w = Math.max(containerW, needW);
+  c.width = w * dpr;
+  c.height = H * dpr;
+  c.style.width = w + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const h = H;
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, w, h);
+
   const maxHM = Math.max(...top.map(d => num(d.HMTotal)), 1);
   const vals = top.map(d => num(d[cfg.field]));
   const maxCmp = cfg.tetapMax !== null ? cfg.tetapMax : niceMax(Math.max(...vals) * 1.15);
-
-  const padL = 64, padR = 74, padT = 54;
   const plotW = w - padL - padR;
   const GAP = 0.6;                       // jarak antar kelompok (satuan slot)
 
@@ -1638,7 +1789,7 @@ function fillAreas() {
     const k = normArea(t);
     if (!map.has(k)) map.set(k, t);
   };
-  DATA.filter(d => v === 'ALL' || d.Vendor === v).forEach(d => add(d.Area));
+  DATA.filter(d => matchVendor(d.Vendor, v)).forEach(d => add(d.Area));
   WTD.filter(d => v === 'ALL' || wtVendorKey(d.Vendor) === wtVendorKey(v)).forEach(d => add(d.Area));
 
   const areas = [...map.values()].sort((a, b) => a.localeCompare(b));
@@ -1657,7 +1808,7 @@ function fillJenis() {
   const prev = sel.value;
 
   const heRows = DATA.filter(d =>
-    (v === 'ALL' || d.Vendor === v) &&
+    (matchVendor(d.Vendor, v)) &&
     (area === 'ALL' || (d.Area || '') === area)
   );
   const wtRows = WTD.filter(d =>
@@ -1693,7 +1844,7 @@ function fillCap() {
   const jenis = document.getElementById('fJenis').value;
 
   const rows = DATA.filter(d =>
-    (v === 'ALL' || d.Vendor === v) &&
+    (matchVendor(d.Vendor, v)) &&
     (area === 'ALL' || (d.Area || '') === area) &&
     (jenis === 'ALL' || (d.Jenis || '-') === jenis)
   );
@@ -1779,8 +1930,7 @@ function setCmp(key) {
   document.querySelectorAll('.seg-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.cmp === key);
   });
-  const topN = window.innerWidth < 620 ? 8 : 15;
-  TITLE_BASE = `Grafik HM (Bar) & ${cfg.judul} (Garis) per Unit - Top ${topN} · per Capacity`;
+  TITLE_BASE = `Grafik HM (Bar) &  (Garis) per Unit per Vendor · per Capacity`;
   updateTitle();
   document.getElementById('chartNote').textContent = cfg.catatan;
   render();
@@ -1983,13 +2133,10 @@ if (lblAwal) lblAwal.textContent = rangeLabel();
   let wtHover = -1;
   let wtRows = [];
   let animRAF = null;
-  const CAL = { pick: null };
 
   // ---------- rentang tanggal ----------
-  function isoOf(day) { return PERIODE.y + '-' + String(PERIODE.m).padStart(2, '0') + '-' + String(day).padStart(2, '0'); }
-
   function rangeState() {
-    const f = $('wtFrom'), t = $('wtTo');
+    const f = $('fFrom'), t = $('fTo');
     const from = f && f.value ? parseInt(f.value.slice(8, 10), 10) : 1;
     const to = t && t.value ? parseInt(t.value.slice(8, 10), 10) : PERIODE.last;
     return { from, to, full: from <= 1 && to >= PERIODE.last };
@@ -2088,19 +2235,20 @@ if (lblAwal) lblAwal.textContent = rangeLabel();
     $('wtTbody').innerHTML = tabel.length ? tabel.map(d => {
       const cmpVal = num(d[cmpField]);
       const maTxt = cmpVal > 0 ? (isPct ? fmt(cmpVal, 1) + '%' : fmt(cmpVal, 2)) : '\u2013';
+      const maLow = WT_CMP === 'MA' && cmpVal > 0 && cmpVal < 85;
       const rata = d.Hari > 0 ? fmt(d.P / d.Hari, 1) : '\u2013';
       const pCls = d.P > 0 ? '' : ' sisa-over';
       const fuelTxt = num(d.Fuel) > 0 ? fmt0(d.Fuel) : '\u2013';
       return '<tr>' +
         '<td><b>' + (esc(d.Unit) || '-') + '</b></td>' +
-        '<td class="col-optional">' + (esc(d.Vendor) || '-') + '</td>' +
+        '<td class="col-optional">' + (esc(String(d.Vendor || '-').replace(/^\d+\.\s*/, '').replace(/^WT\s+/i, '')) || '-') + '</td>' +
         '<td class="col-optional">' + (esc(d.Area) || '-') + '</td>' +
         '<td class="model-cell col-optional">' + (esc(d.Model) || '-') + (d.Capacity && d.Capacity !== '-' ? ' / ' + esc(d.Capacity) : '') + '</td>' +
         '<td class="num' + pCls + '"><b>' + fmt0(d.P) + '</b></td>' +
         '<td class="num min-h">' + d.Hari + '</td>' +
         '<td class="num">' + rata + '</td>' +
         '<td class="num">' + fuelTxt + '</td>' +
-        '<td class="num">' + maTxt + '</td>' +
+        '<td class="num"' + (maLow ? ' style="color:#DC2626;font-weight:700"' : '') + '>' + maTxt + '</td>' +
       '</tr>';
     }).join('') : '<tr><td colspan="9" class="wt-empty">Tidak ada unit WT yang cocok dengan filter di atas.</td></tr>';
 
@@ -2570,71 +2718,7 @@ if (lblAwal) lblAwal.textContent = rangeLabel();
     });
   }
 
-  // ---------- kalender rentang ----------
-  function setRange(from, to) {
-    const f = $('wtFrom'), t = $('wtTo');
-    if (f) f.value = isoOf(from);
-    if (t) t.value = isoOf(to);
-    const lbl = $('wtRangeVal');
-    if (lbl) lbl.textContent = rangeLabel();
-    render();
-  }
-
-  function pilihHari(d) {
-    if (CAL.pick === null) { CAL.pick = d; renderKalender(); return; }
-    const a = Math.min(CAL.pick, d), b = Math.max(CAL.pick, d);
-    CAL.pick = null;
-    setRange(a, b);
-    tutupKalender();
-  }
-
-  function renderKalender() {
-    const pop = $('wtCalPop');
-    if (!pop) return;
-    const rs = rangeState();
-    const pk = CAL.pick;
-    const from = pk !== null ? pk : (rs.full ? 0 : rs.from);
-    const to = pk !== null ? pk : (rs.full ? 0 : rs.to);
-    const jml = PERIODE.last;
-    const mulai = new Date(PERIODE.y, PERIODE.m - 1, 1).getDay();
-    const now = new Date();
-    const hariIni = (now.getFullYear() === PERIODE.y && now.getMonth() === PERIODE.m - 1) ? now.getDate() : 0;
-    const dow = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
-
-    let html = '<div class="cal-head"><span>' + PERIODE.label + '</span><span class="cal-hint">' +
-      (CAL.pick ? 'klik tanggal akhir' : 'klik tanggal awal') + '</span></div><div class="cal-grid">';
-    html += dow.map(d => '<div class="cal-dow">' + d + '</div>').join('');
-    for (let i = 0; i < mulai; i++) html += '<div></div>';
-    for (let d = 1; d <= jml; d++) {
-      const dalam = from && to && d > from && d < to;
-      const tepi = !!from && !!to && (d === from || d === to);
-      const cls = ['cal-day'];
-      if (dalam) cls.push('in-range');
-      if (tepi) cls.push('edge', from === to ? 'single' : (d === from ? 'start' : 'end'));
-      if (d === hariIni) cls.push('today');
-      html += '<button type="button" class="' + cls.join(' ') + '" data-day="' + d + '">' + d + '</button>';
-    }
-    html += '</div><div class="cal-foot"><span class="cal-hint">Pilih 2 tanggal (awal &amp; akhir)</span><button type="button" class="btn-reset" id="wtResetCal">Semua</button></div>';
-    pop.innerHTML = html;
-    pop.querySelectorAll('.cal-day').forEach(b => b.addEventListener('click', ev => {
-      ev.stopPropagation();
-      pilihHari(parseInt(b.dataset.day, 10));
-    }));
-    const rst = pop.querySelector('#wtResetCal');
-    if (rst) rst.addEventListener('click', ev => { ev.stopPropagation(); CAL.pick = null; setRange(1, PERIODE.last); tutupKalender(); });
-  }
-
-  function bukaKalender() {
-    const pop = $('wtCalPop');
-    if (!pop) return;
-    CAL.pick = null;
-    renderKalender();
-    pop.hidden = false;
-  }
-  function tutupKalender() {
-    const pop = $('wtCalPop');
-    if (pop) pop.hidden = true;
-  }
+  // Rentang waktu mengikuti rentang utama HE (fFrom/fTo), bukan kontrol WT sendiri.
 
   // ---------- init ----------
   document.addEventListener('DOMContentLoaded', () => {
@@ -2653,28 +2737,9 @@ if (lblAwal) lblAwal.textContent = rangeLabel();
       th.addEventListener('click', () => setSort(th.dataset.sort));
     });
 
-    const rangeBtn = $('wtRangeBtn');
-    if (rangeBtn) rangeBtn.addEventListener('click', ev => {
-      ev.stopPropagation();
-      const pop = $('wtCalPop');
-      if (pop && pop.hidden) bukaKalender(); else tutupKalender();
-    });
-
-    document.addEventListener('click', ev => {
-      const wrap = ev.target.closest ? ev.target.closest('.wt-range-wrap') : null;
-      if (!wrap) tutupKalender();
-    });
-
-    ['wtFrom', 'wtTo'].forEach(id => {
+    ['fFrom', 'fTo'].forEach(id => {
       const inp = $(id);
-      if (!inp) return;
-      inp.addEventListener('change', () => {
-        const f = $('wtFrom'), t = $('wtTo');
-        if (f.value && t.value && f.value > t.value) { const x = f.value; f.value = t.value; t.value = x; }
-        const lbl = $('wtRangeVal');
-        if (lbl) lbl.textContent = rangeLabel();
-        render();
-      });
+      if (inp) inp.addEventListener('change', () => render());
     });
 
     let rz = null;

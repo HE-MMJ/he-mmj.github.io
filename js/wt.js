@@ -57,13 +57,10 @@
   let wtHover = -1;
   let wtRows = [];
   let animRAF = null;
-  const CAL = { pick: null };
 
   // ---------- rentang tanggal ----------
-  function isoOf(day) { return PERIODE.y + '-' + String(PERIODE.m).padStart(2, '0') + '-' + String(day).padStart(2, '0'); }
-
   function rangeState() {
-    const f = $('wtFrom'), t = $('wtTo');
+    const f = $('fFrom'), t = $('fTo');
     const from = f && f.value ? parseInt(f.value.slice(8, 10), 10) : 1;
     const to = t && t.value ? parseInt(t.value.slice(8, 10), 10) : PERIODE.last;
     return { from, to, full: from <= 1 && to >= PERIODE.last };
@@ -162,19 +159,20 @@
     $('wtTbody').innerHTML = tabel.length ? tabel.map(d => {
       const cmpVal = num(d[cmpField]);
       const maTxt = cmpVal > 0 ? (isPct ? fmt(cmpVal, 1) + '%' : fmt(cmpVal, 2)) : '\u2013';
+      const maLow = WT_CMP === 'MA' && cmpVal > 0 && cmpVal < 85;
       const rata = d.Hari > 0 ? fmt(d.P / d.Hari, 1) : '\u2013';
       const pCls = d.P > 0 ? '' : ' sisa-over';
       const fuelTxt = num(d.Fuel) > 0 ? fmt0(d.Fuel) : '\u2013';
       return '<tr>' +
         '<td><b>' + (esc(d.Unit) || '-') + '</b></td>' +
-        '<td class="col-optional">' + (esc(d.Vendor) || '-') + '</td>' +
+        '<td class="col-optional">' + (esc(String(d.Vendor || '-').replace(/^\d+\.\s*/, '').replace(/^WT\s+/i, '')) || '-') + '</td>' +
         '<td class="col-optional">' + (esc(d.Area) || '-') + '</td>' +
         '<td class="model-cell col-optional">' + (esc(d.Model) || '-') + (d.Capacity && d.Capacity !== '-' ? ' / ' + esc(d.Capacity) : '') + '</td>' +
         '<td class="num' + pCls + '"><b>' + fmt0(d.P) + '</b></td>' +
         '<td class="num min-h">' + d.Hari + '</td>' +
         '<td class="num">' + rata + '</td>' +
         '<td class="num">' + fuelTxt + '</td>' +
-        '<td class="num">' + maTxt + '</td>' +
+        '<td class="num"' + (maLow ? ' style="color:#DC2626;font-weight:700"' : '') + '>' + maTxt + '</td>' +
       '</tr>';
     }).join('') : '<tr><td colspan="9" class="wt-empty">Tidak ada unit WT yang cocok dengan filter di atas.</td></tr>';
 
@@ -644,71 +642,7 @@
     });
   }
 
-  // ---------- kalender rentang ----------
-  function setRange(from, to) {
-    const f = $('wtFrom'), t = $('wtTo');
-    if (f) f.value = isoOf(from);
-    if (t) t.value = isoOf(to);
-    const lbl = $('wtRangeVal');
-    if (lbl) lbl.textContent = rangeLabel();
-    render();
-  }
-
-  function pilihHari(d) {
-    if (CAL.pick === null) { CAL.pick = d; renderKalender(); return; }
-    const a = Math.min(CAL.pick, d), b = Math.max(CAL.pick, d);
-    CAL.pick = null;
-    setRange(a, b);
-    tutupKalender();
-  }
-
-  function renderKalender() {
-    const pop = $('wtCalPop');
-    if (!pop) return;
-    const rs = rangeState();
-    const pk = CAL.pick;
-    const from = pk !== null ? pk : (rs.full ? 0 : rs.from);
-    const to = pk !== null ? pk : (rs.full ? 0 : rs.to);
-    const jml = PERIODE.last;
-    const mulai = new Date(PERIODE.y, PERIODE.m - 1, 1).getDay();
-    const now = new Date();
-    const hariIni = (now.getFullYear() === PERIODE.y && now.getMonth() === PERIODE.m - 1) ? now.getDate() : 0;
-    const dow = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
-
-    let html = '<div class="cal-head"><span>' + PERIODE.label + '</span><span class="cal-hint">' +
-      (CAL.pick ? 'klik tanggal akhir' : 'klik tanggal awal') + '</span></div><div class="cal-grid">';
-    html += dow.map(d => '<div class="cal-dow">' + d + '</div>').join('');
-    for (let i = 0; i < mulai; i++) html += '<div></div>';
-    for (let d = 1; d <= jml; d++) {
-      const dalam = from && to && d > from && d < to;
-      const tepi = !!from && !!to && (d === from || d === to);
-      const cls = ['cal-day'];
-      if (dalam) cls.push('in-range');
-      if (tepi) cls.push('edge', from === to ? 'single' : (d === from ? 'start' : 'end'));
-      if (d === hariIni) cls.push('today');
-      html += '<button type="button" class="' + cls.join(' ') + '" data-day="' + d + '">' + d + '</button>';
-    }
-    html += '</div><div class="cal-foot"><span class="cal-hint">Pilih 2 tanggal (awal &amp; akhir)</span><button type="button" class="btn-reset" id="wtResetCal">Semua</button></div>';
-    pop.innerHTML = html;
-    pop.querySelectorAll('.cal-day').forEach(b => b.addEventListener('click', ev => {
-      ev.stopPropagation();
-      pilihHari(parseInt(b.dataset.day, 10));
-    }));
-    const rst = pop.querySelector('#wtResetCal');
-    if (rst) rst.addEventListener('click', ev => { ev.stopPropagation(); CAL.pick = null; setRange(1, PERIODE.last); tutupKalender(); });
-  }
-
-  function bukaKalender() {
-    const pop = $('wtCalPop');
-    if (!pop) return;
-    CAL.pick = null;
-    renderKalender();
-    pop.hidden = false;
-  }
-  function tutupKalender() {
-    const pop = $('wtCalPop');
-    if (pop) pop.hidden = true;
-  }
+  // Rentang waktu mengikuti rentang utama HE (fFrom/fTo), bukan kontrol WT sendiri.
 
   // ---------- init ----------
   document.addEventListener('DOMContentLoaded', () => {
@@ -727,28 +661,9 @@
       th.addEventListener('click', () => setSort(th.dataset.sort));
     });
 
-    const rangeBtn = $('wtRangeBtn');
-    if (rangeBtn) rangeBtn.addEventListener('click', ev => {
-      ev.stopPropagation();
-      const pop = $('wtCalPop');
-      if (pop && pop.hidden) bukaKalender(); else tutupKalender();
-    });
-
-    document.addEventListener('click', ev => {
-      const wrap = ev.target.closest ? ev.target.closest('.wt-range-wrap') : null;
-      if (!wrap) tutupKalender();
-    });
-
-    ['wtFrom', 'wtTo'].forEach(id => {
+    ['fFrom', 'fTo'].forEach(id => {
       const inp = $(id);
-      if (!inp) return;
-      inp.addEventListener('change', () => {
-        const f = $('wtFrom'), t = $('wtTo');
-        if (f.value && t.value && f.value > t.value) { const x = f.value; f.value = t.value; t.value = x; }
-        const lbl = $('wtRangeVal');
-        if (lbl) lbl.textContent = rangeLabel();
-        render();
-      });
+      if (inp) inp.addEventListener('change', () => render());
     });
 
     let rz = null;
