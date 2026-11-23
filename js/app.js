@@ -1,4 +1,4 @@
-﻿// Dashboard Timesheet HE - MMJ November 2026
+// Dashboard Timesheet HE - MMJ November 2026
 // Data berasal dari js/data.js (const DATA dan const DAILY) - tidak perlu server.
 
 // Unit Water Truck (WT SKN-01..04) sudah tampil di tabel Penyiraman (WT),
@@ -70,7 +70,35 @@ let lastRows = [];   // data yang sedang tampil (untuk redraw saat hover)
 let hoverIdx = -1;   // indeks batang yang disorot mouse
 let GEO = null;      // geometri grafik terakhir (untuk hit-test mouse)
 let animRAF = null;  // requestAnimationFrame animasi
+let blinkRAF = null; // requestAnimationFrame blink titik MA<85/PA<80/FR>std
 let TITLE_BASE = 'Grafik HM & MA per Unit'; // judul grafik tanpa info rentang
+
+function blinkBad(d, cfg) {
+  const ma = num(d.MA);
+  const pa = num(d.PAPct != null ? d.PAPct : d.PA);
+  const fr = num(d.FuelRatio);
+  if (cfg.field === 'MA') return ma > 0 && ma < 85;
+  if (cfg.field === 'PAPct' || cfg.field === 'PA') return pa > 0 && pa < 80;
+  if (cfg.field === 'FuelRatio') {
+    const s = typeof stdFuel === 'function' ? stdFuel(d) : null;
+    return !!s && fr > 0 && fr > s.ratio;
+  }
+  return false;
+}
+function anyBlink(rows, cfg) {
+  return Array.isArray(rows) && rows.some(d => blinkBad(d, cfg));
+}
+function stopBlink() {
+  if (blinkRAF) { cancelAnimationFrame(blinkRAF); blinkRAF = null; }
+}
+function startBlink() {
+  if (blinkRAF || animRAF) return;
+  const loop = () => {
+    drawCombo(lastRows, 1);
+    blinkRAF = requestAnimationFrame(loop);
+  };
+  blinkRAF = requestAnimationFrame(loop);
+}
 
 function matchVendor(dv, sel) { return sel === 'ALL' || dv === sel; }
 function hasVendor(sel, arr) { return sel !== 'ALL' && arr.some(d => d.Vendor === sel); }
@@ -1221,6 +1249,7 @@ function renderControlHE() {
 // ---------- animasi: batang & garis tumbuh dari 0 ----------
 function animateChart() {
   if (animRAF) cancelAnimationFrame(animRAF);
+  stopBlink();
   const dur = 650;
   const t0 = performance.now();
   const step = now => {
@@ -1232,6 +1261,7 @@ function animateChart() {
     } else {
       animRAF = null;
       drawCombo(lastRows, 1);
+      if (anyBlink(lastRows, CMP_CFG[CMP])) startBlink();
     }
   };
   animRAF = requestAnimationFrame(step);
@@ -1648,16 +1678,36 @@ function drawCombo(rows, prog = 1) {
     i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
   });
   ctx.stroke();
+  const blinkOn = (Math.floor(performance.now() / 450) % 2) === 0;
+  let hasBlink = false;
   top.forEach((d, i) => {
     const x = xCenter(i), y = cmpYA(num(d[cfg.field]));
     const r = i === hoverIdx ? 6 : 4;
-    ctx.fillStyle = '#fff';
-    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = cfg.warna;
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+    const bad = blinkBad(d, cfg);
+    if (bad) hasBlink = true;
+    if (bad && blinkOn) {
+      ctx.fillStyle = '#EF4444';
+      ctx.beginPath(); ctx.arc(x, y, r + 1.5, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#B91C1C';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(x, y, r + 1.5, 0, Math.PI * 2); ctx.stroke();
+    } else if (bad) {
+      ctx.fillStyle = '#FCA5A5';
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#EF4444';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+    } else {
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = cfg.warna;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+    }
   });
   ctx.restore();
+  if (prog >= 1 && hasBlink && !animRAF && !blinkRAF) startBlink();
+  if (prog >= 1 && !hasBlink && blinkRAF) stopBlink();
 
   // --- label angka pada tiap titik garis ---
   if (prog > 0.7) {
@@ -1781,7 +1831,7 @@ function drawTooltip(ctx, d, i, cfg, geo, barW, maxHM, baseY, plotH) {
     if (idx !== hoverIdx) {
       hoverIdx = idx;
       c.style.cursor = idx >= 0 ? 'pointer' : 'default';
-      if (!animRAF) drawCombo(lastRows, 1);
+      if (!animRAF && !blinkRAF) drawCombo(lastRows, 1);
     }
   });
 
@@ -1789,7 +1839,7 @@ function drawTooltip(ctx, d, i, cfg, geo, barW, maxHM, baseY, plotH) {
     if (hoverIdx !== -1) {
       hoverIdx = -1;
       c.style.cursor = 'default';
-      if (!animRAF) drawCombo(lastRows, 1);
+      if (!animRAF && !blinkRAF) drawCombo(lastRows, 1);
     }
   });
 
@@ -1802,14 +1852,14 @@ function drawTooltip(ctx, d, i, cfg, geo, barW, maxHM, baseY, plotH) {
     const idx = idxDi(x);
     if (idx !== hoverIdx) {
       hoverIdx = idx;
-      if (!animRAF) drawCombo(lastRows, 1);
+      if (!animRAF && !blinkRAF) drawCombo(lastRows, 1);
     }
   }
   c.addEventListener('touchstart', sentuh, { passive: true });
   c.addEventListener('touchmove', sentuh, { passive: true });
 
   window.addEventListener('resize', () => {
-    if (!animRAF) drawCombo(lastRows, 1);
+    if (!animRAF && !blinkRAF) drawCombo(lastRows, 1);
   });
 })();
 
@@ -2087,6 +2137,18 @@ document.getElementById('fArea').addEventListener('change', () => { fillJenis();
 document.getElementById('fJenis').addEventListener('change', () => { fillCap(); render(); });
 const fCapEl = document.getElementById('fCap');
 if (fCapEl) fCapEl.addEventListener('change', () => render());
+
+// kunci filter mobile (seperti Coal Hauling)
+(function(){ const lb=document.getElementById("lockbar"), bt=document.getElementById("lkFt"); if(!lb||!bt) return;
+  bt.onclick=()=>{ const o=!lb.classList.contains("open"); lb.classList.toggle("open",o); bt.setAttribute("aria-expanded",o); bt.querySelector("span").textContent=o?"Tutup filter":"Filter"; };
+  const setH=()=>{ lb.style.setProperty("--lockH", lb.offsetHeight+"px"); };
+  setH(); if(window.ResizeObserver) new ResizeObserver(setH).observe(lb);
+  addEventListener("scroll",()=>lb.classList.toggle("stuck", lb.getBoundingClientRect().top<=10), {passive:true});
+})();
+// toggle sidebar (901-1000px)
+(function(){ const app=document.querySelector('.app'), bt=document.getElementById('sideTog'); if(!app||!bt) return;
+  bt.onclick=()=>{ const o=!app.classList.contains('side-open'); app.classList.toggle('side-open',o); bt.setAttribute('aria-expanded',o); const sp=bt.querySelector('span'); if(sp) sp.textContent=o?'Tutup menu':'Menu'; };
+})();
 
 // tombol reset filter
 const btnReset = document.getElementById('btnResetFilter');

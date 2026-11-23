@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    Dashboard Timesheet HE â€” MMJ
    Gaya: Data-Dense Dashboard (biru korporat + aksen amber)
    ========================================================================== */
@@ -144,7 +144,7 @@ body {
 .filterbar {
   position: sticky;
   top: 0;
-  z-index: 30;
+  z-index: 60;
   background: rgba(255, 255, 255, .88);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);
@@ -156,7 +156,7 @@ body {
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
-  max-width: 1560px;
+  max-width: 1000px;
   margin: 0 auto;
   padding: 12px 24px;
 }
@@ -835,3 +835,25 @@ tr.wt-row td:first-child { border-left: 3px solid #0D9488; }
 th.wt-sortable { cursor: pointer; user-select: none; }
 th.wt-sortable:hover { background: #EDF3FC; color: var(--primary); }
 .wt-arrow { font-size: 9px; opacity: .9; }
+
+/* Mobile filter toggle - seperti Coal Hauling */
+.lk-ft{display:none}
+.filterbar.lockbar .filters{display:contents}
+@media (max-width:1000px){
+  .filterbar.lockbar{position:sticky;top:0;z-index:30;gap:6px;margin:0 -6px 12px;padding:6px;border-radius:0 0 18px 18px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+  .filterbar.lockbar.stuck{background:color-mix(in srgb,var(--surface-solid, #fff) 82%,transparent);box-shadow:0 14px 32px -14px rgba(30,40,100,.35)}
+  .filterbar .lk-ft{display:flex;align-items:center;justify-content:center;gap:8px;min-height:42px;border-radius:14px;border:1px solid var(--border, #d7def0);background:var(--surface-solid, #fff);color:var(--ink, #121833);font:inherit;font-size:13px;font-weight:700;cursor:pointer;width:100%}
+  .filterbar .lk-ft svg{transition:transform .2s}
+  .filterbar.lockbar.open .lk-ft svg{transform:rotate(180deg)}
+  .filterbar.lockbar:not(.open) .filters{display:none}
+  .filterbar.lockbar .filterbar-inner{display:flex;flex-direction:column;gap:8px;padding:0}
+  .filterbar.lockbar .filters{display:flex;flex-direction:column;gap:10px;padding:10px 4px 4px}
+  .filterbar.lockbar.open .filters{display:flex}
+  .filterbar.lockbar .filter-group{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+  .filterbar.lockbar .field{min-width:0;width:100%}
+  .filterbar.lockbar .select-wrap,.filterbar.lockbar .select-wrap select,.filterbar.lockbar select{width:100%;min-width:0}
+  .filterbar.lockbar .filter-range-row{display:flex;flex-direction:column;align-items:stretch;gap:10px;width:100%}
+  .filterbar.lockbar .range-wrap,.filterbar.lockbar .range-box{width:100%}
+  .filterbar.lockbar .btn-ghost{width:100%;min-height:42px}
+}
+@media print{.lk-ft{display:none}.filterbar.lockbar{position:static}}

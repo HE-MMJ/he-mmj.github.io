@@ -57,6 +57,34 @@
   let wtHover = -1;
   let wtRows = [];
   let animRAF = null;
+  let blinkRAF = null;
+
+  function blinkBad(d, cfg) {
+    const ma = num(d.MA);
+    const pa = num(d.PA != null ? d.PA : d.PAPct);
+    const fr = num(d.FuelRatio);
+    if (cfg.field === 'MA') return ma > 0 && ma < 85;
+    if (cfg.field === 'PA' || cfg.field === 'PAPct') return pa > 0 && pa < 80;
+    if (cfg.field === 'FuelRatio') {
+      const s = typeof stdFuel === 'function' ? stdFuel(d) : null;
+      return !!s && fr > 0 && fr > s.ratio;
+    }
+    return false;
+  }
+  function anyBlink(rows, cfg) {
+    return Array.isArray(rows) && rows.some(d => blinkBad(d, cfg));
+  }
+  function stopBlink() {
+    if (blinkRAF) { cancelAnimationFrame(blinkRAF); blinkRAF = null; }
+  }
+  function startBlink() {
+    if (blinkRAF || animRAF) return;
+    const loop = () => {
+      drawCombo(wtRows, 1);
+      blinkRAF = requestAnimationFrame(loop);
+    };
+    blinkRAF = requestAnimationFrame(loop);
+  }
 
   // ---------- rentang tanggal ----------
   function rangeState() {
@@ -272,6 +300,7 @@
 
   function animateChart() {
     if (animRAF) cancelAnimationFrame(animRAF);
+    stopBlink();
     const t0 = performance.now();
     const dur = 520;
     const step = now => {
@@ -279,7 +308,7 @@
       const e = 1 - Math.pow(1 - p, 3);
       drawCombo(wtRows, e);
       if (p < 1) animRAF = requestAnimationFrame(step);
-      else { animRAF = null; drawCombo(wtRows, 1); }
+      else { animRAF = null; drawCombo(wtRows, 1); if (anyBlink(wtRows, WT_CMP_CFG[WT_CMP] || WT_CMP_CFG.MA)) startBlink(); }
     };
     animRAF = requestAnimationFrame(step);
   }
@@ -462,12 +491,26 @@
     ctx.save(); ctx.globalAlpha = Math.min(1, prog * 1.6); ctx.strokeStyle = cfg.warna; ctx.lineWidth = 2; ctx.beginPath();
     top.forEach((d, i) => { const x = xCenter(i), y = cmpYA(num(d[cmpField])); i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
     ctx.stroke();
+    const blinkOn = (Math.floor(performance.now() / 450) % 2) === 0;
+    let hasBlink = false;
     top.forEach((d, i) => {
       const x = xCenter(i), y = cmpYA(num(d[cmpField])); const r = i === wtHover ? 6 : 4;
-      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = cfg.warna; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+      const bad = blinkBad(d, cfg);
+      if (bad) hasBlink = true;
+      if (bad && blinkOn) {
+        ctx.fillStyle = '#EF4444'; ctx.beginPath(); ctx.arc(x, y, r + 1.5, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#B91C1C'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, r + 1.5, 0, Math.PI * 2); ctx.stroke();
+      } else if (bad) {
+        ctx.fillStyle = '#FCA5A5'; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#EF4444'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+      } else {
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = cfg.warna; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+      }
     });
     ctx.restore();
+    if (prog >= 1 && hasBlink && !animRAF && !blinkRAF) startBlink();
+    if (prog >= 1 && !hasBlink && blinkRAF) stopBlink();
 
     // line labels
     const cmpLabel = cfg.nilai || cfg.tick;
@@ -535,10 +578,10 @@
       let best = -1, dist = Infinity;
       centers.forEach((cx, i) => { const dd = Math.abs(cx - x); if (dd < dist) { dist = dd; best = i; } });
       if (dist > (WT_GEO.slotW / 2) + 4) best = -1;
-      if (best !== wtHover) { wtHover = best; drawCombo(wtRows, 1); }
+      if (best !== wtHover) { wtHover = best; if (!animRAF && !blinkRAF) drawCombo(wtRows, 1); }
     });
     c.addEventListener('mouseleave', () => {
-      if (wtHover !== -1) { wtHover = -1; drawCombo(wtRows, 1); }
+      if (wtHover !== -1) { wtHover = -1; if (!animRAF && !blinkRAF) drawCombo(wtRows, 1); }
     });
   }
 
