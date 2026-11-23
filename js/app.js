@@ -406,6 +406,7 @@ const UD_BARIS = [
 
 let UD_WRAP = null;   // overlay panel (dibuat sekali, dipakai ulang)
 let UD_FOKUS = null;  // elemen yang fokusnya dikembalikan saat panel ditutup
+let UD_DATA = null;
 
 function vendorAgg(kind, heRows, wtRows, allHe, allWt) {
   const groups = new Map();
@@ -658,72 +659,117 @@ function openVendorPanel(kind) {
   if (btn) { btn.addEventListener('click', closeUnitPanel); btn.focus(); }
 }
 
-function renderUnitPanel(d) {
+function udIsGip12(vendor) {
+  const v = String(vendor || '').toUpperCase();
+  return v.includes('GIP H1') || v.includes('GIP H2') || v.includes('GIP 1') || v.includes('GIP 2');
+}
+function udTabData(kind, c, det, bl, vendor) {
+  const b = (det && det.b) || [];
+  const nofuelBd = udIsGip12(vendor);
+  if (kind === 'breakdown') {
+    const rows = [['Repair', num(c.rep)], ['Break Down', num(c.bd)]];
+    if (nofuelBd) rows.push(['No Fuel', num(c.nofuel)]);
+    const totalBd = b.reduce((s, x) => s + num(x.h), 0) || 1;
+    const rincian = b.length ? `<div class="ud-bd"><h4>Rincian breakdown</h4>${b.map(x => `
+      <div class="ud-bd-row">
+        <div class="ud-bd-top"><span class="ud-bd-l">${escHtml(judulKata(x.l || 'tanpa keterangan'))}</span><span>${fmt(x.h,1)} jam</span></div>
+        <div class="ud-bar"><i style="width:${Math.max(2, num(x.h)/totalBd*100).toFixed(1)}%"></i></div>
+        <div class="ud-bd-d">${(x.d||[]).map(t => t[0]+' '+bl).join(', ')}</div>
+      </div>`).join('')}</div>` : '<p class="ud-nol">Tidak ada rincian breakdown.</p>';
+    return {rows, extra: rincian};
+  }
+  if (kind === 'standby') {
+    const rows = [['Standby – Rain',num(c.rain)],['Standby – Slippery',num(c.slip)],['Meals And Rest',num(c.meals)],['P2H',num(c.p2h)],['Holiday',num(c.hol)],['Travelling',num(c.trav)]];
+    if (!nofuelBd) rows.push(['No Fuel',num(c.nofuel)]);
+    return {rows, extra:''};
+  }
+  if (kind === 'noop') return {rows:[['No Operator',num(c.noop)],['Waiting Operator',num(c.waitop)]], extra:''};
+  if (kind === 'nojob') return {rows:[['No Job (No Work Location)',num(c.nowork)],['No Tandem',num(c.notandem)]], extra:''};
+  return {rows:[], extra:''};
+}
+
+function udBuildTable(kind, d) {
+  const det = udDetail(d.Unit || '-');
+  const c = udCats(d.Unit || '-');
+  const bl = BULAN_ID[PERIODE.m - 1];
+  const t = udTabData(kind, c, det, bl, d.Vendor);
+  const label = {breakdown:'Breakdown', standby:'Standby', noop:'No Operator', nojob:'No Job'}[kind] || '';
+  const rowsHtml = t.rows.map(([l,v]) => `<tr class="${v? '':'ud-nol'}"><td>${escHtml(l)}</td><td class="num vd-tnum">${fmt(v,1)}</td></tr>`).join('');
+  return `<div class="vd-table-head">Rincian ${escHtml(label)}</div><table class="vd-table-body"><thead><tr><th>Kategori</th><th class="vd-tnum">Jam</th></tr></thead><tbody>${rowsHtml}</tbody></table>${t.extra}`;
+}
+
+function renderUnitPanel(d, activeKind) {
   const unit = d.Unit || '-';
   const det = udDetail(unit);
   const c = udCats(unit);
   const bl = BULAN_ID[PERIODE.m - 1];
+  const nofuelBd = udIsGip12(d.Vendor);
+  const standbyVal = num(c.rain)+num(c.slip)+num(c.meals)+num(c.p2h)+num(c.hol)+num(c.trav)+(nofuelBd?0:num(c.nofuel));
+  const bdVal = num(c.rep)+num(c.bd)+(nofuelBd?num(c.nofuel):0);
   const kartu = [
-    ['Breakdown', num(c.rep) + num(c.bd), '#DC2626'],
-    ['Standby', num(c.rain) + num(c.slip), '#0891B2'],
-    ['No Operator', num(c.noop), '#D97706'],
-    ['No Job', num(c.nowork), '#7C3AED']
+    ['breakdown','Breakdown', bdVal, '#DC2626'],
+    ['standby','Standby', standbyVal, '#0891B2'],
+    ['noop','No Operator', num(c.noop), '#D97706'],
+    ['nojob','No Job', num(c.nowork), '#7C3AED']
   ];
-  const b = (det && det.b) || [];
-  const totalBd = b.reduce((s, x) => s + num(x.h), 0) || 1;
-  // keterangan breakdown berasal dari teks Excel: selalu lewat escHtml
-  const rincian = b.length ? `
-    <div class="ud-bd">
-      <h4>Rincian breakdown</h4>
-      ${b.map(x => `
-      <div class="ud-bd-row">
-        <div class="ud-bd-top">
-          <span class="ud-bd-l">${escHtml(judulKata(x.l || 'tanpa keterangan'))}</span>
-          <span>${fmt(x.h, 1)} jam</span>
-        </div>
-        <div class="ud-bar"><i style="width:${Math.max(2, num(x.h) / totalBd * 100).toFixed(1)}%"></i></div>
-        <div class="ud-bd-d">${(x.d || []).map(t => t[0] + ' ' + bl).join(', ')}</div>
-      </div>`).join('')}
-    </div>` : '';
-
   return `
     <h3 id="udJudul">${escHtml(unit)}</h3>
     <p class="ud-sub">${escHtml([d.Jenis, d.Area].filter(Boolean).join(' \u00b7 ') || '-')}
       \u00b7 Total ${bl} ${PERIODE.y} (tidak ikut filter rentang tanggal)</p>
-    <div class="ud-cards">
-      ${kartu.map(([l, v, cl]) => `<div class="ud-card" style="--c:${cl}">
-        <div class="ud-card-l">${l}</div>
-        <div class="ud-card-v">${fmt(v, 1)}</div>
-        <div class="ud-card-s">jam</div>
-      </div>`).join('')}
+    <div class="vd-cards ud-tabs">
+      ${kartu.map(([k,l,v,cl], i) => `<button type="button" class="vd-card ud-tab" data-kind="${k}" aria-pressed="false" style="--c:${cl};animation-delay:${Math.min(i*45,200)}ms">
+        <div class="vd-card-head">
+          <span class="vd-name">${l}</span>
+          <div class="vd-val-line">
+            <b class="vd-val">${fmt(v, 1)}</b>
+            <span class="vd-sub">jam</span>
+          </div>
+        </div>
+      </button>`).join('')}
     </div>
-    <table class="ud-table">
-      <thead><tr><th>Kategori</th><th class="num">Jam</th></tr></thead>
-      <tbody>${UD_BARIS.map(([l, f, sub]) => {
-        const v = f(c);
-        return `<tr class="${sub ? 'ud-sub ' : ''}${v ? '' : 'ud-nol'}">
-          <td>${escHtml(l)}</td><td class="num">${fmt(v, 1)}</td></tr>`;
-      }).join('')}</tbody>
-    </table>
-    ${det ? '' : '<p class="ud-note">Rincian per kategori belum tersedia untuk bulan ini; angka Breakdown memakai total harian.</p>'}
-    ${rincian}`;
+    ${det ? '' : '<p class="ud-note">Rincian per kategori belum tersedia untuk bulan ini; angka Breakdown memakai total harian.</p>'}`;
 }
 
 function judulKata(s) {
   return String(s).replace(/\b\w/g, m => m.toUpperCase());
 }
 
-function openUnitPanel(d) {
+function openUnitPanel(d, activeKind) {
+  const bindUdTabs = () => {
+    if (UD_WRAP._udTabBound) return;
+    UD_WRAP._udTabBound = true;
+    UD_WRAP.addEventListener('click', e => {
+      if (e.target === UD_WRAP) return closeUnitPanel();
+      const tab = e.target.closest ? e.target.closest('.ud-tab') : null;
+      if (!tab || !UD_DATA) return;
+      const grid = tab.closest('.vd-cards');
+      const sama = tab.classList.contains('open');
+      UD_WRAP.querySelectorAll('.ud-tab.open').forEach(b => { b.classList.remove('open'); b.setAttribute('aria-pressed','false'); });
+      if (grid) { const old = grid.querySelector('.vd-table'); if (old) old.remove(); }
+      if (sama) return;
+      tab.classList.add('open'); tab.setAttribute('aria-pressed','true');
+      let anchor = tab;
+      if (grid) {
+        const top = Math.round(tab.getBoundingClientRect().top);
+        [...grid.querySelectorAll('.vd-card')].forEach(c => { if (Math.round(c.getBoundingClientRect().top) === top) anchor = c; });
+      }
+      const tabel = document.createElement('div');
+      tabel.className = 'vd-table';
+      tabel.innerHTML = udBuildTable(tab.dataset.kind, UD_DATA);
+      anchor.insertAdjacentElement('afterend', tabel);
+    });
+  };
   if (!UD_WRAP) {
     UD_WRAP = document.createElement('div');
     UD_WRAP.className = 'ud-wrap';
-    UD_WRAP.addEventListener('click', e => { if (e.target === UD_WRAP) closeUnitPanel(); });
     document.body.appendChild(UD_WRAP);
   }
+  bindUdTabs();
+  UD_DATA = d;
   UD_FOKUS = document.activeElement;
-  UD_WRAP.innerHTML = '<div class="ud-panel" role="dialog" aria-modal="true" aria-labelledby="udJudul">'
+  UD_WRAP.innerHTML = '<div class="ud-panel vd-panel" role="dialog" aria-modal="true" aria-labelledby="udJudul">'
     + '<button type="button" class="ud-close" aria-label="Tutup detail unit">&times;</button>'
-    + renderUnitPanel(d) + '</div>';
+    + renderUnitPanel(d, activeKind) + '</div>';
   UD_WRAP.classList.add('open');
   const btn = UD_WRAP.querySelector('.ud-close');
   if (btn) { btn.addEventListener('click', closeUnitPanel); btn.focus(); }
@@ -749,17 +795,18 @@ function render() {
   });
   updateTitle();
 
-  // kartu ringkasan
-  const sumHM = rows.reduce((s, d) => s + num(d.HMTotal), 0);
-  const sumFuel = rows.reduce((s, d) => s + num(d.Fuel), 0)
+  // kartu ringkasan — global (tidak ikut filter vendor/area/jenis)
+  const kpiRows = applyRange(DATA);
+  const sumHM = kpiRows.reduce((s, d) => s + num(d.HMTotal), 0);
+  const sumFuel = kpiRows.reduce((s, d) => s + num(d.Fuel), 0)
     + (typeof window.WT_summary === 'function' ? wtFuelTotal(WTD) : WTD.reduce((s, d) => s + wtFuelRange(d), 0));
-  const sumPA = rows.filter(d => num(d.PAPct) > 0);
+  const sumPA = kpiRows.filter(d => num(d.PAPct) > 0);
   const avgPA = sumPA.length ? sumPA.reduce((s, d) => s + num(d.PAPct), 0) / sumPA.length : 0;
   const avgMA = (() => {
-    const f = rows.filter(d => num(d.MA) > 0);
+    const f = kpiRows.filter(d => num(d.MA) > 0);
     return f.length ? f.reduce((s, d) => s + num(d.MA), 0) / f.length : 0;
   })();
-  const sumRatio = rows.filter(d => num(d.FuelRatio) > 0);
+  const sumRatio = kpiRows.filter(d => num(d.FuelRatio) > 0);
   const avgRatio = sumRatio.length ? sumRatio.reduce((s, d) => s + num(d.FuelRatio), 0) / sumRatio.length : 0;
   const totalUnit = DATA.length + WTD.length;
   const wtInfo = (typeof window.WT_summary === 'function') ? window.WT_summary() : null;
@@ -816,6 +863,13 @@ function render() {
     const sisa = MIN_HOURS - hmBulan;
     const sisaTxt = kosong || sisa.toFixed(1);
     const sisaCls = kosong ? '' : (sisa < 0 ? ' sisa-over' : (sisa <= MIN_HOURS * 0.1 ? ' sisa-warn' : ' sisa-ok'));
+    const daysInMonth = (typeof PERIODE !== 'undefined' && PERIODE.last) ? PERIODE.last : 30;
+    const bel = (typeof BELUM !== 'undefined' ? BELUM : []).find(b => unitKey(b.Unit) === unitKey(d.Unit));
+    const adaHariBel = bel && typeof belumDays === 'function' ? belumDays(bel) : null;
+    let lastInputDay = 0;
+    if (adaHariBel) { for (let i = adaHariBel.length - 1; i >= 0; i--) { if (adaHariBel[i]) { lastInputDay = i + 1; break; } } }
+    const sisaHari = Math.max(0, daysInMonth - lastInputDay);
+    const sisaDayTxt = kosong || (sisaHari > 0 ? ((MIN_HOURS - hmBulan) / sisaHari).toFixed(1) : '\u2014');
     // model + kapasitas unit (dari sheet Database List Unit)
     const modelTxt = d.Model ? (d.Capacity && d.Capacity !== '-' ? `${d.Model}/${d.Capacity}` : d.Model) : '-';
     return `<tr>
@@ -825,6 +879,7 @@ function render() {
     <td class="model-cell">${modelTxt}</td>
     <td class="num"><b>${hmTxt}</b></td>
     <td class="num${sisaCls}"><b>${sisaTxt}</b></td>
+    <td class="num"><b>${sisaDayTxt}</b></td>
     <td class="num"${maStyle}>${maTxt}</td>
     <td class="num">${paTxt}</td>
     <td class="num">${fuelTxt}</td>
@@ -834,12 +889,16 @@ function render() {
   const totUnit = tabelRows.length;
   const totHM = tabelRows.reduce((s, d) => s + num(d.HMTotal), 0);
   const totFuel = tabelRows.reduce((s, d) => s + num(d.Fuel), 0);
+  const elHU = document.getElementById('heCountUnit'); if (elHU) elHU.textContent = totUnit;
+  const elHH = document.getElementById('heTotalHM'); if (elHH) elHH.textContent = totHM.toFixed(1);
+  const elHF = document.getElementById('heTotalFuel'); if (elHF) elHF.textContent = fmt(totFuel, 0);
   const totalRow = totUnit ? `<tr style="font-weight:700;background:#f1f5f9">
     <td><b>Total</b></td>
     <td><b>${totUnit} unit</b></td>
     <td></td>
     <td></td>
     <td class="num"><b>${totHM.toFixed(1)}</b></td>
+    <td class="num"></td>
     <td class="num"></td>
     <td class="num"></td>
     <td class="num"></td>
@@ -939,7 +998,9 @@ function hitungBelum() {
   const rs = rangeState();
   const maks = Math.min(rs.to, cutoffDay());
   const mulai = Math.max(1, rs.from);
-  const sumber = all.filter(d => Object.keys(d.Days || {}).length || DU_MAP[unitKey(d.Unit)]);
+  const wtNorm = s => String(s || '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim().split(/\s+/).sort().join(' ');
+  const wtUnitKeys = new Set((typeof WTD !== 'undefined' ? WTD : []).map(d => wtNorm(d.Unit)));
+  const sumber = all.filter(d => !wtUnitKeys.has(wtNorm(d.Unit)) && (Object.keys(d.Days || {}).length || DU_MAP[unitKey(d.Unit)]));
   const rows = sumber.map(d => belumDays(d));
   // hari terakhir yang datanya sudah mayoritas masuk (>=50% unit) -> dianggap sudah jatuh tempo
   let batas = 0;
@@ -973,10 +1034,13 @@ function renderBelum() {
   const pakaiV = hasVendor(fV, all);
   const pakaiA = fA !== 'ALL' && all.some(d => (d.Area || '') === fA);
   const pakaiJ = fJ !== 'ALL' && all.some(d => (d.Jenis || '-') === fJ);
+  const wtNorm = s => String(s || '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim().split(/\s+/).sort().join(' ');
+  const wtUnitKeys = new Set((typeof WTD !== 'undefined' ? WTD : []).map(d => wtNorm(d.Unit)));
   const list = all.filter(d =>
     (!pakaiV || matchVendor(d.Vendor, fV)) &&
     (!pakaiA || (d.Area || '') === fA) &&
-    (!pakaiJ || (d.Jenis || '-') === fJ)
+    (!pakaiJ || (d.Jenis || '-') === fJ) &&
+    !wtUnitKeys.has(wtNorm(d.Unit))
   );
 
   // WT units (shift S/M) ikut filter yang sama
@@ -1054,9 +1118,9 @@ function renderControlHE() {
   const lateWtTb = document.getElementById('controlLateWtTbody');
   if (!fuelTb || (!lateHeTb && !lateWtTb)) return;
 
-  // 1) Fuel di luar standar (HE saja, ikut filter aktif)
+  // 1) Fuel di luar standar (HE saja, tidak ikut filter vendor/area/jenis — kecuali Control HE)
   const fuelRows = [];
-  (lastRows || []).forEach(d => {
+  (applyRange(DATA) || []).forEach(d => {
     const s = stdFuel(d);
     const v = num(d.FuelRatio);
     if (!s || v <= 0) return;
@@ -1095,24 +1159,16 @@ function renderControlHE() {
     <td class="num">${r.std}</td>
     <td class="num ${r.cls}"><b>${r.sel}</b></td>
     <td><span class="ctrl-status ${r.cls}">${r.status}</span></td>
-  </tr>`).join('') || '<tr><td colspan="8" class="wt-empty">Tidak ada unit fuel di luar standar pada filter ini.</td></tr>';
+  </tr>`).join('') || '<tr><td colspan="8" class="wt-empty">Tidak ada unit fuel di luar standar pada periode ini.</td></tr>';
 
-  // 2) Timesheet terlambat >1 hari (HE + WT, ikut filter aktif, definisi sama tabel Belum Terima)
-  const fV = document.getElementById('fVendor').value;
-  const fA = document.getElementById('fArea').value;
-  const fJ = document.getElementById('fJenis').value;
+  // 2) Timesheet terlambat >1 hari (HE + WT, tidak ikut filter vendor/area/jenis — kecuali Control HE)
   const raw = (typeof BELUM !== 'undefined') ? BELUM : [];
   const all = Array.isArray(raw) ? raw : (raw ? [raw] : []);
-  const pakaiV = hasVendor(fV, all);
-  const pakaiA = fA !== 'ALL' && all.some(d => (d.Area || '') === fA);
-  const pakaiJ = fJ !== 'ALL' && all.some(d => (d.Jenis || '-') === fJ);
-  const heList = all.filter(d =>
-    (!pakaiV || matchVendor(d.Vendor, fV)) &&
-    (!pakaiA || (d.Area || '') === fA) &&
-    (!pakaiJ || (d.Jenis || '-') === fJ)
-  );
+  const wtNorm = s => String(s || '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim().split(/\s+/).sort().join(' ');
+  const wtUnitKeys = new Set(WTD.map(d => wtNorm(d.Unit)));
   const lateHeRows = [];
-  heList.forEach(d => {
+  all.forEach(d => {
+    if (wtUnitKeys.has(wtNorm(d.Unit))) return;
     const hariLate = (BMAP[unitKey(d.Unit)] || []).filter(h => h <= BBATAS - 1);
     if (!hariLate.length) return;
     lateHeRows.push({
@@ -1121,15 +1177,8 @@ function renderControlHE() {
     });
   });
 
-  const wtPakaiV = fV !== 'ALL' && WTD.some(d => wtVendorKey(d.Vendor) === wtVendorKey(fV));
-  const wtPakaiA = fA !== 'ALL' && WTD.some(d => wtNormKey(d.Area) === wtNormKey(fA));
-  const wtPakaiJ = fJ !== 'ALL' && WTD.some(d => wtJenisCocok(d, fJ));
   const lateWtRows = [];
-  WTD.filter(d =>
-    (!wtPakaiV || wtVendorKey(d.Vendor) === wtVendorKey(fV)) &&
-    (!wtPakaiA || wtNormKey(d.Area) === wtNormKey(fA)) &&
-    (!wtPakaiJ || wtJenisCocok(d, fJ))
-  ).forEach(d => {
+  WTD.forEach(d => {
     const single = WT_SHIFT1.indexOf(wtVendorKey(d.Vendor)) >= 0 || (d.Shift2 === false || d.Shift2 === 0);
     const S = (Array.isArray(d.BelumS) && d.BelumS.length === 30) ? d.BelumS : new Array(30).fill(0);
     const M = (Array.isArray(d.BelumM) && d.BelumM.length === 30) ? d.BelumM : new Array(30).fill(0);
@@ -1158,9 +1207,10 @@ function renderControlHE() {
     <td>${escHtml(r.area)}</td>
     <td>${escHtml(r.days)}</td>
     <td class="num"><b>${r.count}</b></td>
-  </tr>`).join('') || '<tr><td colspan="5" class="wt-empty">Tidak ada timesheet terlambat &gt;1 hari pada filter ini.</td></tr>';
+  </tr>`).join('') || '<tr><td colspan="5" class="wt-empty">Tidak ada timesheet terlambat &gt;1 hari pada periode ini.</td></tr>';
+  const vendorSort = v => String(v || '').replace(/^\d+\.\s*/, '').trim().toUpperCase();
   lateHeRows.sort((a, b) => b.count - a.count || String(a.unit).localeCompare(String(b.unit)));
-  lateWtRows.sort((a, b) => b.count - a.count || String(a.unit).localeCompare(String(b.unit)));
+  lateWtRows.sort((a, b) => vendorSort(a.vendor).localeCompare(vendorSort(b.vendor), 'id') || String(a.unit).localeCompare(String(b.unit), 'id', { numeric: true }));
   if (lateHeTb) lateHeTb.innerHTML = renderLate(lateHeRows);
   if (lateWtTb) lateWtTb.innerHTML = renderLate(lateWtRows);
   if (!lateWtTb && lateHeTb && lateHeTb.id === 'controlLateTbody') lateHeTb.innerHTML = renderLate(lateHeRows.concat(lateWtRows).sort((a,b)=>b.count-a.count||String(a.unit).localeCompare(String(b.unit))));

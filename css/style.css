@@ -589,8 +589,8 @@ th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .table-wrap tbody td:first-child {
   position: sticky;
   left: 0;
-  z-index: 1;
-  background: inherit;
+  z-index: 2;
+  background: #fff;
   box-shadow: 1px 0 0 var(--border), 8px 0 12px -8px rgba(15, 23, 42, .18);
 }
 .table-wrap tbody tr:nth-child(even) td:first-child { background: #FBFDFF; }

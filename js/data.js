@@ -1,4 +1,4 @@
-﻿// Data tertanam - dihasilkan otomatis dari data\data.json, data\daily.json, data\belum.json & data\daily_unit.json
+// Data tertanam - dihasilkan otomatis dari data\data.json, data\daily.json, data\belum.json & data\daily_unit.json
 // Supaya index.html bisa dibuka langsung (double-click) tanpa server.
 
 const DATA = [{

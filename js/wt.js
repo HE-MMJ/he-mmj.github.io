@@ -99,7 +99,7 @@
     return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
   }
   function vendorKey(s) {
-    return String(s || '').toUpperCase().replace(/^WT\s+/, '').trim();
+    return String(s || '').toUpperCase().replace(/^\d+\.\s*/, '').replace(/^WT\s+/, '').trim();
   }
   function jenisCocok(d, j) {
     if (!j || j === 'ALL') return true;
@@ -153,7 +153,7 @@
     } else {
       tabel.sort((a, b) => {
         const va = VENDOR_ORDER.indexOf(a.Vendor), vb = VENDOR_ORDER.indexOf(b.Vendor);
-        return (va - vb) || (b.P - a.P) || String(a.Unit).localeCompare(String(b.Unit), 'id', { numeric: true });
+        return (va - vb) || String(a.Vendor || '').localeCompare(String(b.Vendor || ''), 'id') || String(a.Unit).localeCompare(String(b.Unit), 'id', { numeric: true });
       });
     }
     $('wtTbody').innerHTML = tabel.length ? tabel.map(d => {
@@ -236,7 +236,7 @@
       b.classList.toggle('active', b.dataset.cmp === key);
     });
     const title = $('wtChartTitle');
-    if (title) title.textContent = 'Grafik Penyiraman (Bar) & ' + cfg.judul + ' (Garis) \u2014 Top 15 Water Truck';
+    if (title) title.textContent = 'Grafik Penyiraman (Bar) & ' + cfg.judul + ' (Garis) per Unit';
     const colLabel = $('wtCmpColLabel');
     if (colLabel) colLabel.textContent = cfg.judul;
     render();
@@ -286,47 +286,43 @@
 
   function drawCombo(rows, prog) {
     prog = prog == null ? 1 : prog;
+    const cfg = WT_CMP_CFG[WT_CMP] || WT_CMP_CFG.MA;
     const c = $('wtChart');
     if (!c) return;
     const ctx = c.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
     const H = 360;
-    const cfg = WT_CMP_CFG[WT_CMP] || WT_CMP_CFG.MA;
-    const cmpField = cfg.field;
-    const maxCmp = cfg.tetapMax;
 
-    // selalu tampilkan 15 unit dengan penyiraman terbanyak
-    const TOP_N = window.innerWidth < 620 ? 8 : 15;
-    const src = rows.slice()
-      .sort((a, b) => (b.P - a.P) || String(a.Unit).localeCompare(String(b.Unit), 'id', { numeric: true }))
-      .slice(0, TOP_N);
+    // tampilkan semua unit WT, urut nomor unit seperti HM
+    const nomorUnit = u => { const m = String(u || '').match(/(\d+)/); return m ? parseInt(m[1], 10) : 0; };
+    const topAll = rows.slice().sort((a, b) =>
+      (nomorUnit(a.Unit) - nomorUnit(b.Unit)) ||
+      String(a.Unit).localeCompare(String(b.Unit), 'id', { numeric: true })
+    );
 
+    // group by vendor (analog kapasitas di HM)
     const byVendor = {};
-    src.forEach(d => { (byVendor[d.Vendor] = byVendor[d.Vendor] || []).push(d); });
+    topAll.forEach(d => { (byVendor[d.Vendor] = byVendor[d.Vendor] || []).push(d); });
     const vendors = Object.keys(byVendor).sort((a, b) => {
       const ta = byVendor[a].reduce((s, d) => s + d.P, 0);
       const tb = byVendor[b].reduce((s, d) => s + d.P, 0);
-      return (tb - ta) || (VENDOR_ORDER.indexOf(a) - VENDOR_ORDER.indexOf(b));
+      return (tb - ta) || String(a).localeCompare(String(b), 'id');
     });
     const groups = vendors.map(v => {
-      const items = byVendor[v].slice().sort((a, b) => (b.P - a.P) || String(a.Unit).localeCompare(String(b.Unit), 'id', { numeric: true }));
-      return { vendor: v, items: items, total: items.reduce((s, d) => s + d.P, 0) };
+      const items = byVendor[v].slice().sort((a, b) =>
+        (nomorUnit(a.Unit) - nomorUnit(b.Unit)) ||
+        String(a.Unit).localeCompare(String(b.Unit), 'id', { numeric: true })
+      );
+      return { vendor: v, label: String(v || '-').replace(/^\d+\.\s*/, ''), items, total: items.reduce((s, d) => s + d.P, 0) };
     });
-    const top = groups.reduce((acc, g) => acc.concat(g.items), []);
-
-    const minW = (window.innerWidth < 620)
-      ? Math.max(330, top.length * 24 + 96)
-      : Math.max(680, top.length * 30 + 132);
-    c.style.minWidth = minW + 'px';
-    const w = Math.max(c.clientWidth, minW);
-    c.width = Math.round(w * dpr);
-    c.height = Math.round(H * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, w, H);
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, w, H);
+    const top = groups.flatMap(g => g.items);
 
     if (!top.length) {
+      const cw0 = c.clientWidth || 680;
+      c.width = cw0 * dpr; c.height = H * dpr; c.style.width = cw0 + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, cw0, H);
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, cw0, H);
       WT_GEO = null;
       ctx.fillStyle = '#64748B';
       ctx.font = '13px "Fira Sans", Segoe UI, sans-serif';
@@ -334,296 +330,200 @@
       return;
     }
 
-    const padL = 64, padR = 74, padT = 54, padB = 118;
+    const padL = 64, padR = 74, padT = 54;
+    const slotMin = 56;
+    const containerW = (c.parentElement && c.parentElement.clientWidth) ? c.parentElement.clientWidth : (c.clientWidth || 680);
+    const needW = padL + padR + (top.length * slotMin) + (Math.max(0, groups.length - 1) * 18);
+    const w = Math.max(containerW, needW);
+    c.width = w * dpr; c.height = H * dpr; c.style.width = w + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const h = H;
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, w, h);
+
+    const maxP = Math.max(...top.map(d => num(d.P)), 1);
+    const cmpField = cfg.field;
+    const maxCmp = cfg.tetapMax !== null && cfg.tetapMax !== undefined ? cfg.tetapMax : niceMax(Math.max(...top.map(d => num(d[cmpField]))) * 1.15);
     const plotW = w - padL - padR;
-    const plotH = H - padT - padB;
-    const baseY = padT + plotH;
-    const maxP = niceMax(Math.max.apply(null, top.map(d => d.P).concat([1])) * 1.12);
-    const GAP = 0.75;
+    const GAP = 0.6;
 
     let cursor = 0;
-    groups.forEach(g => {
-      g.slotAwal = cursor;
-      cursor += g.items.length;
-      g.slotAkhir = cursor;
-      cursor += GAP;
-    });
+    groups.forEach(g => { g.slotAwal = cursor; cursor += g.items.length; g.slotAkhir = cursor; cursor += GAP; });
     const totalSlot = Math.max(cursor - GAP, 1);
     const slotW = plotW / totalSlot;
+    const bw = slotW;
     const centers = [];
     cursor = 0;
-    groups.forEach(g => {
-      g.items.forEach(() => { centers.push(padL + (cursor + 0.5) * slotW); cursor += 1; });
-      cursor += GAP;
-    });
+    groups.forEach(g => { g.items.forEach(() => { centers.push(padL + (cursor + 0.5) * slotW); cursor += 1; }); cursor += GAP; });
+    const xCenter = i => centers[i];
 
-    // pita latar + pemisah vendor
+    // label kelompok
+    ctx.save();
+    ctx.font = 'bold 9.5px "Fira Code", Consolas, monospace';
+    const pillPx = 14;
+    groups.forEach(g => {
+      g.cx = padL + ((g.slotAwal + g.slotAkhir) / 2) * slotW;
+      g.teks = g.label + (g.items.length > 1 ? ' (' + g.items.length + ')' : '');
+      g.pw = Math.ceil(ctx.measureText(g.teks).width) + pillPx;
+      g.baris = 0;
+    });
+    ctx.restore();
+    const barisAkhir = [];
+    groups.forEach(g => {
+      let r = 0;
+      while (barisAkhir[r] !== undefined && (g.cx - g.pw / 2) < barisAkhir[r] + 5) r++;
+      g.baris = r; barisAkhir[r] = g.cx + g.pw / 2;
+    });
+    const barisMaks = Math.max(0, barisAkhir.length - 1);
+    const padB = 102 + barisMaks * 16;
+    const plotH = h - padB - padT;
+    const baseY = h - padB;
+    WT_GEO = { padL, padB, padT, bw, slotW, plotH, n: top.length, w, h, xCenter, centers };
+
+    // pita latar + pemisah
     groups.forEach((g, gi) => {
-      const x1 = padL + g.slotAwal * slotW;
-      const x2 = padL + g.slotAkhir * slotW;
-      if (gi % 2 === 0) {
-        ctx.fillStyle = '#F8FAFC';
-        ctx.fillRect(x1, padT - 6, x2 - x1, plotH + 12);
-      }
+      const x0 = padL + g.slotAwal * slotW;
+      const x1 = padL + g.slotAkhir * slotW;
+      if (gi % 2 === 1) { ctx.fillStyle = 'rgba(30,64,175,0.035)'; ctx.fillRect(x0, padT - 8, x1 - x0, plotH + 10); }
       if (gi > 0) {
-        ctx.strokeStyle = '#E2E8F0';
-        ctx.lineWidth = 1;
-        ctx.setLineDash([4, 4]);
-        ctx.beginPath();
-        ctx.moveTo(x1 - (GAP / 2) * slotW, padT - 6);
-        ctx.lineTo(x1 - (GAP / 2) * slotW, baseY + 8);
-        ctx.stroke();
-        ctx.setLineDash([]);
+        ctx.save(); ctx.strokeStyle = '#DCE7F5'; ctx.lineWidth = 1; ctx.setLineDash([3, 4]);
+        ctx.beginPath(); ctx.moveTo(x0 - (GAP * slotW) / 2, padT - 8); ctx.lineTo(x0 - (GAP * slotW) / 2, baseY); ctx.stroke(); ctx.restore();
       }
     });
 
-    // sorotan hover
+    // hover highlight
     if (wtHover >= 0 && wtHover < top.length) {
-      const cx = centers[wtHover];
-      ctx.fillStyle = 'rgba(30,64,175,.06)';
-      ctx.fillRect(cx - slotW / 2, padT - 6, slotW, plotH + 12);
+      ctx.fillStyle = 'rgba(59,130,246,0.10)';
+      ctx.fillRect(centers[wtHover] - slotW / 2, padT, slotW, plotH + 6);
     }
 
-    // grid + sumbu kiri
-    ctx.font = '10.5px "Fira Code", Consolas, monospace';
+    // grid + axes
     ctx.font = '11px "Fira Code", Consolas, monospace';
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'middle';
     for (let i = 0; i <= 4; i++) {
-      const v = (maxP / 4) * i;
-      const y = baseY - (plotH / 4) * i;
+      const y = baseY - i * plotH / 4;
       ctx.strokeStyle = i === 0 ? '#CBD5E1' : '#EEF2F7';
-      ctx.lineWidth = i === 0 ? 1.2 : 1;
-      ctx.beginPath();
-      ctx.moveTo(padL, y);
-      ctx.lineTo(padL + plotW, y);
-      ctx.stroke();
-      ctx.fillStyle = '#64748B';
-      ctx.fillText(fmt0(v), padL - 8, y + 4);
+      ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(w - padR, y); ctx.stroke();
+      ctx.fillStyle = '#64748B'; ctx.textAlign = 'right';
+      ctx.fillText((maxP * i / 4).toFixed(0), padL - 8, y + 4);
+      ctx.fillStyle = cfg.warna; ctx.textAlign = 'left';
+      ctx.fillText(cfg.tick(maxCmp * i / 4), w - padR + 8, y + 4);
     }
-
-    // sumbu kanan (metrik perbandingan)
-    ctx.textAlign = 'left';
-    for (let i = 0; i <= 4; i++) {
-      const y = baseY - (plotH / 4) * i;
-      ctx.fillStyle = '#B91C1C';
-      ctx.fillText(cfg.tick((maxCmp / 4) * i), padL + plotW + 8, y + 4);
-    }
-
-    // judul sumbu (sama seperti Grafik HM)
-    ctx.fillStyle = '#94A3B8';
-    ctx.textAlign = 'center';
-    ctx.font = '11px "Fira Sans", Segoe UI, sans-serif';
-    ctx.fillText('Penyiraman (rit)', padL - 22, padT - 16);
+    ctx.fillStyle = '#94A3B8'; ctx.textAlign = 'center';
+    ctx.fillText('Penyiraman (rit)', padL - 34, padT - 16);
     ctx.fillStyle = cfg.warna;
-    ctx.fillText(cfg.satuan, padL + plotW + 34, padT - 16);
+    ctx.fillText(cfg.satuan, w - padR + 36, padT - 16);
 
-    // batang
-    const bw = Math.max(7, Math.min(slotW * 0.62, 40));
-    ctx.textAlign = 'center';
+    // bars
+    const barW = Math.max(6, bw * 0.64);
     top.forEach((d, i) => {
-      const cx = centers[i];
-      const hh = Math.max(0, (d.P / maxP) * plotH) * prog;
-      const y = baseY - hh;
+      const pv = num(d.P);
+      const bh = plotH * (pv / maxP) * prog;
+      const x = centers[i] - barW / 2;
+      const y = baseY - bh;
+      const aktif = i === wtHover;
+      if (bh > 0.5) {
+        const grad = ctx.createLinearGradient(0, y, 0, baseY);
+        if (aktif) { grad.addColorStop(0, '#60A5FA'); grad.addColorStop(1, '#1D4ED8'); }
+        else { grad.addColorStop(0, '#7EB3F7'); grad.addColorStop(1, '#1E40AF'); }
+        ctx.save();
+        if (aktif) { ctx.shadowColor = 'rgba(30,64,175,0.35)'; ctx.shadowBlur = 12; ctx.shadowOffsetY = 3; }
+        ctx.fillStyle = grad; barPath(ctx, x, y, barW, bh, 4); ctx.fill(); ctx.restore();
+        if (aktif) { ctx.strokeStyle = '#1E3A8A'; ctx.lineWidth = 1.5; barPath(ctx, x, y, barW, bh, 4); ctx.stroke(); }
+      }
+      if (pv > 0 && prog > 0.55) {
+        ctx.save(); ctx.globalAlpha = Math.min(1, (prog - 0.55) / 0.45);
+        ctx.font = 'bold 10px "Fira Code", Consolas, monospace'; ctx.textAlign = 'center';
+        if (bh > 22) { ctx.fillStyle = '#ffffff'; ctx.fillText(pv.toFixed(0), x + barW / 2, baseY - 6); }
+        else { ctx.fillStyle = '#334155'; ctx.fillText(pv.toFixed(0), x + barW / 2, y - 5); }
+        ctx.restore();
+      }
       ctx.save();
-      if (wtHover === i) {
-        ctx.shadowColor = 'rgba(15,23,42,0.25)';
-        ctx.shadowBlur = 12;
-        ctx.shadowOffsetY = 3;
-      }
-      ctx.fillStyle = vColor(d.Vendor);
-      ctx.globalAlpha = d.P > 0 ? 1 : 0.28;
-      barPath(ctx, cx - bw / 2, y, bw, hh, 3);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-      ctx.shadowColor = 'transparent';
-      ctx.restore();
-      if (d.P > 0) {
-        const hm = d.P;
-        ctx.font = 'bold 10px "Fira Code", Consolas, monospace';
-        ctx.textAlign = 'center';
-        if (hh > 22) {
-          ctx.fillStyle = '#ffffff';
-          ctx.fillText(fmt0(hm), cx, baseY - 6);
-        } else {
-          ctx.fillStyle = '#334155';
-          ctx.fillText(fmt0(hm), cx, y - 5);
-        }
-      }
-    });
-
-    // garis metrik perbandingan (hanya unit yang punya nilai)
-    const pts = top.map((d, i) => ({ x: centers[i], v: num(d[cmpField]), ok: num(d[cmpField]) > 0 }));
-    ctx.strokeStyle = cfg.warna;
-    ctx.lineWidth = 2;
-    ctx.lineJoin = 'round';
-    let seg = [];
-    const flush = () => {
-      if (seg.length > 1) {
-        ctx.beginPath();
-        seg.forEach((p, k) => {
-          const y = baseY - (p.v / maxCmp) * plotH * prog;
-          if (k === 0) ctx.moveTo(p.x, y); else ctx.lineTo(p.x, y);
-        });
-        ctx.stroke();
-      }
-      seg = [];
-    };
-    pts.forEach(p => { if (p.ok) seg.push(p); else flush(); });
-    flush();
-    pts.forEach(p => {
-      if (!p.ok) return;
-      const y = baseY - (p.v / maxCmp) * plotH * prog;
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath(); ctx.arc(p.x, y, 3.2, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = cfg.warna;
-      ctx.beginPath(); ctx.arc(p.x, y, 2, 0, Math.PI * 2); ctx.fill();
-      // label nilai pada titik garis
-      ctx.fillStyle = cfg.warna;
-      ctx.font = 'bold 8.5px "Fira Code", Consolas, monospace';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'bottom';
-      ctx.fillText(cfg.tick(p.v), p.x, y - 5);
-    });
-
-    // label unit miring
-    top.forEach((d, i) => {
-      const cx = centers[i];
-      ctx.save();
-      ctx.translate(cx + 2, baseY + 12);
-      ctx.rotate(-Math.PI / 4);
+      ctx.translate(xCenter(i), baseY + 12); ctx.rotate(-Math.PI / 4);
+      ctx.fillStyle = i === wtHover ? '#1E40AF' : '#475569';
+      ctx.font = (i === wtHover ? 'bold ' : '') + '10px "Fira Sans", Segoe UI, sans-serif';
       ctx.textAlign = 'right';
-      ctx.textBaseline = 'middle';
-      ctx.font = '9.5px "Fira Sans", Segoe UI, sans-serif';
-      ctx.fillStyle = d.P > 0 ? '#334155' : '#94A3B8';
-      ctx.fillText(d.Unit, 0, 0);
+      ctx.fillText(String(d.Unit || ''), 0, 0);
       ctx.restore();
     });
 
-    // pill vendor di bawah (menyusut bila ruang sempit, disusun 2 baris agar tidak tumpang tindih)
-    ctx.font = 'bold 9px "Fira Code", Consolas, monospace';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    const barisPill = [[], []];
-    const tumpang = (a, b) => a.x1 < b.x2 + 3 && a.x2 > b.x1 - 3;
+    // group labels
+    const groupY = baseY + 76;
     groups.forEach(g => {
-      const x1 = padL + g.slotAwal * slotW;
-      const x2 = padL + g.slotAkhir * slotW;
-      const lebar = x2 - x1;
-      const cx = (x1 + x2) / 2;
-      const pendek = g.vendor.replace('WT ', '');
-      let teks = pendek + ' (' + g.items.length + ')';
-      let pw = Math.ceil(ctx.measureText(teks).width) + 14;
-      if (pw > lebar - 2) { teks = pendek; pw = Math.ceil(ctx.measureText(teks).width) + 12; }
-      if (pw > lebar - 2) { teks = pendek.slice(0, 3); pw = Math.ceil(ctx.measureText(teks).width) + 10; }
-      const box = { x1: cx - pw / 2, x2: cx + pw / 2 };
-      let baris = 0;
-      if (barisPill[0].some(b => tumpang(box, b))) {
-        baris = barisPill[1].some(b => tumpang(box, b)) ? 0 : 1;
-      }
-      barisPill[baris].push(box);
-      const py = H - 16 - baris * 20;
-      ctx.fillStyle = vColor(g.vendor);
-      ctx.globalAlpha = 0.14;
-      ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(cx - pw / 2, py - 9, pw, 18, 9);
-      else ctx.rect(cx - pw / 2, py - 9, pw, 18);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = vColor(g.vendor);
-      ctx.fillText(teks, cx, py);
+      const cy = groupY + g.baris * 16;
+      ctx.save(); ctx.font = 'bold 9.5px "Fira Code", Consolas, monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#EEF4FE'; barPath(ctx, g.cx - g.pw / 2, cy - 8, g.pw, 16, 8); ctx.fill();
+      ctx.strokeStyle = '#D6E4FA'; ctx.lineWidth = 1; barPath(ctx, g.cx - g.pw / 2, cy - 8, g.pw, 16, 8); ctx.stroke();
+      ctx.fillStyle = '#1E40AF'; ctx.fillText(g.teks, g.cx, cy + 0.5); ctx.restore();
     });
 
-    // legenda (gaya sama seperti Grafik HM)
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    let lx = padL;
-    const ly = 12;
-    ctx.fillStyle = '#3B82F6';
-    ctx.fillRect(lx, ly - 4, 12, 8);
-    ctx.fillStyle = '#475569';
-    ctx.font = '12px "Fira Sans", Segoe UI, sans-serif';
-    const legBar = 'Penyiraman (rit)';
-    ctx.fillText(legBar, lx + 18, ly);
-    lx += 18 + ctx.measureText(legBar).width + 22;
-    ctx.strokeStyle = cfg.warna;
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx + 28, ly); ctx.stroke();
-    ctx.fillStyle = '#fff';
-    ctx.beginPath(); ctx.arc(lx + 14, ly, 3.2, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = cfg.warna;
-    ctx.beginPath(); ctx.arc(lx + 14, ly, 2, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#475569';
-    ctx.fillText(cfg.satuan, lx + 34, ly);
-    lx += 34 + ctx.measureText(cfg.satuan).width + 22;
-    // warna per vendor
-    groups.forEach(g => {
-      ctx.fillStyle = vColor(g.vendor);
-      ctx.fillRect(lx, ly - 4, 10, 8);
-      ctx.fillStyle = '#475569';
-      ctx.font = '11px "Fira Sans", Segoe UI, sans-serif';
-      ctx.fillText(g.vendor.replace('WT ', ''), lx + 14, ly);
-      lx += 14 + ctx.measureText(g.vendor.replace('WT ', '')).width + 12;
-      ctx.font = '12px "Fira Sans", Segoe UI, sans-serif';
+    // line
+    const cmpY = v => baseY - plotH * (Math.min(Math.max(v, 0), maxCmp) / maxCmp);
+    const cmpYA = v => baseY - (baseY - cmpY(v)) * prog;
+    ctx.save(); ctx.globalAlpha = Math.min(1, prog * 1.6); ctx.strokeStyle = cfg.warna; ctx.lineWidth = 2; ctx.beginPath();
+    top.forEach((d, i) => { const x = xCenter(i), y = cmpYA(num(d[cmpField])); i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
+    ctx.stroke();
+    top.forEach((d, i) => {
+      const x = xCenter(i), y = cmpYA(num(d[cmpField])); const r = i === wtHover ? 6 : 4;
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = cfg.warna; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
     });
+    ctx.restore();
 
-    WT_GEO = { centers: centers, slotW: slotW, top: top, maxP: maxP, baseY: baseY, plotH: plotH };
+    // line labels
+    const cmpLabel = cfg.nilai || cfg.tick;
+    if (prog > 0.7) {
+      ctx.save(); ctx.globalAlpha = Math.min(1, (prog - 0.7) / 0.3);
+      ctx.font = 'bold 9px "Fira Code", Consolas, monospace'; ctx.textAlign = 'center';
+      top.forEach((d, i) => {
+        const v = num(d[cmpField]); const x = xCenter(i), y = cmpY(v);
+        const teks = cmpLabel(v); const diAtas = y > padT + 16;
+        const tw = ctx.measureText(teks).width; const ty = diAtas ? y - 7 : y + 13;
+        ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(x - tw / 2 - 2, ty - 8, tw + 4, 11);
+        ctx.fillStyle = cfg.warna; ctx.fillText(teks, x, ty);
+      });
+      ctx.restore();
+    }
+
+    // legend
+    ctx.textAlign = 'left'; ctx.font = '12px "Fira Sans", Segoe UI, sans-serif';
+    ctx.fillStyle = '#3B82F6'; ctx.fillRect(padL, 8, 12, 8);
+    ctx.fillStyle = '#475569'; ctx.fillText('Penyiraman (rit)', padL + 18, 16);
+    ctx.strokeStyle = cfg.warna; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(padL + 140, 12); ctx.lineTo(padL + 168, 12); ctx.stroke();
+    ctx.fillStyle = cfg.warna; ctx.beginPath(); ctx.arc(padL + 154, 12, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#475569'; ctx.fillText(cfg.satuan, padL + 174, 16);
 
     if (wtHover >= 0 && wtHover < top.length && prog >= 1) {
-      drawTooltip(ctx, top[wtHover], wtHover, centers, maxP, baseY, plotH, w, H, cfg);
+      drawTooltip(ctx, top[wtHover], wtHover, cfg, WT_GEO, barW, maxP, baseY, plotH);
     }
   }
 
-  function drawTooltip(ctx, d, i, centers, maxP, baseY, plotH, w, H, cfg) {
-    const cx = centers[i];
-    const by = baseY - (d.P / maxP) * plotH;
-    const capTxt = d.Capacity && d.Capacity !== '-' ? d.Capacity : '-';
-    const cmpVal = num(d[cfg.field]);
+  function drawTooltip(ctx, d, i, cfg, geo, barW, maxP, baseY, plotH) {
+    const barTop = baseY - plotH * (num(d.P) / maxP);
+    const cmpLabel = cfg.nilai || cfg.tick;
     const lines = [
-      [d.Unit, '#0F172A', 'bold 12px "Fira Sans", Segoe UI, sans-serif'],
-      [d.Vendor + (d.Area ? ' \u00b7 ' + d.Area : ''), '#64748B', '10.5px "Fira Sans", Segoe UI, sans-serif'],
-      ['Capacity: ' + capTxt, capTxt !== '-' ? '#1E40AF' : '#94A3B8', '10.5px "Fira Sans", Segoe UI, sans-serif'],
-      ['Penyiraman: ' + fmt0(d.P) + ' rit', vColor(d.Vendor), 'bold 11px "Fira Code", Consolas, monospace'],
-      ['Hari ada: ' + d.Hari + ' hari', '#334155', '10.5px "Fira Code", Consolas, monospace'],
-      [cfg.judul + ': ' + (cmpVal > 0 ? cfg.tick(cmpVal) : '\u2013'), cfg.warna, 'bold 11px "Fira Code", Consolas, monospace']
+      { t: String(d.Unit || '-'), bold: true, warna: '#0F172A' },
+      { t: [d.Vendor, d.Area].filter(Boolean).join(' - '), bold: false, warna: '#64748B' },
+      { t: 'Penyiraman: ' + fmt0(num(d.P)) + ' rit', bold: true, warna: '#1E40AF' },
+      { t: cfg.judul + ': ' + cmpLabel(num(d[cfg.field])), bold: true, warna: cfg.warna }
     ];
-    ctx.font = '12px "Fira Sans", Segoe UI, sans-serif';
-    let tw = 0;
-    lines.forEach(l => { ctx.font = l[2]; tw = Math.max(tw, ctx.measureText(l[0]).width); });
-    const padX = 12, padY = 10, lh = 16;
-    const bw = tw + padX * 2;
-    const bh = lines.length * lh + padY * 2 - 4;
-    let x = cx + 14;
-    if (x + bw > w - 6) x = cx - 14 - bw;
-    if (x < 6) x = 6;
-    let y = Math.max(6, by - bh - 10);
-    if (y + bh > H - 6) y = H - 6 - bh;
-
     ctx.save();
-    ctx.shadowColor = 'rgba(15,23,42,.18)';
-    ctx.shadowBlur = 14;
-    ctx.shadowOffsetY = 4;
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(x, y, bw, bh, 8); else ctx.rect(x, y, bw, bh);
-    ctx.fill();
+    ctx.font = '11px "Fira Sans", Segoe UI, sans-serif';
+    let maxW = 0;
+    lines.forEach(l => { ctx.font = (l.bold ? 'bold ' : '') + '11px "Fira Sans", Segoe UI, sans-serif'; maxW = Math.max(maxW, ctx.measureText(l.t).width); });
+    const padX = 10, padY = 8, lineH = 15;
+    const boxW = maxW + padX * 2, boxH = lines.length * lineH + padY * 2;
+    let bx = geo.centers[i] + 14; let by = barTop - 6;
+    if (bx + boxW > geo.w - 8) bx = geo.centers[i] - boxW - 14;
+    if (by < 6) by = 6; if (by + boxH > geo.h - 8) by = geo.h - boxH - 8;
+    ctx.shadowColor = 'rgba(0,0,0,0.18)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 3;
+    ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#DCE7F5'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(bx, by, boxW, boxH, 8); ctx.fill(); ctx.stroke();
+    ctx.shadowColor = 'transparent';
+    lines.forEach((l, li) => { ctx.font = (l.bold ? 'bold ' : '') + '11px "Fira Sans", Segoe UI, sans-serif'; ctx.fillStyle = l.warna; ctx.textAlign = 'left'; ctx.fillText(l.t, bx + padX, by + padY + 11 + li * lineH); });
     ctx.restore();
-    ctx.strokeStyle = '#E2E8F0';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(x, y, bw, bh, 8); else ctx.rect(x, y, bw, bh);
-    ctx.stroke();
-
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    lines.forEach((l, k) => {
-      ctx.font = l[2];
-      ctx.fillStyle = l[1];
-      ctx.fillText(l[0], x + padX, y + padY + k * lh);
-    });
   }
 
-  // ---------- hover ----------
   function pasangHover() {
     const c = $('wtChart');
     if (!c) return;
@@ -674,5 +574,7 @@
 
     pasangHover();
     render();
+    requestAnimationFrame(() => { if (wtRows.length) drawCombo(wtRows, 1); });
+    setTimeout(() => { if (wtRows.length) drawCombo(wtRows, 1); }, 400);
   });
 })();

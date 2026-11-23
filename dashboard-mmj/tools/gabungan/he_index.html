@@ -26,13 +26,8 @@
         <h1>Dashboard Timesheet HE <span class="h1-sep">/</span> MMJ</h1>
         <p class="sub">
           <span class="chip-period">November 2026</span>
-          <span class="sub-vendors">GIP H1 &middot; GIP H2 &middot; JTU &middot; BDK &middot; SKN</span>
+          
         </p>
-        <nav class="header-nav" aria-label="Pindah bagian">
-          <a href="#he" class="active">Heavy Equipment</a>
-          <a href="#wt">Water Truck</a>
-          <a href="#control-he">Control HE</a>
-        </nav>
       </div>
       <div class="header-brand">
         <img class="header-logo" src="assets/logo-mmj.png" alt="Musi Mitra Jaya">
@@ -118,7 +113,7 @@
 
     <section class="cards" id="cards" aria-label="Ringkasan indikator"></section>
 
-    <section class="panel charts">
+    <section class="panel charts" id="heChartPanel" style="scroll-margin-top:80px">
       <div class="chart-box">
         <div class="chart-head">
           <div class="chart-head-main">
@@ -140,7 +135,7 @@
       <div class="chart-box wt-chart-box">
         <div class="chart-head">
           <div class="chart-head-main">
-            <h2 id="wtChartTitle">Grafik Penyiraman (Bar) &amp; MA (Garis) &mdash; Top 15 Water Truck</h2>
+            <h2 id="wtChartTitle">Grafik Penyiraman (Bar) &amp; MA (Garis) per Unit</h2>
           </div>
           <div class="seg" id="wtCmpMenu">
             <button type="button" class="seg-btn active" data-cmp="MA">Penyiraman VS MA</button>
@@ -153,9 +148,23 @@
       </div>
     </section>
 
-    <section class="panel">
+    <section class="panel" id="heReviewUnit" style="scroll-margin-top:80px">
       <div class="panel-head">
         <h2>Tabel Review Unit</h2>
+        <span class="panel-sub">
+          <span class="live-chip" title="Jumlah unit HE yang sedang ditampilkan">
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M3 7h13l5 5v5h-3M3 7v10h3M6 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0Zm9 0a2 2 0 1 0 4 0 2 2 0 0 0-4 0Z"/></svg>
+            <b id="heCountUnit">0</b><span>unit HE</span>
+          </span>
+          <span class="live-chip" title="Total HM HE dalam filter terpilih">
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M12 8v5l3 3m6-4a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+            <b id="heTotalHM">0</b><span>jam</span>
+          </span>
+          <span class="live-chip" title="Total Fuel HE dalam filter terpilih">
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M4 20V7a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v13M4 20h10M4 20H2m12 0h2m-4-9h2a2 2 0 0 1 2 2v2a2 2 0 0 0 4 0V9l-3-3M7 9h4"/></svg>
+            <b id="heTotalFuel">0</b><span>L fuel</span>
+          </span>
+        </span>
       </div>
       <div class="table-wrap">
         <table class="grid">
@@ -167,6 +176,7 @@
               <th>Model / Capacity</th>
               <th class="sortable num" data-sort="HMTotal" title="Klik untuk mengurutkan">HM Total <span class="arrow" data-arrow="HMTotal"></span></th>
               <th class="num" title="Sisa jatah HM = Min Hours - HM Total">Sisa HM</th>
+              <th class="num" title="Sisa HM/Day = (Minimum Hours - Total HM) / Sisa Hari">Sisa HM/Day</th>
               <th class="sortable num" data-sort="MA" title="Klik untuk mengurutkan">MA <span class="arrow" data-arrow="MA"></span></th>
               <th class="num">PA (%)</th>
               <th class="sortable num" data-sort="Fuel" title="Klik untuk mengurutkan">Fuel (L) <span class="arrow" data-arrow="Fuel"></span></th>
@@ -176,7 +186,6 @@
           <tbody id="tbody"></tbody>
         </table>
       </div>
-      <p class="note">Sisa HM = Min. hours 240 jam &minus; HM bulan berjalan tiap unit (tidak berubah saat rentang tanggal dipersempit). Nilai negatif berarti pemakaian sudah melebihi jatah bulanan.</p>
     </section>
 
     <!-- ==================== WATER TRUCK: tabel penyiraman ==================== -->
@@ -216,7 +225,7 @@
       </section>
     </div>
 
-    <section class="panel">
+    <section class="panel" id="heBelum" style="scroll-margin-top:80px">
       <div class="panel-head">
         <h2>Tabel Timesheet Belum di Terima</h2>
       </div>
@@ -261,14 +270,12 @@
     <section class="panel" id="control-he">
       <div class="panel-head">
         <h2>Control HE</h2>
-        <span class="panel-sub">Fuel di luar standar SOP &middot; Timesheet terlambat &gt;1 hari</span>
       </div>
       <p class="legend" id="controlHeSummary">
         <span class="lg"><span class="lg-chip miss">-</span> Memuat...</span>
       </p>
 
       <h3 class="subtable-title">Fuel di Luar Standar SOP</h3>
-      <p class="note">Melebihi standar = FR aktual &gt; FR standar. Terlalu rendah = selisih di bawah standar &gt; 2 L (contoh std 20, aktual 17 =&gt; selisih -3).</p>
       <div class="table-wrap">
         <table class="grid">
           <thead>
@@ -288,7 +295,6 @@
       </div>
 
       <h3 class="subtable-title">Timesheet Terlambat &gt;1 Hari &mdash; HE</h3>
-      <p class="note">Unit HE dengan timesheet belum diterima dan sudah lewat jatuh tempo lebih dari 1 hari.</p>
       <div class="table-wrap">
         <table class="grid">
           <thead>
@@ -305,7 +311,6 @@
       </div>
 
       <h3 class="subtable-title">Timesheet Terlambat &gt;1 Hari &mdash; WT</h3>
-      <p class="note">Unit WT dengan timesheet belum diterima dan sudah lewat jatuh tempo lebih dari 1 hari.</p>
       <div class="table-wrap">
         <table class="grid">
           <thead>
