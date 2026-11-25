@@ -30,6 +30,7 @@ body{margin:0;background:#edf2fb;color:#121833;font:15px/1.5 system-ui,-apple-sy
     var d=document.createElement("div"); d.innerHTML=t.innerHTML; var f=document.createDocumentFragment(); while(d.firstChild) f.appendChild(d.firstChild); return f; };
   var T = {exec: asFrag(document.getElementById("mmjT_exec")), haul: asFrag(document.getElementById("mmjT_haul")), batu: asFrag(document.getElementById("mmjT_batu")), lt: asFrag(document.getElementById("mmjT_lt"))};
   T.cmp = asFrag(document.getElementById("mmjT_cmp"));   /* sub menu Coal Achievement vs Loss Time; baris lain jangan diubah (dipatch build situs gabungan) */
+  T.dhp = asFrag(document.getElementById("mmjT_dhp"));   /* sub menu Daily Hauling Performance (laporan harian grup) */
   /* data mentah tiap dashboard untuk Dashboard Eksekutif (dibaca dari script dashboard aslinya, tidak diduplikasi) */
   var DC = {};
   window.mmjData = function(k){
@@ -53,6 +54,7 @@ body{margin:0;background:#edf2fb;color:#121833;font:15px/1.5 system-ui,-apple-sy
   function mount(tab){
     var key = (tab === "batu" || tab === "haul" || tab === "exec") ? tab : "lt";
     if(tab === "cmp") key = "cmp";
+    if(tab === "dhp") key = "dhp";
     if(!T[key]){ key = ["exec","haul","batu","lt"].filter(function(k){ return T[k]; })[0]; tab = key; }
     try{ localStorage.setItem("mmjTab", tab); }catch(e){}
     /* bersihkan dashboard sebelumnya */
@@ -93,7 +95,9 @@ body{margin:0;background:#edf2fb;color:#121833;font:15px/1.5 system-ui,-apple-sy
   if(!tab){ try{ tab = localStorage.getItem("mmjTab") || ""; }catch(e){} }
   var wantCmp = T.cmp && (/tab=cmp/.test(location.hash || "") || (!m && tab === "cmp"));
   if(["exec","haul","batu","lt","rf"].indexOf(tab) < 0) tab = "exec";
+  var wantDhp = T.dhp && (/tab=dhp/.test(location.hash || "") || (!m && tab === "dhp"));
   if(wantCmp) tab = "cmp";
+  if(wantDhp) tab = "dhp";
   mount(tab);
 })();
 </script>
