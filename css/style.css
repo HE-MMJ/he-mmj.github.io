@@ -358,6 +358,29 @@ h2::before {
 }
 .card .val small { font-size: 13px; font-weight: 500; color: var(--muted); margin-left: 2px; }
 .card-sub { margin-top: 3px; font-size: 11.5px; color: var(--muted); }
+/* kartu gabungan (Availability, Fuel): label kartu diperbesar; nilai dua baris */
+.card[data-card="availability"] .label,
+.card[data-card="fueluse"] .label {
+  font-size: 12.5px;
+  letter-spacing: .08em;
+}
+.card[data-card="availability"] .card-sub,
+.card[data-card="fueluse"] .card-sub {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+}
+.card[data-card="availability"] .card-sub .av-row,
+.card[data-card="fueluse"] .card-sub .av-row {
+  line-height: 1.25;
+}
+.card[data-card="availability"] .card-sub .av-row > span,
+.card[data-card="fueluse"] .card-sub .av-row > span {
+  font-weight: 600;
+  color: var(--navy-900);
+  font-variant-numeric: tabular-nums;
+}
 
 /* ---------- grafik ---------- */
 .chart-head {
@@ -552,7 +575,8 @@ th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .grid tbody td:nth-child(8),
 .grid tbody td:nth-child(9),
 .grid tbody td:nth-child(10),
-.grid tbody td:nth-child(11) { font-family: var(--font-num); font-size: 12.5px; }
+.grid tbody td:nth-child(11),
+.grid tbody td:nth-child(12) { font-family: var(--font-num); font-size: 12.5px; }
 
 /* kolom Min Hours & Sisa HM */
 .grid tbody td.min-h { color: var(--muted); }
