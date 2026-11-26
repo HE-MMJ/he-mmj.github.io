@@ -52,7 +52,8 @@ TABS = ["exec", "haul", "batu", "lt", "he", "cost"]
 
 # Dashboard Eksekutif membaca data dashboard lain lewat window.mmjData()
 DATA_DEPS = {"exec": ["haul", "batu", "lt", "he-summary"],
-             "cmp": ["haul", "lt"]}
+             "cmp": ["haul", "lt"],
+             "dhp": ["haul", "lt"]}
 
 # --------------------------------------------------------------- halaman ----
 # Tiap dashboard dipublikasikan sebagai halaman sendiri (folder + index.html,
@@ -72,6 +73,8 @@ PAGES = [
      "judul": "Heavy Equipment - MMJ", "menu": "Heavy Equipment"},
     {"tab": "haul", "dir": "Coal-Hauling", "css": "haul",
      "judul": "Coal Hauling - MMJ", "menu": "Coal Hauling"},
+    {"tab": "dhp", "dir": "Daily-Hauling-Performance", "css": "dhp",
+     "judul": "Daily Hauling Performance - MMJ", "menu": "Daily Hauling Performance"},
     {"tab": "batu", "dir": "Batu-Split", "css": "batu",
      "judul": "Batu Split - MMJ", "menu": "Batu Split"},
     {"tab": "lt", "dir": "Loss-Time", "css": "lt",
@@ -99,6 +102,7 @@ NAV_URL = {
     "lt": "Loss-Time/",
     "rf": "Rainfall/",
     "cmp": "Coal-Achievement-vs-Loss-Time/",
+    "dhp": "Daily-Hauling-Performance/",
     "cost": "Cost-Control/",
     "simper": "Data-Simper/",
     "dt": "Data-DT/",
@@ -118,7 +122,11 @@ _IC_DT = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-wid
 _IC_CSR = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
            '<path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z"/></svg>')
 
-# sub menu Loss Time (hanya bila template mmjT_cmp ada di shell)
+# sub menu Coal Hauling (hanya bila template mmjT_dhp / mmjT_cmp ada di shell)
+_SUB_DHP = ('<a class="msub" href="#tab=dhp" data-mmjtab="dhp">'
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
+            '<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 10h18M8 2v4M16 2v4M7 15h4"/></svg>'
+            'Daily Hauling Performance</a>')
 _SUB_CMP = ('<a class="msub" href="#tab=cmp" data-mmjtab="cmp">'
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
             '<path d="M5 20V10m5 10V4"/><path d="M14 17l3-5 4 3"/></svg>'
@@ -555,10 +563,18 @@ def _rewrite_nav(markup, prefix, subnav=False):
             return m.group(0)
         return 'href="%s%s" data-mmj-cap="public"' % (prefix, url or "./")
 
-    if subnav and 'data-mmjtab="cmp"' not in markup:
-        # sub menu di bawah Loss Time (disisipkan di sini supaya sama di semua halaman)
-        markup = re.sub(r'<a href="#tab=lt" data-mmjtab="lt"[^>]*>.*?</a>',
-                        lambda m: m.group(0) + _SUB_CMP, markup, count=1, flags=re.S)
+    # subnav: kumpulan tab yang ada (True = versi lama, hanya cmp)
+    subs = {"cmp"} if subnav is True else set(subnav or ())
+    # sub menu di bawah Coal Hauling, urutan sama dengan dashboard lokal:
+    # Coal Hauling -> Daily Hauling Performance -> Coal Achievement vs Loss Time
+    add = ""
+    if "dhp" in subs and 'data-mmjtab="dhp"' not in markup:
+        add += _SUB_DHP
+    if "cmp" in subs and 'data-mmjtab="cmp"' not in markup:
+        add += _SUB_CMP
+    if add:
+        markup = re.sub(r'<a href="#tab=haul" data-mmjtab="haul"[^>]*>.*?</a>',
+                        lambda m: m.group(0) + add, markup, count=1, flags=re.S)
     markup = re.sub(r'href="#tab=(\w+)"', rep, markup)
 
     # 1) bagian Cost Control di dalam halaman Eksekutif sudah tidak dipakai
@@ -807,7 +823,7 @@ def emit(html, root, version=None):
         rel = (folder + "/index.html") if folder else "index.html"
 
         markup, heads = _pull_head(data["markup"])
-        markup = _rewrite_nav(markup, prefix, "cmp" in page_data)
+        markup = _rewrite_nav(markup, prefix, [t for t in ("dhp", "cmp") if t in page_data])
         markup = _prefix_paths(markup, prefix)
 
         head = "\n".join(heads + ([data["head"]] if data["head"] else []))
