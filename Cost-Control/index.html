@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="id" data-build="d54c171617" data-mmj-page="cost" data-mmj-auth-page="costcontrol">
+<html lang="id" data-build="b548b4f47f" data-mmj-page="cost" data-mmj-auth-page="costcontrol">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,14 +9,14 @@
 <title>Cost Control - MMJ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link data-mmj-head rel="stylesheet" href="../assets/css/cost.css?v=d54c171617">
+<link data-mmj-head rel="stylesheet" href="../assets/css/cost.css?v=b548b4f47f">
 <meta name="theme-color" content="#6366f1">
 <meta name="description" content="Dashboard MMJ 2026: Eksekutif, Heavy Equipment (Timesheet HE/WT), Coal Hauling, Batu Split, Loss Time &amp; Rainfall.">
-<link rel="icon" type="image/png" href="../assets/img/favicon.png?v=d54c171617">
-<link rel="stylesheet" id="mmjBootCss" href="../assets/css/boot.css?v=d54c171617">
-<link rel="stylesheet" href="../assets/css/theme.css?v=d54c171617">
-<link rel="stylesheet" href="../assets/css/shell.css?v=d54c171617">
-<link rel="stylesheet" href="../assets/css/common.css?v=d54c171617">
+<link rel="icon" type="image/png" href="../assets/img/favicon.png?v=b548b4f47f">
+<link rel="stylesheet" id="mmjBootCss" href="../assets/css/boot.css?v=b548b4f47f">
+<link rel="stylesheet" href="../assets/css/theme.css?v=b548b4f47f">
+<link rel="stylesheet" href="../assets/css/shell.css?v=b548b4f47f">
+<link rel="stylesheet" href="../assets/css/common.css?v=b548b4f47f">
 </head>
 <body>
 <!-- terlihat hanya bila JavaScript tidak berjalan -->
@@ -39,38 +39,16 @@
 </aside>
 
 <main id="mccMain">
-  <section class="mcc-lock" id="mccLock">
-    <form class="mcc-card" id="mccForm" autocomplete="off">
-      <div class="mcc-ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
-      <h2>Monitoring Cost Control</h2>
-      <p>Data biaya dienkripsi. Masukkan <b>kata sandi data</b> dari Admin General.</p>
-      <label class="mcc-l" for="mccPw">Kata sandi data</label>
-      <input id="mccPw" type="password" required autocomplete="off" spellcheck="false">
-      <label class="mcc-rm"><input type="checkbox" id="mccRem"> Ingat di perangkat ini</label>
-      <p class="mcc-err" id="mccErr" role="alert" hidden></p>
-      <button type="submit" id="mccBtn">Buka dashboard</button>
-      <div class="mcc-st" id="mccSt">Data per 26-11-2026 10:08</div>
-    </form>
-  </section>
+  <section class="mcc-lock" id="mccLock"><div class="mcc-card" id="mccMsg">Memuat Monitoring Cost Control&hellip;</div></section>
   <div class="mcc-wrap" id="mccWrap" hidden>
     <div class="mcc-bar"><span>Monitoring Cost Control &middot; data per 26-11-2026 10:08</span>
-      <a href="#" id="mccFull">Layar penuh</a><a href="#" id="mccOut">Kunci</a></div>
+      <a href="#" id="mccFull">Layar penuh</a></div>
     <iframe id="mccFrame" title="Monitoring Cost Control MMJ 2026"></iframe>
   </div>
 </main>
 <style>
 .mcc-lock{min-height:calc(100vh - 60px);display:grid;place-items:center;padding:16px}
-.mcc-card{width:100%;max-width:380px;background:var(--surface,#fff);border:1px solid var(--border,#ddd);border-radius:22px;padding:26px 24px;box-shadow:var(--shadow);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);display:flex;flex-direction:column;gap:10px}
-.mcc-ic{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;color:var(--accent,#4f46e5);background:var(--accent-soft,#eef)}
-.mcc-card h2{margin:4px 0 0;font-size:19px}
-.mcc-card p{margin:0;color:var(--ink-2,#555);font-size:13.5px}
-.mcc-l{font-size:12px;font-weight:600;color:var(--ink-2,#555);margin-top:6px}
-.mcc-card input[type=password]{font:inherit;padding:11px 12px;border-radius:12px;border:1px solid var(--axis,#ccc);background:var(--surface-solid,#fff);color:var(--ink,#111)}
-.mcc-rm{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--ink-2,#555)}
-.mcc-err{color:var(--bad,#c2410c)!important;font-weight:600}
-.mcc-card button{font:inherit;font-weight:700;padding:11px;border:0;border-radius:12px;background:var(--accent,#4f46e5);color:#fff;cursor:pointer}
-.mcc-card button:disabled{opacity:.6;cursor:wait}
-.mcc-st{font-size:11.5px;color:var(--muted,#888);text-align:center}
+.mcc-card{max-width:380px;background:var(--surface,#fff);border:1px solid var(--border,#ddd);border-radius:18px;padding:18px 22px;box-shadow:var(--shadow);color:var(--ink-2,#555);font-size:14px}
 .mcc-wrap{display:flex;flex-direction:column;gap:8px;height:calc(100vh - 40px)}
 .mcc-wrap[hidden],.mcc-lock[hidden]{display:none}
 .mcc-bar{display:flex;gap:14px;align-items:center;font-size:12.5px;color:var(--ink-2,#555)}
@@ -81,61 +59,25 @@
 </style>
 <script>
 (function () {
-  var DATA_SRC = "mcc-data.js?v=1496da6ddb", SALT = "KN1NtYEK2citM2NM9rwtlw==", ITER = 310000, KEYN = "mccKey";
+  var DATA_SRC = "mcc-data.js?v=5813c37190";
   function $(id) { return document.getElementById(id); }
   function allowed() { return !!(window.MMJ_AUTH && MMJ_AUTH.can && MMJ_AUTH.can("costcontrol")); }
+  function msg(t) { var m = $("mccMsg"); if (m) m.textContent = t; }
   function b64(s) { var b = atob(s), u = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
-  function ub64(buf) { var u = new Uint8Array(buf), s = ""; for (var i = 0; i < u.length; i++) s += String.fromCharCode(u[i]); return btoa(s); }
-  function get(k) { try { return sessionStorage.getItem(k) || localStorage.getItem(k); } catch (e) { return null; } }
-  function put(k, v, rem) { try { sessionStorage.setItem(k, v); if (rem) localStorage.setItem(k, v); } catch (e) {} }
-  function del(k) { try { sessionStorage.removeItem(k); localStorage.removeItem(k); } catch (e) {} }
-  var dataP = null;
-  function loadData() {
-    if (dataP) return dataP;
-    dataP = new Promise(function (ok, no) {
-      var s = document.createElement("script"); s.src = DATA_SRC;
-      s.onload = function () { window.MCC_ENC ? ok(window.MCC_ENC) : no(new Error("data")); };
-      s.onerror = function () { dataP = null; no(new Error("data")); };
-      document.head.appendChild(s);
-    });
-    return dataP;
-  }
-  function derive(pw) {
-    return crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveBits"])
-      .then(function (k) { return crypto.subtle.deriveBits({ name: "PBKDF2", salt: b64(SALT), iterations: ITER, hash: "SHA-256" }, k, 256); });
-  }
-  function open(raw) {
-    return Promise.all([loadData(), crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["decrypt"])])
-      .then(function (r) {
-        var all = b64(r[0]);
-        return crypto.subtle.decrypt({ name: "AES-GCM", iv: all.slice(0, 12) }, r[1], all.slice(12));
-      })
-      .then(function (gz) { return new Response(new Blob([gz]).stream().pipeThrough(new DecompressionStream("gzip"))).text(); })
-      .then(function (html) {
-        var f = $("mccFrame");
-        f.src = URL.createObjectURL(new Blob([html], { type: "text/html" }));
-        $("mccLock").hidden = true; $("mccWrap").hidden = false;
-      });
-  }
-  function fail(msg) { var e = $("mccErr"); e.textContent = msg; e.hidden = false; $("mccBtn").disabled = false; $("mccBtn").textContent = "Buka dashboard"; }
   function init() {
-    if (!allowed() || !$("mccForm")) return;
-    if (!(window.crypto && crypto.subtle && window.DecompressionStream)) { fail("Browser ini belum didukung. Buka dengan Chrome / Edge / Safari terbaru."); $("mccBtn").disabled = true; return; }
-    var saved = get(KEYN);
-    if (saved) { $("mccBtn").disabled = true; $("mccBtn").textContent = "Membuka..."; open(b64(saved)).catch(function () { del(KEYN); fail("Kata sandi data sudah berubah. Masukkan yang baru."); }); }
-    loadData().catch(function () {});
-    $("mccForm").addEventListener("submit", function (ev) {
-      ev.preventDefault(); $("mccErr").hidden = true;
-      $("mccBtn").disabled = true; $("mccBtn").textContent = "Membuka...";
-      var raw;
-      derive($("mccPw").value).then(function (r) { raw = r; return open(r); })
-        .then(function () { put(KEYN, ub64(raw), $("mccRem").checked); $("mccPw").value = ""; })
-        .catch(function (e) { fail(e && e.message === "data" ? "Data gagal dimuat. Cek koneksi lalu coba lagi." : "Kata sandi data salah."); });
-    });
-    $("mccOut").addEventListener("click", function (ev) {
-      ev.preventDefault(); del(KEYN); var f = $("mccFrame"); f.removeAttribute("src");
-      $("mccWrap").hidden = true; $("mccLock").hidden = false; $("mccBtn").disabled = false; $("mccBtn").textContent = "Buka dashboard";
-    });
+    if (!allowed() || !$("mccMain")) return;
+    if (!window.DecompressionStream) { msg("Browser ini belum didukung. Buka dengan Chrome / Edge / Safari terbaru."); return; }
+    var s = document.createElement("script"); s.src = DATA_SRC;
+    s.onerror = function () { msg("Data gagal dimuat. Cek koneksi lalu muat ulang halaman."); };
+    s.onload = function () {
+      if (!window.MCC_GZ) { msg("Data gagal dimuat."); return; }
+      new Response(new Blob([b64(window.MCC_GZ)]).stream().pipeThrough(new DecompressionStream("gzip"))).text()
+        .then(function (html) {
+          $("mccFrame").src = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+          $("mccLock").hidden = true; $("mccWrap").hidden = false;
+        }).catch(function () { msg("Data gagal dibuka."); });
+    };
+    document.head.appendChild(s);
     $("mccFull").addEventListener("click", function (ev) {
       ev.preventDefault(); var f = $("mccFrame"); (f.requestFullscreen || f.webkitRequestFullscreen || function () {}).call(f);
     });
@@ -146,8 +88,8 @@
 </div>
 <div id="etip" role="tooltip"></div>
 
-<script src="../assets/js/auth.js?v=d54c171617"></script>
+<script src="../assets/js/auth.js?v=b548b4f47f"></script>
 <script>window.MMJ_BULAN = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];</script>
-<script src="../assets/js/shell.js?v=d54c171617"></script>
+<script src="../assets/js/shell.js?v=b548b4f47f"></script>
 </body>
 </html>
