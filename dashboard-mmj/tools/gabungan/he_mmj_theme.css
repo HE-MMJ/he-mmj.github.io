@@ -362,6 +362,12 @@ button.vd-card { width: 100%; text-align: left; font: inherit; cursor: pointer; 
 .vd-name { font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2, #334155); font-weight: 600; }
 .vd-val-line { display: flex; align-items: baseline; gap: 6px; flex-wrap: nowrap; white-space: nowrap; }
 .vd-val { font-size: 20px; font-variant-numeric: tabular-nums; }
+/* kartu vendor Availability: dua nilai (MA/PA) tidak muat satu baris di kartu
+   150px -> tiap pasangan tetap utuh, turun baris antar-pasangan */
+.vd-card-av .vd-val-line { flex-wrap: wrap; column-gap: 10px; row-gap: 1px; white-space: normal; }
+.vd-card-av .vd-av { font-size: 10.5px; letter-spacing: .02em; white-space: nowrap; }
+.vd-card-av .vd-av b { font-size: 15px; }
+.vd-card-av .vd-val-line .vd-sub { flex-basis: 100%; }
 .vd-sub { font-size: 11px; color: var(--ink-2, #334155); font-weight: 500; white-space: nowrap; }
 .vd-logo {
   position: absolute;
