@@ -36,6 +36,43 @@ def read_json(path):
         return None
 
 
+CAP = r"D:\Temp\wa_timesheet\capacity.json"   # dari export_capacity.ps1 (List Unit)
+
+
+def apply_capacity(review):
+    """Tempel Capacity tiap unit (byUnit lalu byModel) seperti apply_capacity.ps1.
+
+    Wajib karena stdFuel() di app.js butuh Jenis+Capacity untuk mencocokkan
+    Tabel 1 SOP; export_review.ps1 tidak menulis Capacity.
+    """
+    cap = read_json(CAP)
+    if not cap:
+        print("  (kapasitas dilewati: %s tidak ada)" % CAP)
+        return review
+
+    def key(s):
+        return re.sub(r"\s+", " ", str(s or "")).strip().upper()
+
+    by_unit, by_type = {}, {}
+    for c in cap:
+        if c.get("Unit"):
+            by_unit.setdefault(key(c.get("Unit")), c.get("Capacity") or "")
+        if c.get("UnitLama"):
+            by_unit.setdefault(key(c.get("UnitLama")), c.get("Capacity") or "")
+        if c.get("Type"):
+            by_type.setdefault(key(c.get("Type")), c.get("Capacity") or "")
+
+    n = 0
+    for d in review:
+        if d.get("Capacity"):
+            continue
+        cap_val = by_unit.get(key(d.get("Unit"))) or by_type.get(key(d.get("Model"))) or ""
+        if cap_val:
+            d["Capacity"] = cap_val
+            n += 1
+    return review
+
+
 def main():
     os.makedirs(OUT_HE, exist_ok=True)
     os.makedirs(OUT_WT, exist_ok=True)
@@ -58,6 +95,7 @@ def main():
         if not review:
             print("  %s: lewati (review kosong)" % mm)
             continue
+        review = apply_capacity(review)
         he = {
             "PERIODE": {"y": 2026, "m": b, "last": HARI[b - 1]},
             "DATA": review,
