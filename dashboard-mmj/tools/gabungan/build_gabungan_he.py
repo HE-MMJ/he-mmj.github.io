@@ -533,8 +533,9 @@ def main():
 
     # 2) ambil 4 template lama (verbatim) + patch exec
     tpls = {}
-    has_cmp = '<template id="mmjT_cmp">' in shell       # sub menu Loss Time (opsional)
-    for key in ("exec", "haul", "batu", "lt") + (("cmp",) if has_cmp else ()):
+    has_cmp = '<template id="mmjT_cmp">' in shell       # sub menu Coal Hauling (opsional)
+    has_dhp = '<template id="mmjT_dhp">' in shell       # Daily Hauling Performance (opsional)
+    for key in ("exec", "haul", "batu", "lt") + (("cmp",) if has_cmp else ()) + (("dhp",) if has_dhp else ()):
         m = re.search(r'<template id="mmjT_%s">.*?</template>' % key, shell, re.S)
         if not m:
             raise SystemExit("template mmjT_%s tidak ditemukan" % key)
@@ -586,6 +587,8 @@ def main():
 
     if has_cmp:
         tpls["cmp"] = patch_cmp(tpls["cmp"], tpls["exec"])
+    if has_dhp:
+        tpls["dhp"] = patch_cmp(tpls["dhp"], tpls["exec"])   # aturan sama: menu exec, tema situs
 
     # 3) susun template HE dengan format yang sama seperti build_gabungan.py
     he_head = ('<title data-mmj-head>Dashboard Timesheet HE - MMJ November 2026</title>'
@@ -626,7 +629,8 @@ def main():
     csr_tpl = build_csr_template(tpls["exec"])
     block = "\n".join([tpls["exec"], tpls["haul"], tpls["batu"], tpls["lt"],
                        he_tpl, cost_tpl, simper_tpl, dt_tpl, csr_tpl]
-                      + ([tpls["cmp"]] if has_cmp else []))
+                      + ([tpls["cmp"]] if has_cmp else [])
+                      + ([tpls["dhp"]] if has_dhp else []))
     shell = shell[:start] + block + shell[end:]
 
     # 5) pecah menjadi situs modular: index.html + assets/css + assets/js + assets/data
