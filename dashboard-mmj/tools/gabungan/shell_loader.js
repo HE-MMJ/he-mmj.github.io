@@ -98,6 +98,7 @@
                    batu: "Batu-Split/", lt: "Loss-Time/", rf: "Rainfall/",
                    cmp: "Coal-Achievement-vs-Loss-Time/",
                    dhp: "Daily-Hauling-Performance/",
+                   peta: "Peta-Sebaran-Batu-Split/",
                    cost: "Cost-Control/", simper: "Data-Simper/", dt: "Data-DT/",
                    csr: "CSR/" };
 

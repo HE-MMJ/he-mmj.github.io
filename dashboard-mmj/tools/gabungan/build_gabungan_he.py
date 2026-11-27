@@ -589,6 +589,11 @@ def main():
         tpls["cmp"] = patch_cmp(tpls["cmp"], tpls["exec"])
     if has_dhp:
         tpls["dhp"] = patch_cmp(tpls["dhp"], tpls["exec"])   # aturan sama: menu exec, tema situs
+    # Peta Sebaran Batu Split (opsional): layout sendiri (sidebar flex + peta Leaflet), jadi TIDAK lewat
+    # blok "HE sidebar parity" di atas; cukup menu exec & tema situs seperti cmp/dhp
+    has_peta = '<template id="mmjT_peta">' in shell
+    if has_peta:
+        tpls["peta"] = patch_cmp(re.search(r'<template id="mmjT_peta">.*?</template>', shell, re.S).group(0), tpls["exec"])
 
     # 3) susun template HE dengan format yang sama seperti build_gabungan.py
     he_head = ('<title data-mmj-head>Dashboard Timesheet HE - MMJ November 2026</title>'
@@ -630,7 +635,8 @@ def main():
     block = "\n".join([tpls["exec"], tpls["haul"], tpls["batu"], tpls["lt"],
                        he_tpl, cost_tpl, simper_tpl, dt_tpl, csr_tpl]
                       + ([tpls["cmp"]] if has_cmp else [])
-                      + ([tpls["dhp"]] if has_dhp else []))
+                      + ([tpls["dhp"]] if has_dhp else [])
+                      + ([tpls["peta"]] if has_peta else []))
     shell = shell[:start] + block + shell[end:]
 
     # 5) pecah menjadi situs modular: index.html + assets/css + assets/js + assets/data

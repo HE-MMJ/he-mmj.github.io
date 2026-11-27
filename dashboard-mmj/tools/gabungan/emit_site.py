@@ -53,7 +53,8 @@ TABS = ["exec", "haul", "batu", "lt", "he", "cost"]
 # Dashboard Eksekutif membaca data dashboard lain lewat window.mmjData()
 DATA_DEPS = {"exec": ["haul", "batu", "lt", "he-summary"],
              "cmp": ["haul", "lt"],
-             "dhp": ["haul", "lt"]}
+             "dhp": ["haul", "lt"],
+             "peta": []}
 
 # --------------------------------------------------------------- halaman ----
 # Tiap dashboard dipublikasikan sebagai halaman sendiri (folder + index.html,
@@ -77,6 +78,8 @@ PAGES = [
      "judul": "Daily Hauling Performance - MMJ", "menu": "Daily Hauling Performance"},
     {"tab": "batu", "dir": "Batu-Split", "css": "batu",
      "judul": "Batu Split - MMJ", "menu": "Batu Split"},
+    {"tab": "peta", "dir": "Peta-Sebaran-Batu-Split", "css": "peta",
+     "judul": "Peta Sebaran Batu Split - MMJ", "menu": "Peta Sebaran"},
     {"tab": "lt", "dir": "Loss-Time", "css": "lt",
      "judul": "Loss Time - MMJ", "menu": "Loss Time"},
     {"tab": "rf", "dir": "Rainfall", "css": "lt", "view": "rain", "src": "lt",
@@ -103,6 +106,7 @@ NAV_URL = {
     "rf": "Rainfall/",
     "cmp": "Coal-Achievement-vs-Loss-Time/",
     "dhp": "Daily-Hauling-Performance/",
+    "peta": "Peta-Sebaran-Batu-Split/",
     "cost": "Cost-Control/",
     "simper": "Data-Simper/",
     "dt": "Data-DT/",
@@ -131,6 +135,12 @@ _SUB_CMP = ('<a class="msub" href="#tab=cmp" data-mmjtab="cmp">'
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
             '<path d="M5 20V10m5 10V4"/><path d="M14 17l3-5 4 3"/></svg>'
             'Coal Achievement vs Loss Time</a>')
+
+# sub menu Batu Split (hanya bila template mmjT_peta ada di shell)
+_SUB_PETA = ('<a class="msub" href="#tab=peta" data-mmjtab="peta">'
+             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
+             '<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg>'
+             'Peta Sebaran</a>')
 
 # menu tambahan yang disisipkan ke sidebar tiap halaman (urutan tampil)
 #   (tab, capability, folder tujuan, label, ikon)
@@ -575,6 +585,9 @@ def _rewrite_nav(markup, prefix, subnav=False):
     if add:
         markup = re.sub(r'<a href="#tab=haul" data-mmjtab="haul"[^>]*>.*?</a>',
                         lambda m: m.group(0) + add, markup, count=1, flags=re.S)
+    if "peta" in subs and 'data-mmjtab="peta"' not in markup:
+        markup = re.sub(r'<a href="#tab=batu" data-mmjtab="batu"[^>]*>.*?</a>',
+                        lambda m: m.group(0) + _SUB_PETA, markup, count=1, flags=re.S)
     markup = re.sub(r'href="#tab=(\w+)"', rep, markup)
 
     # 1) bagian Cost Control di dalam halaman Eksekutif sudah tidak dipakai
@@ -823,7 +836,7 @@ def emit(html, root, version=None):
         rel = (folder + "/index.html") if folder else "index.html"
 
         markup, heads = _pull_head(data["markup"])
-        markup = _rewrite_nav(markup, prefix, [t for t in ("dhp", "cmp") if t in page_data])
+        markup = _rewrite_nav(markup, prefix, [t for t in ("dhp", "cmp", "peta") if t in page_data])
         markup = _prefix_paths(markup, prefix)
 
         head = "\n".join(heads + ([data["head"]] if data["head"] else []))
