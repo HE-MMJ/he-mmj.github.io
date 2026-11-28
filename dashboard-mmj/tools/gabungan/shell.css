@@ -93,3 +93,19 @@ html[data-mmj-auth-page]:not([data-mmj-auth-ok]) main{display:none}
 html[data-theme="dark"] .mmj-wall-card{background:rgba(24,27,60,.9);border-color:rgba(255,255,255,.12)}
 html[data-theme="dark"] .mmj-wall-card h2{color:#e8ecf7}
 html[data-theme="dark"] .mmj-wall-card p{color:#9aa6c4}
+
+/* Transisi halus antar halaman (user 2026-11-28, sama dengan Dashboard Gabungan lokal):
+   sidebar tetap diam, isi halaman memudar keluar lalu muncul naik. View Transitions lintas
+   halaman (Chrome/Edge 126+); browser lain tetap pindah halaman biasa. */
+@view-transition{navigation:auto}
+.side{view-transition-name:mmj-side}
+::view-transition-old(root){animation:mmjVtOut .16s ease both}
+::view-transition-new(root){animation:mmjVtIn .34s cubic-bezier(.22,1,.36,1) both}
+::view-transition-old(mmj-side),::view-transition-new(mmj-side){animation:none}
+::view-transition-group(mmj-side){animation-duration:0s}
+@keyframes mmjVtOut{to{opacity:0}}
+@keyframes mmjVtIn{from{opacity:0;transform:translateY(10px)}}
+@media (prefers-reduced-motion:reduce){
+  @view-transition{navigation:none}
+  ::view-transition-old(root),::view-transition-new(root){animation:none}
+}
