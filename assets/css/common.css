@@ -21,3 +21,22 @@
 }
 
 *{box-sizing:border-box}
+:root{
+  --page:#edf2fb; --bg-a:#c4d8ff; --bg-b:#e2d9ff;
+  --surface:rgba(255,255,255,.72); --surface-solid:#ffffff; --surface-2:rgba(232,237,251,.9);
+  --ink:#121833; --ink-2:#4d5677; --muted:#6b7392; --hair:rgba(18,24,51,.10); --border:rgba(255,255,255,.7);
+  --accent:#4f46e5; --accent-soft:rgba(99,102,241,.13); --bad:#dc2626; --good:#059669;
+  --shadow:0 10px 30px rgba(31,41,99,.12);
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;     /* sama dengan dashboard Batu Split: Splite 10/20, Splite 5/7, Base Course */
+  --side:rgba(255,255,255,.55);
+}
+
+:root[data-theme="dark"]{
+  --page:#0a0c1d; --bg-a:rgba(79,70,229,.34); --bg-b:rgba(124,58,237,.26);
+  --surface:rgba(24,27,60,.78); --surface-solid:#181b3c; --surface-2:rgba(42,46,94,.75);
+  --ink:#eef0ff; --ink-2:#b7bce0; --muted:#9097c0; --hair:rgba(255,255,255,.10); --border:rgba(255,255,255,.08);
+  --accent:#818cf8; --accent-soft:rgba(129,140,248,.18); --bad:#f87171; --good:#34d399;
+  --shadow:0 10px 30px rgba(0,0,0,.4);
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+  --side:rgba(22,25,54,.66);
+}
