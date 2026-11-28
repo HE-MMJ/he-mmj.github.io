@@ -99,7 +99,7 @@
                    cmp: "Coal-Achievement-vs-Loss-Time/",
                    dhp: "Daily-Hauling-Performance/",
                    peta: "Peta-Sebaran-Batu-Split/",
-                   petalt: "Peta-Loss-Time/", petarf: "Peta-Curah-Hujan/",
+                   petalt: "Peta-Loss-Time/", petarf: "Peta-Loss-Time/",
                    cost: "Cost-Control/", simper: "Data-Simper/", dt: "Data-DT/",
                    csr: "CSR/" };
 

@@ -85,11 +85,9 @@ PAGES = [
      "judul": "Loss Time - MMJ", "menu": "Loss Time"},
     # Peta Loss Time & Curah Hujan (sub menu Loss Time / Rainfall, satu template mmjT_petalt; 2026-11-28)
     {"tab": "petalt", "dir": "Peta-Loss-Time", "css": "petalt", "view": "lt",
-     "judul": "Peta Loss Time - MMJ", "menu": "Peta Loss Time"},
+     "judul": "Peta Loss Time & Curah Hujan - MMJ", "menu": "Peta Loss Time & Curah Hujan"},
     {"tab": "rf", "dir": "Rainfall", "css": "lt", "view": "rain", "src": "lt",
      "judul": "Rainfall - MMJ", "menu": "Rainfall"},
-    {"tab": "petarf", "dir": "Peta-Curah-Hujan", "css": "petalt", "view": "rain", "src": "petalt",
-     "judul": "Peta Curah Hujan - MMJ", "menu": "Peta Curah Hujan"},
     {"tab": "cmp", "dir": "Coal-Achievement-vs-Loss-Time", "css": "cmp",
      "judul": "Coal Achievement vs Loss Time - MMJ", "menu": "Coal Achievement vs Loss Time"},
     {"tab": "cost", "dir": "Cost-Control", "css": "cost", "auth": "costcontrol",
@@ -114,7 +112,7 @@ NAV_URL = {
     "dhp": "Daily-Hauling-Performance/",
     "peta": "Peta-Sebaran-Batu-Split/",
     "petalt": "Peta-Loss-Time/",
-    "petarf": "Peta-Curah-Hujan/",
+    "petarf": "Peta-Loss-Time/",   # sub menu Peta Curah Hujan dihapus (user 2026-11-28) -> ke peta gabungan
     "cost": "Cost-Control/",
     "simper": "Data-Simper/",
     "dt": "Data-DT/",
@@ -154,7 +152,7 @@ _SUB_PETA = ('<a class="msub" href="#tab=peta" data-mmjtab="peta">'
 _SUB_PETALT = ('<a class="msub" href="#tab=petalt" data-mmjtab="petalt">'
                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
               '<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg>'
-               'Peta Loss Time</a>')
+               'Peta Loss Time &amp; Curah Hujan</a>')
 _SUB_PETARF = ('<a class="msub" href="#tab=petarf" data-mmjtab="petarf">'
                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
               '<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg>'
@@ -609,9 +607,8 @@ def _rewrite_nav(markup, prefix, subnav=False):
     if "petalt" in subs and 'data-mmjtab="petalt"' not in markup:
         markup = re.sub(r'<a href="#tab=lt" data-mmjtab="lt"[^>]*>.*?</a>',
                         lambda m: m.group(0) + _SUB_PETALT, markup, count=1, flags=re.S)
-    if "petalt" in subs and 'data-mmjtab="petarf"' not in markup:
-        markup = re.sub(r'<a href="#tab=rf" data-mmjtab="rf"[^>]*>.*?</a>',
-                        lambda m: m.group(0) + _SUB_PETARF, markup, count=1, flags=re.S)
+    # sub menu Peta Curah Hujan (petarf) dihapus atas permintaan user 2026-11-28
+    markup = re.sub(r'<a class="msub" href="#tab=petarf"[^>]*>.*?</a>', "", markup, flags=re.S)
     markup = re.sub(r'href="#tab=(\w+)"', rep, markup)
 
     # 1) bagian Cost Control di dalam halaman Eksekutif sudah tidak dipakai
