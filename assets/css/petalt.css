@@ -1,5 +1,15 @@
 /* assets/css/petalt.css - dibuat otomatis oleh emit_site.py, jangan diedit manual. */
 
+:root[data-theme="dark"]{
+  --page:#0a0c1d; --bg-a:rgba(79,70,229,.34); --bg-b:rgba(124,58,237,.26);
+  --surface:rgba(24,27,60,.78); --surface-solid:#181b3c; --surface-2:rgba(42,46,94,.75);
+  --ink:#eef0ff; --ink-2:#b7bce0; --muted:#9097c0; --hair:rgba(255,255,255,.10); --border:rgba(255,255,255,.08);
+  --accent:#818cf8; --accent-soft:rgba(129,140,248,.18); --bad:#f87171; --good:#34d399;
+  --shadow:0 10px 30px rgba(0,0,0,.4);
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+  --side:rgba(22,25,54,.66);
+}
+
 html,body{height:100%;margin:0}
 
 body{background:radial-gradient(900px 640px at -5% -10%,var(--bg-a),transparent 62%),radial-gradient(820px 620px at 105% 0%,var(--bg-b),transparent 60%),var(--page);color:var(--ink);font:14px/1.5 "Inter",system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column}
@@ -428,6 +438,30 @@ button.apb.kpos:hover{background:var(--accent-soft)}
 .gauge .gt b{color:var(--ink);font-variant-numeric:tabular-nums}
 
 .chip .rt{width:10px;height:10px;border-radius:50%;flex:none}
+
+
+/* kepala halaman & jarak tepi = Coal Achievement vs Loss Time (user 2026-11-28: seragamkan) */
+:root{--h1-grad:linear-gradient(90deg,#4f46e5,#7c3aed 55%,#2a78d6)}
+
+:root[data-theme="dark"]{--h1-grad:linear-gradient(90deg,#a5b4fc,#c4b5fd)}
+
+@media (min-width:1001px){.shell{padding:20px;gap:22px}}
+
+.top{flex-wrap:wrap;justify-content:space-between;gap:16px;align-items:flex-start;padding:4px 4px 16px}
+
+.top .eyebrow{font-size:11.5px;font-weight:600;letter-spacing:.16em;color:var(--accent);text-transform:uppercase}
+
+.top h1{margin:6px 0 0;font-size:36px;line-height:1.1;letter-spacing:-.025em;font-weight:750}
+
+.top h1 span{display:block;background:var(--h1-grad);-webkit-background-clip:text;background-clip:text;color:transparent;padding-bottom:2px}
+
+.top .sub{color:var(--ink-2);font-size:14px;margin-top:8px}
+
+.top .stamp{font-size:11.5px;color:var(--muted);text-align:right;line-height:1.4}
+
+@media (max-width:1000px){.top h1{font-size:30px}}
+
+@media (max-width:900px){.top h1{font-size:26px}.top .stamp{display:none}}
 
 .side{overflow-y:auto;scrollbar-width:thin}
 
