@@ -594,6 +594,10 @@ def main():
     has_peta = '<template id="mmjT_peta">' in shell
     if has_peta:
         tpls["peta"] = patch_cmp(re.search(r'<template id="mmjT_peta">.*?</template>', shell, re.S).group(0), tpls["exec"])
+    # Peta Loss Time & Curah Hujan (opsional, 2026-11-28): pola sama dengan Peta Sebaran
+    has_petalt = '<template id="mmjT_petalt">' in shell
+    if has_petalt:
+        tpls["petalt"] = patch_cmp(re.search(r'<template id="mmjT_petalt">.*?</template>', shell, re.S).group(0), tpls["exec"])
 
     # 3) susun template HE dengan format yang sama seperti build_gabungan.py
     he_head = ('<title data-mmj-head>Dashboard Timesheet HE - MMJ November 2026</title>'
@@ -636,7 +640,8 @@ def main():
                        he_tpl, cost_tpl, simper_tpl, dt_tpl, csr_tpl]
                       + ([tpls["cmp"]] if has_cmp else [])
                       + ([tpls["dhp"]] if has_dhp else [])
-                      + ([tpls["peta"]] if has_peta else []))
+                      + ([tpls["peta"]] if has_peta else [])
+                      + ([tpls["petalt"]] if has_petalt else []))
     shell = shell[:start] + block + shell[end:]
 
     # 5) pecah menjadi situs modular: index.html + assets/css + assets/js + assets/data

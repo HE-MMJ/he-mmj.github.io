@@ -1,13 +1,4 @@
 /* assets/css/peta.css - dibuat otomatis oleh emit_site.py, jangan diedit manual. */
-:root{
-  --page:#edf2fb; --bg-a:#c4d8ff; --bg-b:#e2d9ff;
-  --surface:rgba(255,255,255,.72); --surface-solid:#ffffff; --surface-2:rgba(232,237,251,.9);
-  --ink:#121833; --ink-2:#4d5677; --muted:#6b7392; --hair:rgba(18,24,51,.10); --border:rgba(255,255,255,.7);
-  --accent:#4f46e5; --accent-soft:rgba(99,102,241,.13); --bad:#dc2626; --good:#059669;
-  --shadow:0 10px 30px rgba(31,41,99,.12);
-  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;     /* sama dengan dashboard Batu Split: Splite 10/20, Splite 5/7, Base Course */
-  --side:rgba(255,255,255,.55);
-}
 
 :root[data-theme="dark"]{
   --page:#0a0c1d; --bg-a:rgba(79,70,229,.34); --bg-b:rgba(124,58,237,.26);
@@ -329,7 +320,66 @@ input[type=range]{flex:1;accent-color:var(--accent)}
   body.pan-open .fab{display:none}
 }
 
+/* perapian 2026-11-28 (sama dengan Peta Loss Time): titik penting satu kolom, legenda jenis per baris, KPI = tombol pop-up */
+.mlg{display:flex;flex-direction:column}
+
+.mchip{display:flex;align-items:center;gap:7px;width:100%;min-height:32px;margin-bottom:4px;padding:4px 8px 4px 5px;border:1px solid var(--hair);background:var(--surface-solid);border-radius:9px;cursor:pointer;font-size:12px;color:var(--ink-2);text-align:left;transition:border-color .15s ease,background .15s ease}
+
+.mchip:hover{border-color:var(--accent)}
+
+.mchip .ico{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;color:#fff;flex:none}
+
+.mchip .ico svg{width:13px;height:13px}
+
+.mchip .tn{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+
+.mchip .cnt{flex:none;font-size:11px;font-weight:600;color:var(--muted);background:var(--surface-2);border-radius:999px;padding:0 7px;font-variant-numeric:tabular-nums}
+
+.mchip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--ink);font-weight:600}
+
+.mchip[aria-pressed="false"]{opacity:.85}
+
+.mchip[aria-pressed="false"] .ico{filter:grayscale(.6);opacity:.7}
+
+.jl{display:flex;flex-direction:column;gap:3px}
+
+button.kpi{display:block;width:100%;text-align:left;cursor:pointer;font:inherit;color:inherit;min-height:44px;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+
+button.kpi:hover{border-color:var(--accent);box-shadow:0 6px 16px rgba(31,41,99,.12)}
+
+button.kpi.on{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 3px var(--accent-soft)}
+
+.kpi .more{font-size:11px;font-weight:600;color:var(--accent);margin-top:4px}
+
+.kex{font-size:11.5px;line-height:1.45;color:var(--ink-2);background:var(--accent-soft);border-radius:10px;padding:7px 9px;margin:-2px 0 10px}
+
+.kex b{color:var(--accent)}
+
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+
+/* kepala halaman & jarak tepi = Coal Achievement vs Loss Time (user 2026-11-28: seragamkan) */
+:root{--h1-grad:linear-gradient(90deg,#4f46e5,#7c3aed 55%,#2a78d6)}
+
+:root[data-theme="dark"]{--h1-grad:linear-gradient(90deg,#a5b4fc,#c4b5fd)}
+
+@media (min-width:1001px){.shell{padding:20px;gap:22px}}
+
+.top{flex-wrap:wrap;justify-content:space-between;gap:16px;align-items:flex-start;padding:4px 4px 16px}
+
+.top .eyebrow{font-size:11.5px;font-weight:600;letter-spacing:.16em;color:var(--accent);text-transform:uppercase}
+
+.top h1{margin:6px 0 0;font-size:36px;line-height:1.1;letter-spacing:-.025em;font-weight:750}
+
+.top h1 span{display:block;background:var(--h1-grad);-webkit-background-clip:text;background-clip:text;color:transparent;padding-bottom:2px}
+
+.top .sub{color:var(--ink-2);font-size:14px;margin-top:8px}
+
+.top .stamp{font-size:11.5px;color:var(--muted);text-align:right;line-height:1.4}
+
+@media (max-width:1000px){.top h1{font-size:30px}}
+
+@media (max-width:900px){.top h1{font-size:26px}.top .stamp{display:none}}
 
 .side{overflow-y:auto;scrollbar-width:thin}
 

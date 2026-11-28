@@ -79,7 +79,7 @@ function prep(mode){
 
 /* ---------- gambar laporan (SVG 2000 x 1528, juga dipakai untuk PNG) ---------- */
 const W=2000, HT=1528, FONT="Calibri, Carlito, 'Segoe UI', Arial, sans-serif";
-function tx(x,y,s,o={}){ return `<text x="${x}" y="${y}" font-size="${o.fs||16}" font-weight="${o.fw||400}" fill="${o.c||"#000"}" text-anchor="${o.a||"start"}"${o.it?' font-style="italic"':""}${o.ls?` letter-spacing="${o.ls}"`:""}${o.tr?` transform="${o.tr}"`:""}${o.ol?` stroke="#262626" stroke-width="${o.olw||4}" stroke-linejoin="round" paint-order="stroke"`:""}>${esc(s)}</text>`; }
+function tx(x,y,s,o={}){ return `<text x="${x}" y="${y}" font-size="${o.fs||16}" font-weight="${o.fw||400}" fill="${o.c||"#000"}" text-anchor="${o.a||"start"}"${o.it?' font-style="italic"':""}${o.ls?` letter-spacing="${o.ls}"`:""}${o.tr?` transform="${o.tr}"`:""}${o.ol?` stroke="#262626" stroke-width="${o.olw||4}" stroke-linejoin="round" paint-order="stroke"`:""}${o.cl?` class="${o.cl}" style="--i:${o.i||0}"`:""}>${esc(s)}</text>`; }
 function rc(x,y,w,h,o={}){ return `<rect x="${x}" y="${y}" width="${Math.max(0,w)}" height="${Math.max(0,h)}" fill="${o.f||"#fff"}"${o.s===null?"":` stroke="${o.s||"#000"}" stroke-width="${o.sw??1.5}"`}${o.rx?` rx="${o.rx}"`:""}${o.at||""}/>`; }
 const P=v=>v==null||!isFinite(v)?"":nf0.format(Math.round(v))+"%";
 
@@ -88,7 +88,7 @@ function box(x,y,w,h,lab,val,pct,unit,frac,key,fullFill){
   let s=rc(x,y,w,h,{sw:1.5})+tx(x+w/2,y+16,lab,{fs:15,a:"middle"});
   s+=rc(x+4,y+20,vw,vh,{f:"#fff",s:"#7f7f7f",sw:1});
   const fr=fullFill?1:Math.max(0,Math.min(1,frac||0));
-  if(frac!=null||fullFill) s+=rc(x+4.5,y+20.5,(vw-1)*fr,vh-1,{f:`url(#g${key})`,s:null});
+  if(frac!=null||fullFill) s+=rc(x+4.5,y+20.5,(vw-1)*fr,vh-1,{f:`url(#g${key})`,s:null,at:' class="ax"'});
   const wt=key==="TOTAL"&&(fullFill||fr>.3);   // angka putih bertepi gelap: tetap terbaca di bagian gradasi terang
   s+=tx(x+4+vw/2,y+h-11,val,{fs:31,fw:700,a:"middle",c:wt?"#fff":"#000",ol:wt});
   if(pct) s+=tx(x+w-6,y+40,pct,{fs:18,fw:700,a:"end"});
@@ -154,7 +154,7 @@ function draw(D){
   s+=rc(1758,210,232,480,{f:"#d9d9d9",s:null})+tx(1874,242,"MTD COAL",{fs:22,fw:700,a:"middle",ls:1})+tx(1874,268,"ACHIEVE",{fs:22,fw:700,a:"middle",ls:1});
   ORD.forEach((c,k)=>{ const cx=1790+k*42, top=284, h=296, r=row[c], fr=r.p?Math.min(1,r.cum/r.p):0;
     s+=rc(cx-8,top,16,h,{f:"#efefef",s:null});
-    s+=rc(cx-8,top+h*(1-fr),16,h*fr,{f:`url(#v${c})`,s:null});
+    s+=rc(cx-8,top+h*(1-fr),16,h*fr,{f:`url(#v${c})`,s:null,at:` class="ay" style="--i:${k*3}"`});
     s+=tx(cx+6,top+h-8,nf0.format(r.cum),{fs:15,tr:`rotate(-90 ${cx+6} ${top+h-8})`});
     s+=tx(cx+6,top+h+12,c.split("").join(" "),{fs:15,a:"end",tr:`rotate(-90 ${cx+6} ${top+h+12})`}); });
 
@@ -168,17 +168,17 @@ function draw(D){
   s+=`<line x1="${PX0}" y1="${Yb}" x2="${PX1}" y2="${Yb}" stroke="#d9d9d9" stroke-width="1"/>`;
   const bw=Math.min(22,slot*.3);
   for(let j=0;j<D;j++){ const c0=cxd(j);
-    s+=rc(c0-bw,yv(ton.BSL[j]),bw,Yb-yv(ton.BSL[j]),{f:"#ffc000",s:"#bf9000",sw:.8});
-    s+=rc(c0,yv(ton.TRA[j]),bw,Yb-yv(ton.TRA[j]),{f:"#bfbfbf",s:"#7f7f7f",sw:.8}); }
+    s+=rc(c0-bw,yv(ton.BSL[j]),bw,Yb-yv(ton.BSL[j]),{f:"#ffc000",s:"#bf9000",sw:.8,at:` class="ay" style="--i:${j}"`});
+    s+=rc(c0,yv(ton.TRA[j]),bw,Yb-yv(ton.TRA[j]),{f:"#bfbfbf",s:"#7f7f7f",sw:.8,at:` class="ay" style="--i:${j}"`}); }
   const line=(arr,o)=>{ const pts=arr.map((v,j)=>`${cxd(j).toFixed(1)},${yv(v).toFixed(1)}`).join(" ");
-    let g=`<polyline points="${pts}" fill="none" stroke="${o.c}" stroke-width="${o.w||3}" stroke-dasharray="${o.da}" stroke-linecap="round"/>`;
+    let g=`<g class="aclip"><polyline points="${pts}" fill="none" stroke="${o.c}" stroke-width="${o.w||3}" stroke-dasharray="${o.da}" stroke-linecap="round"/>`;
     arr.forEach((v,j)=>{ g+=`<circle cx="${cxd(j).toFixed(1)}" cy="${yv(v).toFixed(1)}" r="${o.r}" fill="${o.dot}" stroke="${o.st||o.dot}" stroke-width="1"/>`; });
-    return g; };
+    return g+"</g>"; };   /* garis "tergambar" dari kiri ke kanan (animasi layar saja) */
   s+=line(ton.GPU.slice(0,D),{c:"#2e75b6",da:"9 6",r:3.5,dot:"#2e75b6"});
   s+=line(ton.GE.slice(0,D),{c:"#c55a11",da:"9 6",r:5,dot:"#c55a11"});
   s+=line(ton.BKL.slice(0,D),{c:"#70ad47",da:"9 6",r:3.5,dot:"#70ad47"});
   s+=line(dayTot,{c:"#000",da:"1 7",w:4,r:5,dot:"#ed7d31",st:"#c55a11"});
-  dayTot.forEach((v,j)=>{ s+=tx(cxd(j),yv(v)-(j%2?18:12),nf0.format(v),{fs:15,a:"middle"}); });
+  dayTot.forEach((v,j)=>{ s+=tx(cxd(j),yv(v)-(j%2?18:12),nf0.format(v),{fs:15,a:"middle",cl:"af",i:j}); });
   for(let j=0;j<DIM;j++) s+=tx(cxd(j),1000,pad(j+1),{fs:16,a:"middle"});
   const lg=[["bar","#ffc000","BSL"],["bar","#bfbfbf","TRA"],["ln","#2e75b6","GPU"],["ln","#c55a11","GE"],["ln","#70ad47","BKL"],["dot","#000","Daily Coal Achieve"],["tg","#ff0000","Daily Target"]];
   let lx=560; lg.forEach(([t,c,n])=>{ const y=1028;
@@ -205,12 +205,15 @@ function draw(D){
   s+=rc(38,1166,1924,340,{f:"#fff",s:null});
   const Lb=1470, Lh=262, ltop=Math.max(1,...has)*1.12, lw=Math.min(40,slot*.6);
   for(let j=0;j<D;j++){ const v=ltv[j]; if(v==null||v<.005) continue; const c0=cxd(j); let y=Lb;
+    s+=`<g class="ltb" data-ltb="${j+1}" style="--i:${j}">`;     /* satu batang = satu grup, tumbuh dari garis dasar */
     for(const r of ["ISP",RT]){ const pv=part(ltD[j],r); if(pv<.005) continue; const h=pv/ltop*Lh; y-=h;
       s+=rc(c0-lw/2,y,lw,h,{f:LC[r],s:"#fff",sw:1});
       if(h>=20) s+=tx(c0,y+h/2+5,nf2.format(pv),{fs:15,fw:700,a:"middle",c:"#fff",ol:true,olw:2.2}); }
-    s+=tx(c0,Lb-v/ltop*Lh-8,nf2.format(v),{fs:17,fw:700,a:"middle"}); }
+    s+="</g>"+tx(c0,Lb-v/ltop*Lh-8,nf2.format(v),{fs:17,fw:700,a:"middle",cl:"afl",i:j}); }
   s+=`<line x1="${PX0}" y1="${Lb}" x2="${PX1}" y2="${Lb}" stroke="#d9d9d9" stroke-width="1"/>`;
   for(let j=0;j<DIM;j++) s+=tx(cxd(j),1494,pad(j+1),{fs:16,a:"middle"});
+  /* kolom klik per tanggal (transparan, tidak terlihat di PNG) -> panel detail loss time */
+  for(let j=0;j<D;j++) s+=`<rect class="lth" data-ltday="${j+1}" x="${(PX0+slot*j).toFixed(1)}" y="1168" width="${slot.toFixed(1)}" height="336" fill="transparent"><title>Klik: detail loss time ${j+1} ${BLNF[MO-1]}</title></rect>`;
   if(D>S.ltLastDay) s+=tx(999,1320,`Loss time tanggal ${S.ltLastDay+1}${D>S.ltLastDay+1?"–"+D:""} belum diinput`,{fs:20,a:"middle",c:"#c00000",it:true});
   s+="</svg>";
   return s;
@@ -225,7 +228,54 @@ function show(D){
   $("dPrev").disabled=CUR<=1; $("dNext").disabled=CUR>=S.last;
   $("dMsg").textContent="";
   $("repWrap").querySelectorAll("[data-day]").forEach(g=>g.addEventListener("click",()=>show(+g.dataset.day)));
+  /* grafik loss time: sorot batang saat kursor di atasnya, klik = panel detail */
+  $("repWrap").querySelectorAll(".lth").forEach(h=>{ const d=+h.dataset.ltday, bar=()=>$("repWrap").querySelector(`[data-ltb="${d}"]`);
+    h.addEventListener("mouseenter",()=>{ const b=bar(); if(b) b.classList.add("hot"); });
+    h.addEventListener("mouseleave",()=>{ const b=bar(); if(b) b.classList.remove("hot"); });
+    h.addEventListener("click",()=>openDet(d,true)); });
+  if(DET){ if(DET>CUR) DET=CUR; openDet(DET,false); }
 }
+
+/* ---------- detail loss time per tanggal (klik batang grafik loss time) ---------- */
+let DET=0;
+const MMJ_C=new Set(["T","WB","A","E","M","D"]);
+const TNAME=L&&L.types?Object.fromEntries(L.types.map(t=>[t.c,t.n])):{};
+const TCOL={R:"#2a78d6",S:"#5bb8e8",A:"#d03b3b",E:"#e0842a",M:"#8b5cf6",T:"#f2b632",NH:"#94a3b8",CP:"#e2559b",D:"#a47148",SI:"#14b8a6",FM:"#64748b",MC:"#5b4bd6",RG:"#7fb13a",WB:"#0891b2"};
+const opMin=s=>{ const m=/^(\d{1,2}):(\d{2})/.exec(s||""); if(!m) return 9999; const v=+m[1]*60 + +m[2]; return v<360?v+1440:v; };
+function openDet(d, scroll){
+  DET=Math.max(1,Math.min(CUR,d));
+  $("repWrap").querySelectorAll(".lth").forEach(h=>h.classList.toggle("sel", +h.dataset.ltday===DET));
+  const {Y,MO,RT}=S, ym=`${Y}-${pad(MO)}`, date=`${ym}-${pad(DET)}`, x=S.lt[DET-1];
+  const routes=["ISP",RT], ispOn=ym>="2026-07";
+  const ev=L&&L.stop?L.stop.filter(e=>e.d===date&&routes.includes(e.r)&&(e.r!=="ISP"||ispOn)&&e.h>0).sort((a,b)=>opMin(a.f)-opMin(b.f)||b.h-a.h):[];   /* urut jam hari operasional 06.00 -> 06.00 */
+  const LCR={[RT]:"#548235",ISP:"#c55a11"};
+  const raw=ev.reduce((a,e)=>a+e.h,0), byT={};
+  ev.forEach(e=>{ byT[e.c]=(byT[e.c]||0)+e.h; });
+  let h=`<div class="ltdh"><div><h2>Detail loss time ${DET} ${BLNF[MO-1]} ${Y}</h2><p>Route ISP + ${RT} · klik batang lain di grafik loss time untuk ganti tanggal</p></div>`
+    +`<div class="ltnav"><button class="dbtn" type="button" data-dn="-1" aria-label="Tanggal sebelumnya"${DET<=1?" disabled":""}>&#8249;</button><button class="dbtn" type="button" data-dn="1" aria-label="Tanggal berikutnya"${DET>=CUR?" disabled":""}>&#8250;</button><button class="dbtn" type="button" data-dn="0">Tutup</button></div></div>`;
+  if(DET>S.ltLastDay){ h+=`<div class="empty">Loss time tanggal ${DET} ${BLNF[MO-1]} belum diinput.</div>`; }
+  else if(!ev.length){ h+=`<div class="empty">Tidak ada loss time route ISP + ${RT} pada tanggal ini.</div>`; }
+  else {
+    const part=r=>x&&x.by?(x.by[r]||0):0;
+    h+=`<div class="ltk"><div><span>Total (tanpa overlap)</span><b>${nf2.format(x?x.t:0)}</b><small>jam</small><em>sama dengan angka di atas batang</em></div>`
+      +`<div><span>ISP</span><b>${nf2.format(part("ISP"))}</b><small>jam</small></div><div><span>${RT}</span><b>${nf2.format(part(RT))}</b><small>jam</small></div>`
+      +`<div><span>MMJ · Bukan MMJ</span><b>${nf2.format(x?x.mmj:0)}</b><small>· ${nf2.format(x?x.non:0)} jam</small></div>`
+      +`<div><span>Jumlah durasi kejadian</span><b>${nf2.format(raw)}</b><small>jam</small><em>${ev.length} kejadian${raw-(x?x.t:0)>.005?`, ${nf2.format(raw-(x?x.t:0))} jam bertumpuk`:""}</em></div></div>`;
+    h+=`<div class="ltty">`+Object.entries(byT).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<span><i style="background:${TCOL[c]||"#999"}"></i>${esc(TNAME[c]||c)} <b>${nf2.format(v)}</b> jam${MMJ_C.has(c)?"":" · bukan MMJ"}</span>`).join("")+`</div>`;
+    h+=`<div class="tw"><table class="ltt"><thead><tr><th>Route</th><th>Tipe</th><th>Sub tipe</th><th class="r">Jam</th><th>Waktu</th><th>Lokasi</th><th>Keterangan</th></tr></thead><tbody>`
+      +ev.map(e=>`<tr class="${MMJ_C.has(e.c)?"":"nonmmj"}"><td><span class="rch" style="background:${LCR[e.r]||"#666"}">${esc(e.r)}</span></td>`
+        +`<td><i class="d" style="display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;background:${TCOL[e.c]||"#999"}"></i>${esc(TNAME[e.c]||e.c)}</td><td>${esc(e.t2||"")}</td>`
+        +`<td class="r"><b>${nf2.format(e.h)}</b></td><td style="white-space:nowrap">${esc(e.f||"")}–${esc(e.t||"")}</td>`
+        +`<td style="white-space:nowrap">${e.km!=null?"KM "+nf2.format(e.km).replace(/,00$/,""):""}${e.blok?`<br><small>${esc(e.blok)}</small>`:""}</td><td class="ds">${esc(e.desc||"")}</td></tr>`).join("")
+      +`</tbody></table></div>`;
+    h+=`<div class="ltdn">Jam per kejadian = Convert Duration (data Loss Time). Total di atas menghitung jam yang bertumpuk antar kejadian/route satu kali (bobot terbesar per menit), jadi bisa lebih kecil dari jumlah durasi kejadian. Kejadian yang lewat tengah malam dicatat di tanggal mulainya.</div>`;
+  }
+  const P=$("ltDet"); P.innerHTML=h; P.hidden=false;
+  P.style.animation="none"; void P.offsetWidth; P.style.animation="";
+  P.querySelectorAll("[data-dn]").forEach(b=>b.addEventListener("click",()=>{ const n=+b.dataset.dn; if(n===0){ closeDet(); return; } openDet(DET+n,false); }));
+  if(scroll) P.scrollIntoView({behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth", block:"nearest"});
+}
+function closeDet(){ DET=0; $("ltDet").hidden=true; $("repWrap").querySelectorAll(".lth.sel").forEach(h=>h.classList.remove("sel")); }
 function fileName(){ return `Daily Hauling Performance ${S.h1?"H1 ":""}${pad(CUR)} ${BLNF[S.MO-1]} ${S.Y}.png`; }
 function toBlob(){
   return new Promise((ok,no)=>{

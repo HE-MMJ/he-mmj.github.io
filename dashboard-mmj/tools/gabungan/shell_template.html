@@ -14,6 +14,13 @@ body{margin:0;background:#edf2fb;color:#121833;font:15px/1.5 system-ui,-apple-sy
 .mmjbox b{display:block;font-size:16px;margin-bottom:6px}
 .mmjbox ol{margin:8px 0 0;padding-left:20px}
 </style>
+<style id="mmjFxCss">
+/* transisi pindah dashboard: hanya isi (saudara .side) yang bergerak, sidebar tetap */
+html.mmj-out .side ~ *, html.mmj-out .mmjtop ~ *{opacity:0;transform:translateY(6px);transition:opacity .14s ease,transform .14s ease}
+html.mmj-in .side ~ *, html.mmj-in .mmjtop ~ *{animation:mmjIn .34s cubic-bezier(.22,1,.36,1) both}
+@keyframes mmjIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){html.mmj-out *,html.mmj-in *{transition:none!important;animation:none!important}}
+</style>
 </head>
 <body>
 <!-- terlihat hanya bila JavaScript tidak berjalan -->
@@ -32,6 +39,7 @@ body{margin:0;background:#edf2fb;color:#121833;font:15px/1.5 system-ui,-apple-sy
   T.cmp = asFrag(document.getElementById("mmjT_cmp"));   /* sub menu Coal Achievement vs Loss Time; baris lain jangan diubah (dipatch build situs gabungan) */
   T.dhp = asFrag(document.getElementById("mmjT_dhp"));   /* sub menu Daily Hauling Performance (laporan harian grup) */
   T.peta = asFrag(document.getElementById("mmjT_peta"));   /* sub menu Peta Sebaran Batu Split */
+  T.petalt = asFrag(document.getElementById("mmjT_petalt"));   /* sub menu Peta Loss Time (petalt) & Peta Curah Hujan (petarf), satu template */
   /* data mentah tiap dashboard untuk Dashboard Eksekutif (dibaca dari script dashboard aslinya, tidak diduplikasi) */
   var DC = {};
   window.mmjData = function(k){
@@ -57,6 +65,7 @@ body{margin:0;background:#edf2fb;color:#121833;font:15px/1.5 system-ui,-apple-sy
     if(tab === "cmp") key = "cmp";
     if(tab === "dhp") key = "dhp";
     if(tab === "peta") key = "peta";
+    if(tab === "petalt" || tab === "petarf") key = "petalt";
     if(!T[key]){ key = ["exec","haul","batu","lt"].filter(function(k){ return T[k]; })[0]; tab = key; }
     try{ localStorage.setItem("mmjTab", tab); }catch(e){}
     /* bersihkan dashboard sebelumnya */
@@ -89,19 +98,38 @@ body{margin:0;background:#edf2fb;color:#121833;font:15px/1.5 system-ui,-apple-sy
       s.text = "(function(){\n" + code + "\n;try{ if(typeof setView===\"function\") window.setView=setView; }catch(e){}\n})();";
       o.parentNode.replaceChild(s, o); }
   }
-  /* dipanggil dari bar tab di atas dashboard */
-  window.mmjSwitch = function(tab){ setTimeout(function(){ mount(tab); }, 0); };
+  /* dipanggil dari bar tab di atas dashboard.
+     Transisi (user 2026-11-28 "jangan kaku"): sidebar tetap diam, isi halaman memudar keluar (140 ms) -> dashboard baru
+     dipasang -> isi muncul lagi dengan gerakan naik halus. Menu yang diklik langsung disorot; posisi scroll sidebar dipertahankan. */
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches, busy = false;
+  var root = document.documentElement;
+  function fxIn(){ root.classList.remove("mmj-out"); root.classList.add("mmj-in"); setTimeout(function(){ root.classList.remove("mmj-in"); root.style.background = ""; }, 500); }
+  window.mmjSwitch = function(tab){
+    if(busy) return; busy = true;
+    var links = document.querySelectorAll("[data-mmjtab]");
+    for(var i=0;i<links.length;i++){ if(links[i].dataset.mmjtab === tab) links[i].setAttribute("aria-current","page"); else links[i].removeAttribute("aria-current"); }
+    var side = document.querySelector(".side"), sTop = side ? side.scrollTop : 0;
+    root.style.background = getComputedStyle(document.body).backgroundColor;   /* tidak berkedip putih saat isi diganti */
+    if(!reduce) root.classList.add("mmj-out");
+    setTimeout(function(){
+      try{ mount(tab); } finally { busy = false; }
+      var s2 = document.querySelector(".side"); if(s2) s2.scrollTop = sTop;
+      if(reduce) root.classList.remove("mmj-out"); else setTimeout(fxIn, 16);   /* setTimeout, bukan requestAnimationFrame: rAF tertahan di tab latar -> isi bisa tertinggal pudar */
+    }, reduce ? 0 : 140);
+  };
 
   var tab = "", m = /tab=(exec|haul|batu|lt|rf)/.exec(location.hash || "");
   if(m) tab = m[1];
   if(!tab){ try{ tab = localStorage.getItem("mmjTab") || ""; }catch(e){} }
   var wantCmp = T.cmp && (/tab=cmp/.test(location.hash || "") || (!m && tab === "cmp"));
-  var wantPeta = T.peta && (/tab=peta/.test(location.hash || "") || (!m && tab === "peta"));
+  var wantPeta = T.peta && (/tab=peta(?![a-z])/.test(location.hash || "") || (!m && tab === "peta"));
+  var mPl = /tab=(petalt|petarf)/.exec(location.hash || ""), wantPetaLt = T.petalt && (mPl ? mPl[1] : (!m && (tab === "petalt" || tab === "petarf")) ? tab : "");
   if(["exec","haul","batu","lt","rf"].indexOf(tab) < 0) tab = "exec";
   var wantDhp = T.dhp && (/tab=dhp/.test(location.hash || "") || (!m && tab === "dhp"));
   if(wantCmp) tab = "cmp";
   if(wantDhp) tab = "dhp";
   if(wantPeta) tab = "peta";
+  if(wantPetaLt) tab = wantPetaLt;
   mount(tab);
 })();
 </script>
