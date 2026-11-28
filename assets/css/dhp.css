@@ -453,6 +453,83 @@ main{min-width:0}
 
 #rep [data-day]{cursor:pointer}
 
+/* animasi laporan: hanya CSS halaman (di luar <svg>), jadi PNG unduhan/salinan tetap gambar statis tanpa animasi */
+#repWrap .ax{transform-box:fill-box;transform-origin:left center;animation:dhpGx .8s cubic-bezier(.22,1,.36,1) both}
+
+#repWrap .ay{transform-box:fill-box;transform-origin:center bottom;animation:dhpGy .7s cubic-bezier(.22,1,.36,1) both;animation-delay:calc(var(--i,0) * 22ms)}
+
+#repWrap .ltb{transform-box:view-box;transform-origin:0 1470px;animation:dhpGy .75s cubic-bezier(.22,1,.36,1) both;animation-delay:calc(var(--i,0) * 26ms + 150ms)}
+
+#repWrap .aclip{animation:dhpWipe 1.3s cubic-bezier(.45,0,.2,1) both;animation-delay:.25s}
+
+#repWrap .af{animation:dhpFade .5s ease both;animation-delay:calc(var(--i,0) * 22ms + .9s)}
+
+#repWrap .afl{animation:dhpFade .5s ease both;animation-delay:calc(var(--i,0) * 26ms + .75s)}
+
+@keyframes dhpGx{from{transform:scaleX(0)}to{transform:none}}
+
+@keyframes dhpGy{from{transform:scaleY(0)}to{transform:none}}
+
+@keyframes dhpWipe{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+
+@keyframes dhpFade{from{opacity:0}to{opacity:1}}
+
+/* kolom klik grafik loss time */
+#repWrap .lth{cursor:pointer;transition:fill .15s}
+
+#repWrap .lth:hover{fill:rgba(79,70,229,.08)}
+
+#repWrap .lth.sel{fill:rgba(79,70,229,.12);stroke:#4f46e5;stroke-width:2;stroke-dasharray:6 4}
+
+#repWrap .ltb{transition:filter .15s}
+
+#repWrap svg:has(.lth:hover) .ltb{filter:saturate(.55) opacity(.8)}
+
+#repWrap .ltb.hot,#repWrap svg:has(.lth:hover) .ltb.hot{filter:none}
+
+/* panel detail loss time (klik batang) */
+.ltdet{margin-top:16px;animation:dhpRise .35s ease both}
+
+@keyframes dhpRise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+.ltdh{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px}
+
+.ltdh h2{margin:0;font-size:17px}
+
+.ltdh p{margin:3px 0 0;font-size:12.5px;color:var(--ink-2)}
+
+.ltnav{display:flex;gap:6px}
+
+.ltk{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+
+.ltk>div{background:var(--surface-solid);border:1px solid var(--hair);border-radius:14px;padding:10px 12px}
+
+.ltk span{display:block;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+
+.ltk b{font-size:22px;font-variant-numeric:tabular-nums}
+
+.ltk small{font-size:12px;color:var(--ink-2);margin-left:4px}
+
+.ltk em{display:block;font-style:normal;font-size:11.5px;color:var(--ink-2);margin-top:2px}
+
+.ltty{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+
+.ltty span{display:inline-flex;align-items:center;gap:6px;font-size:12px;background:var(--surface-solid);border:1px solid var(--hair);border-radius:999px;padding:4px 10px}
+
+.ltty i{width:9px;height:9px;border-radius:50%;flex:none}
+
+.ltt td{vertical-align:top;font-size:12.5px}
+
+.ltt td.ds{min-width:240px;color:var(--ink-2)}
+
+.rch{display:inline-block;font-size:11px;font-weight:700;color:#fff;border-radius:6px;padding:2px 7px}
+
+.ltt tr.nonmmj td:nth-child(2){color:var(--ink-2)}
+
+.ltdn{font-size:11.5px;color:var(--ink-2);margin-top:10px;line-height:1.55}
+
+@media (prefers-reduced-motion:reduce){#repWrap *,.ltdet{animation:none!important;transition:none!important}}
+
 .dnote{font-size:12px;color:var(--ink-2);margin:12px 4px 0;line-height:1.6}
 
 .dnote b{color:var(--ink)}

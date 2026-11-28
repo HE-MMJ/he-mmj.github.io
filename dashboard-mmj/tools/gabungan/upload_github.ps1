@@ -37,6 +37,17 @@ if (-not $TanpaGenerate) {
     }
 }
 
+# ---------- 1b. Upload DITAHAN (user 2026-11-28: review dulu sebelum push) ----------
+# Selama file Tools\TAHAN_UPLOAD.txt ada, dashboard lokal tetap dibuat ulang tetapi TIDAK di-push ke GitHub.
+# Hapus file itu (atau minta Claude) setelah review selesai.
+$TAHAN = "$GAB\Tools\TAHAN_UPLOAD.txt"
+if (Test-Path $TAHAN) {
+    Write-Host ""
+    Write-Host "DITAHAN: upload GitHub dilewati karena ada Tools\TAHAN_UPLOAD.txt" -ForegroundColor Yellow
+    Get-Content $TAHAN | ForEach-Object { Write-Host "  $_" }
+    exit 0
+}
+
 # ---------- 2. Siapkan salinan repo ----------
 Langkah "Mengambil versi terbaru repo dari GitHub..."
 if (-not (Test-Path "$REPO\.git")) {

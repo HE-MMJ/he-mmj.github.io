@@ -329,6 +329,41 @@ input[type=range]{flex:1;accent-color:var(--accent)}
   body.pan-open .fab{display:none}
 }
 
+/* perapian 2026-11-28 (sama dengan Peta Loss Time): titik penting satu kolom, legenda jenis per baris, KPI = tombol pop-up */
+.mlg{display:flex;flex-direction:column}
+
+.mchip{display:flex;align-items:center;gap:7px;width:100%;min-height:32px;margin-bottom:4px;padding:4px 8px 4px 5px;border:1px solid var(--hair);background:var(--surface-solid);border-radius:9px;cursor:pointer;font-size:12px;color:var(--ink-2);text-align:left;transition:border-color .15s ease,background .15s ease}
+
+.mchip:hover{border-color:var(--accent)}
+
+.mchip .ico{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;color:#fff;flex:none}
+
+.mchip .ico svg{width:13px;height:13px}
+
+.mchip .tn{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+
+.mchip .cnt{flex:none;font-size:11px;font-weight:600;color:var(--muted);background:var(--surface-2);border-radius:999px;padding:0 7px;font-variant-numeric:tabular-nums}
+
+.mchip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--ink);font-weight:600}
+
+.mchip[aria-pressed="false"]{opacity:.85}
+
+.mchip[aria-pressed="false"] .ico{filter:grayscale(.6);opacity:.7}
+
+.jl{display:flex;flex-direction:column;gap:3px}
+
+button.kpi{display:block;width:100%;text-align:left;cursor:pointer;font:inherit;color:inherit;min-height:44px;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+
+button.kpi:hover{border-color:var(--accent);box-shadow:0 6px 16px rgba(31,41,99,.12)}
+
+button.kpi.on{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 3px var(--accent-soft)}
+
+.kpi .more{font-size:11px;font-weight:600;color:var(--accent);margin-top:4px}
+
+.kex{font-size:11.5px;line-height:1.45;color:var(--ink-2);background:var(--accent-soft);border-radius:10px;padding:7px 9px;margin:-2px 0 10px}
+
+.kex b{color:var(--accent)}
+
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
 .side{overflow-y:auto;scrollbar-width:thin}
